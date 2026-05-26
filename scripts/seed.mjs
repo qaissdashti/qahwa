@@ -13,11 +13,11 @@ for (const line of readFileSync(new URL('../.env.local', import.meta.url), 'utf8
   const m = line.match(/^\s*([A-Z0-9_]+)\s*=\s*(.*)\s*$/);
   if (m && !process.env[m[1]]) process.env[m[1]] = m[2];
 }
-const URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
-const KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
-if (!URL || !KEY) { console.error('Missing Supabase env'); process.exit(1); }
+const SUPA_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
+const SUPA_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
+if (!SUPA_URL || !SUPA_KEY) { console.error('Missing Supabase env'); process.exit(1); }
 
-const db = createClient(URL, KEY, { auth: { persistSession: false } });
+const db = createClient(SUPA_URL, SUPA_KEY, { auth: { persistSession: false } });
 const PASSWORD = 'qahwa1234';
 const FEE_PCT = 7;
 
