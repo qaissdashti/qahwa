@@ -34,7 +34,9 @@ export async function middleware(request) {
   const { data: { user } } = await supabase.auth.getUser();
 
   const { pathname } = request.nextUrl;
-  const isProtected = PROTECTED_PREFIXES.some(
+  // /admin/login must stay reachable while signed out (avoid redirect loop).
+  const isAuthEntry = pathname === '/admin/login';
+  const isProtected = !isAuthEntry && PROTECTED_PREFIXES.some(
     (p) => pathname === p || pathname.startsWith(p + '/')
   );
 
