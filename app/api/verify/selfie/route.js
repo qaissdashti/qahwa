@@ -1,0 +1,59 @@
+// Receives the selfie upload, stores it in the private `selfies` bucket,
+// and moves the creator into 'under_review' to finalise onboarding.
+import { createAdminClient, createServerSupabaseClient } from '@/lib/supabase';
+
+const MAX_BYTES = 6 * 1024 * 1024; // 6 MB
+const ALLOWED = ['image/jpeg', 'image/png', 'image/webp'];
+
+export async function POST(req) {
+  const auth = createServerSupabaseClient();
+  const { data: { user } } = await auth.auth.getUser();
+  if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
+
+  const form = await req.formData();
+  const file = form.get('selfie');
+  if (!file || typeof file === 'string') {
+    return Response.json({ error: 'لا توجد صورة' }, { status: 400 });
+  }
+  if (!ALLOWED.includes(file.type)) {
+    return Response.json({ error: 'صيغة الصورة غير مدعومة' }, { status: 400 });
+  }
+  if (file.size > MAX_BYTES) {
+    return Response.json({ error: 'حجم الصورة كبير (الحد 6MB)' }, { status: 400 });
+  }
+
+  // require phone + civil id already done before finalising
+  const supabase = createAdminClient();
+  const { data: v } = await supabase
+    .from('verifications')
+    .select('phone_verified, civil_id_encrypted')
+    .eq('creator_id', user.id)
+    .maybeSingle();
+
+  if (!v?.phone_verified || !v?.civil_id_encrypted) {
+    return Response.json({ error: 'أكمل الخطوات السابقة أولاً' }, { status: 400 });
+  }
+
+  const ext  = file.type === 'image/png' ? 'png' : file.type === 'image/webp' ? 'webp' : 'jpg';
+  const path = `${user.id}/selfie-${Date.now()}.${ext}`;
+  const bytes = Buffer.from(await file.arrayBuffer());
+
+  const { error: upErr } = await supabase.storage
+    .from('selfies')
+    .upload(path, bytes, { contentType: file.type, upsert: true });
+
+  if (upErr) {
+    console.error('[verify/selfie] upload', upErr);
+    return Response.json({ error: 'تعذّر رفع الصورة' }, { status: 500 });
+  }
+
+  await supabase.from('verifications')
+    .update({ selfie_url: path, status: 'under_review' })
+    .eq('creator_id', user.id);
+
+  await supabase.from('creators')
+    .update({ verification_status: 'under_review' })
+    .eq('id', user.id);
+
+  return Response.json({ success: true });
+}

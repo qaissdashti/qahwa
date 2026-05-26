@@ -92,7 +92,7 @@ alter table public.creators
 -- ─────────────────────────────────────────────────────────────
 create table if not exists public.verifications (
   id                  uuid primary key default gen_random_uuid(),
-  creator_id          uuid not null references public.creators(id) on delete cascade,
+  creator_id          uuid not null unique references public.creators(id) on delete cascade,
   created_at          timestamptz not null default now(),
   reviewed_at         timestamptz,
 
@@ -279,6 +279,33 @@ drop trigger if exists tips_update_balance on public.tips;
 create trigger tips_update_balance
   after insert or update of status on public.tips
   for each row execute function public.update_creator_balance();
+
+-- ─────────────────────────────────────────────────────────────
+-- TRIGGER: auto-create a creators row when a creator signs up.
+-- Signup sets raw_user_meta_data.is_creator = 'true' (+ full_name,
+-- handle). Admin users are created without that flag, so they get
+-- no creators row. Idempotent via on conflict.
+-- ─────────────────────────────────────────────────────────────
+create or replace function public.handle_new_user()
+returns trigger language plpgsql security definer set search_path = public as $$
+begin
+  if coalesce(new.raw_user_meta_data->>'is_creator','') = 'true' then
+    insert into public.creators (id, email, full_name, handle)
+    values (
+      new.id,
+      new.email,
+      coalesce(new.raw_user_meta_data->>'full_name',''),
+      nullif(lower(new.raw_user_meta_data->>'handle'),'')
+    )
+    on conflict (id) do nothing;
+  end if;
+  return new;
+end $$;
+
+drop trigger if exists on_auth_user_created on auth.users;
+create trigger on_auth_user_created
+  after insert on auth.users
+  for each row execute function public.handle_new_user();
 
 -- ─────────────────────────────────────────────────────────────
 -- TRIGGER: decrement balance when a payout is approved/paid

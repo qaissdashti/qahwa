@@ -21,3 +21,38 @@ body {
 
 /* Syne for headings */
 h1, h2, h3 { font-family: 'Syne', sans-serif; font-weight: 800; letter-spacing: -0.04em; }
+
+/* Numbers / Latin emphasis */
+.font-num { font-family: 'DM Sans', sans-serif; font-feature-settings: 'tnum'; }
+
+/* ─── Neo-brutalist building blocks (Qahwa design language) ───
+   chunky black borders + 3px offset box-shadow. Used across the
+   light tipping/auth pages. */
+@layer components {
+  .q-card {
+    @apply bg-white border-2 border-qahwa-black rounded-2xl;
+    box-shadow: 4px 4px 0 0 #0D0D0D;
+  }
+  .q-input {
+    @apply w-full bg-white border-2 border-qahwa-black rounded-xl px-4 py-3
+           text-qahwa-black placeholder:text-black/40 outline-none
+           focus:-translate-y-0.5 transition-transform;
+    box-shadow: 3px 3px 0 0 #0D0D0D;
+  }
+  .q-btn {
+    @apply inline-flex items-center justify-center gap-2 font-bold rounded-xl
+           border-2 border-qahwa-black px-5 py-3 transition-all
+           active:translate-x-[3px] active:translate-y-[3px] active:shadow-none
+           disabled:opacity-50 disabled:pointer-events-none;
+    box-shadow: 3px 3px 0 0 #0D0D0D;
+  }
+  .q-btn-accent  { @apply q-btn bg-qahwa-accent text-qahwa-black; }
+  .q-btn-black   { @apply q-btn bg-qahwa-black text-qahwa-cream; }
+  .q-btn-white   { @apply q-btn bg-white text-qahwa-black; }
+  .q-label       { @apply block text-sm font-bold mb-1.5 text-qahwa-black/80; }
+  .q-error       { @apply text-sm font-bold text-qahwa-red; }
+}
+
+/* Dark dashboard surface helpers */
+.dash-bg      { background: #080808; }
+.dash-surface { background: #0F0F0F; }
