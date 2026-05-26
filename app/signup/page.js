@@ -49,8 +49,18 @@ export default function SignupPage() {
 
       if (signErr) throw signErr;
 
-      // 3. session present (email confirmation disabled) → straight to onboarding
+      // 3. session present (email confirmation disabled) → ensure the
+      //    creators row exists BEFORE onboarding/OTP, then continue.
       if (data.session) {
+        const initRes = await fetch('/api/creator/init', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ full_name: fullName.trim(), handle: cleanHandle }),
+        });
+        if (!initRes.ok) {
+          const j = await initRes.json().catch(() => ({}));
+          throw new Error(j.error || 'تعذّر تجهيز الحساب');
+        }
         router.push('/verify');
         router.refresh();
       } else {
