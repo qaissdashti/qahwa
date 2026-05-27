@@ -1,11 +1,23 @@
 // ============================================================
-// TIPPING CLIENT COMPONENT
-// Handles: language toggle (AR/EN), cup selection, amazing box,
-//          payment initiation, success screen with confetti
+// TIPPING CLIENT COMPONENT — Flewd palette (light only)
+// language toggle (AR/EN), pill cup selector, custom amount,
+// payment initiation, success screen with confetti
 // ============================================================
 'use client';
 
 import { useState, useEffect } from 'react';
+
+// ── Flewd palette (fixed, light-only) ───────────────────────
+const C = {
+  bg:     '#F5F0FF', // very light lavender page background
+  card:   '#FFFFFF',
+  ink:    '#0D0D0D', // black borders/text
+  accent: '#C8F55A', // yellow-green CTA
+  purple: '#7B2FBE', // primary purple (selected state)
+  violet: '#9B4DCA', // secondary violet
+  soft:   '#EDE4FB', // soft lavender fill
+  muted:  '#6B6680',
+};
 
 // ── i18n strings ────────────────────────────────────────────
 const STR = {
@@ -54,7 +66,7 @@ const STR = {
 };
 
 function Confetti() {
-  const colors = ['#C8F55A', '#FF5A5A', '#8B7FF5', '#38BDF8', '#F59A38'];
+  const colors = [C.accent, C.purple, C.violet, '#FF5A5A', '#38BDF8'];
   return (
     <div aria-hidden style={{ position: 'fixed', inset: 0, pointerEvents: 'none', overflow: 'hidden', zIndex: 50 }}>
       <style>{`@keyframes qahwa-fall{0%{transform:translateY(-12vh) rotate(0);opacity:1}100%{transform:translateY(112vh) rotate(720deg);opacity:.85}}@keyframes qahwa-pop{0%{transform:scale(0)}60%{transform:scale(1.25)}100%{transform:scale(1)}}`}</style>
@@ -75,14 +87,14 @@ function Confetti() {
 export default function TippingClient({ creator, settings, recentTips, showSuccess }) {
   const [lang, setLang]                 = useState('ar');
 
-  // Persist the supporter's language across the payment redirect (same
-  // origin), so the success screen shows in the language they chose.
+  // Persist the supporter's language across the payment redirect (same origin).
   useEffect(() => {
     try {
       const stored = localStorage.getItem('qahwa_lang');
       if (stored === 'ar' || stored === 'en') setLang(stored);
     } catch {}
   }, []);
+
   const [selectedCups, setSelectedCups] = useState(1);
   const [isAmazing, setIsAmazing]       = useState(false);
   const [amazingAmt, setAmazingAmt]     = useState('');
@@ -95,10 +107,7 @@ export default function TippingClient({ creator, settings, recentTips, showSucce
 
   const t   = STR[lang];
   const dir = t.dir;
-  const price  = Number(creator.coffee_price_kd);
-  const bg     = creator.theme_bg   || '#FAFAF7';
-  const text   = creator.theme_text || '#0D0D0D';
-  const isDark = bg === '#0D0D0D';
+  const price = Number(creator.coffee_price_kd);
 
   const grossAmount = isAmazing
     ? Number(parseFloat(amazingAmt || 0).toFixed(3))
@@ -130,7 +139,6 @@ export default function TippingClient({ creator, settings, recentTips, showSucce
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || t.genericErr);
-      // Redirect to MyFatoorah hosted page (or, in test mode, straight to success)
       window.location.href = data.paymentUrl;
     } catch (err) {
       setError(err.message);
@@ -138,29 +146,41 @@ export default function TippingClient({ creator, settings, recentTips, showSucce
     }
   }
 
-  // ── STYLES ──────────────────────────────────────────────────
-  const s = {
-    page: { minHeight: '100vh', background: bg, display: 'flex', alignItems: 'flex-start', justifyContent: 'center', padding: '2rem 1rem 3rem', fontFamily: "'Tajawal', sans-serif" },
-    card: { position: 'relative', background: isDark ? '#141414' : '#fff', border: `1.5px solid ${isDark ? '#2A2A2A' : '#E0E0D8'}`, borderRadius: 24, padding: '2rem 1.75rem', width: '100%', maxWidth: 420, boxShadow: `4px 4px 0 ${isDark ? '#333' : text}` },
-    name: { fontFamily: "'Syne', sans-serif", fontSize: 22, fontWeight: 800, color: text, letterSpacing: '-0.04em', direction: dir, textAlign: 'center' },
-    bio: { fontSize: 14, color: isDark ? '#bbb' : '#444', direction: dir, textAlign: 'center', lineHeight: 1.6, background: isDark ? '#1A1A1A' : '#FFF8F0', borderRadius: 12, padding: '10px 14px', border: `1px solid ${isDark ? '#2A2A2A' : '#F0E4D7'}`, margin: '10px 0' },
-    cupBtn: (sel) => ({ flex: 1, border: `2px solid ${sel ? text : isDark ? '#2A2A2A' : '#E0E0D8'}`, borderRadius: 14, background: sel ? text : isDark ? '#1A1A1A' : '#FFF8F0', padding: '12px 6px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3, cursor: 'pointer', transition: 'all .15s' }),
-    cupAmt: (sel) => ({ fontFamily: "'Syne', sans-serif", fontSize: 13, fontWeight: 800, color: sel ? (isDark ? '#C8F55A' : '#FAFAF7') : text }),
-    payBtn: { width: '100%', background: text, color: bg, border: 'none', borderRadius: 16, padding: 16, fontFamily: "'Syne', sans-serif", fontSize: 18, fontWeight: 800, cursor: loading ? 'not-allowed' : 'pointer', opacity: loading ? 0.7 : 1, direction: dir, boxShadow: `3px 3px 0 ${isDark ? '#C8F55A' : '#0D0D0D'}`, transition: 'all .15s' },
-    input: { width: '100%', border: `1.5px solid ${isDark ? '#2A2A2A' : '#E0E0D8'}`, borderRadius: 12, padding: '10px 14px', fontSize: 14, fontFamily: "'Tajawal', sans-serif", direction: dir, background: isDark ? '#1A1A1A' : '#FFF8F0', color: isDark ? '#FAFAF7' : '#1A1A1A', outline: 'none', marginBottom: 10 },
-    divider: { height: 1, background: isDark ? '#222' : '#F0E4D7', margin: '1rem 0' },
-    sectionLabel: { fontSize: 12, fontWeight: 700, color: isDark ? '#666' : '#C09070', textAlign: 'center', direction: dir, marginBottom: 8 },
-    errorBox: { background: '#FFF0F0', border: '1px solid #FFB0B0', borderRadius: 10, padding: '8px 14px', fontSize: 13, color: '#C00', direction: dir, marginBottom: 10 },
-    pmRow: { display: 'flex', justifyContent: 'center', gap: 6, marginTop: 12 },
-    pmBadge: { border: `1px solid ${isDark ? '#333' : '#E0E0D8'}`, borderRadius: 7, padding: '3px 10px', fontSize: 11, fontWeight: 700, color: isDark ? '#666' : '#888', fontFamily: "'DM Sans', sans-serif" },
-    langBtn: { position: 'absolute', top: 14, insetInlineEnd: 14, border: `1.5px solid ${isDark ? '#2A2A2A' : '#E0E0D8'}`, background: isDark ? '#1A1A1A' : '#FFF8F0', color: text, borderRadius: 10, padding: '5px 12px', fontSize: 13, fontWeight: 800, fontFamily: "'Syne', sans-serif", cursor: 'pointer', zIndex: 2 },
-  };
-
   const toggleLang = () => setLang((l) => {
     const next = l === 'ar' ? 'en' : 'ar';
     try { localStorage.setItem('qahwa_lang', next); } catch {}
     return next;
   });
+
+  // ── STYLES (Flewd) ──────────────────────────────────────────
+  const s = {
+    page: { minHeight: '100vh', background: C.bg, display: 'flex', alignItems: 'flex-start', justifyContent: 'center', padding: '2rem 1rem 3rem', fontFamily: "'Tajawal', sans-serif" },
+    card: { position: 'relative', background: C.card, border: `2px solid ${C.ink}`, borderRadius: 28, padding: '2rem 1.75rem', width: '100%', maxWidth: 430, boxShadow: `5px 5px 0 ${C.ink}` },
+    name: { fontFamily: "'Syne', sans-serif", fontSize: 24, fontWeight: 800, color: C.ink, letterSpacing: '-0.04em', direction: dir, textAlign: 'center' },
+    bio: { fontSize: 14, color: '#4A4458', direction: dir, textAlign: 'center', lineHeight: 1.6, background: C.soft, borderRadius: 14, padding: '10px 14px', border: `2px solid ${C.ink}`, margin: '12px 0' },
+    cupPill: (sel) => ({
+      flex: 1, border: `2px solid ${C.ink}`, borderRadius: 999,
+      background: sel ? C.purple : C.card, color: sel ? '#fff' : C.ink,
+      boxShadow: sel ? `3px 3px 0 ${C.ink}` : 'none',
+      padding: '14px 6px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2,
+      cursor: 'pointer', transition: 'all .15s',
+    }),
+    cupAmt: { fontFamily: "'Syne', sans-serif", fontSize: 14, fontWeight: 800 },
+    payBtn: {
+      width: '100%', background: C.accent, color: C.ink, border: `2px solid ${C.ink}`,
+      borderRadius: 999, padding: 17, fontFamily: "'Syne', sans-serif", fontSize: 18, fontWeight: 800,
+      cursor: loading ? 'not-allowed' : 'pointer', opacity: loading ? 0.6 : 1, direction: dir,
+      boxShadow: `4px 4px 0 ${C.ink}`, transition: 'all .12s',
+    },
+    input: { width: '100%', border: `2px solid ${C.ink}`, borderRadius: 14, padding: '11px 14px', fontSize: 14, fontFamily: "'Tajawal', sans-serif", direction: dir, background: C.card, color: C.ink, outline: 'none', marginBottom: 10 },
+    divider: { height: 2, background: C.soft, margin: '1.1rem 0', borderRadius: 2 },
+    sectionLabel: { fontSize: 12, fontWeight: 800, color: C.purple, textAlign: 'center', direction: dir, marginBottom: 10, letterSpacing: '0.02em' },
+    errorBox: { background: '#FFF0F0', border: `2px solid #FF5A5A`, borderRadius: 12, padding: '8px 14px', fontSize: 13, color: '#C00', direction: dir, marginBottom: 10, fontWeight: 700 },
+    pmRow: { display: 'flex', justifyContent: 'center', gap: 6, marginTop: 14, flexWrap: 'wrap' },
+    pmBadge: { border: `1.5px solid ${C.ink}`, borderRadius: 8, padding: '3px 10px', fontSize: 11, fontWeight: 700, color: C.muted, fontFamily: "'DM Sans', sans-serif" },
+    langBtn: { position: 'absolute', top: 16, insetInlineEnd: 16, border: `2px solid ${C.ink}`, background: C.card, color: C.ink, borderRadius: 999, padding: '5px 13px', fontSize: 13, fontWeight: 800, fontFamily: "'Syne', sans-serif", cursor: 'pointer', zIndex: 2, boxShadow: `2px 2px 0 ${C.ink}` },
+    social: { background: C.purple, color: '#fff', border: `2px solid ${C.ink}`, borderRadius: 10, padding: '4px 10px', fontSize: 12, fontWeight: 700, textDecoration: 'none' },
+  };
 
   if (success) {
     return (
@@ -168,7 +188,7 @@ export default function TippingClient({ creator, settings, recentTips, showSucce
         <Confetti />
         <div style={{ ...s.card, textAlign: 'center', padding: '3rem 2rem' }}>
           <button style={s.langBtn} onClick={toggleLang} aria-label={t.otherName}>{t.other}</button>
-          <div style={{ fontSize: 72, marginBottom: 16, animation: 'qahwa-pop .5s ease-out' }}>☕</div>
+          <div style={{ fontSize: 76, marginBottom: 16, animation: 'qahwa-pop .5s ease-out' }}>☕</div>
           <h2 style={{ ...s.name, marginBottom: 8 }}>{t.successTitle}</h2>
           <p style={{ ...s.bio }}>
             {message ? `"${message}"\n\n` : ''}
@@ -192,54 +212,54 @@ export default function TippingClient({ creator, settings, recentTips, showSucce
 
         {/* Avatar */}
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: '1.25rem' }}>
-          <div style={{ width: 80, height: 80, borderRadius: '50%', border: `3px solid ${text}`, boxShadow: `3px 3px 0 ${text}`, overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', background: isDark ? '#1A1A1A' : '#FFF8F0', fontSize: 36, marginBottom: 10 }}>
+          <div style={{ width: 84, height: 84, borderRadius: '50%', border: `2px solid ${C.ink}`, boxShadow: `3px 3px 0 ${C.ink}`, overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', background: C.soft, fontSize: 38, marginBottom: 12 }}>
             {creator.avatar_url
               ? <img src={creator.avatar_url} alt={creator.full_name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
               : (creator.avatar_emoji || '🎙️')}
           </div>
           <div style={s.name}>{creator.full_name} {creator.is_verified && '✓'}</div>
-          <div style={{ fontSize: 12, color: isDark ? '#555' : '#aaa', fontFamily: "'DM Sans', sans-serif", marginBottom: 6 }}>
+          <div style={{ fontSize: 12, color: C.violet, fontFamily: "'DM Sans', sans-serif", fontWeight: 700, marginBottom: 6 }}>
             qahwa.kw/{creator.handle}
           </div>
           {creator.bio && <div style={s.bio}>{creator.bio}</div>}
 
-          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', justifyContent: 'center', marginTop: 6 }}>
-            {creator.instagram && <a href={`https://${creator.instagram}`} target="_blank" rel="noreferrer" style={{ background: text, color: bg, borderRadius: 8, padding: '4px 10px', fontSize: 12, fontWeight: 700, textDecoration: 'none' }}>📸</a>}
-            {creator.twitter   && <a href={`https://${creator.twitter}`}   target="_blank" rel="noreferrer" style={{ background: text, color: bg, borderRadius: 8, padding: '4px 10px', fontSize: 12, fontWeight: 700, textDecoration: 'none' }}>🐦</a>}
-            {creator.youtube   && <a href={`https://${creator.youtube}`}   target="_blank" rel="noreferrer" style={{ background: text, color: bg, borderRadius: 8, padding: '4px 10px', fontSize: 12, fontWeight: 700, textDecoration: 'none' }}>▶️</a>}
-            {creator.tiktok    && <a href={`https://${creator.tiktok}`}    target="_blank" rel="noreferrer" style={{ background: text, color: bg, borderRadius: 8, padding: '4px 10px', fontSize: 12, fontWeight: 700, textDecoration: 'none' }}>🎵</a>}
+          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', justifyContent: 'center', marginTop: 4 }}>
+            {creator.instagram && <a href={`https://${creator.instagram}`} target="_blank" rel="noreferrer" style={s.social}>📸</a>}
+            {creator.twitter   && <a href={`https://${creator.twitter}`}   target="_blank" rel="noreferrer" style={s.social}>🐦</a>}
+            {creator.youtube   && <a href={`https://${creator.youtube}`}   target="_blank" rel="noreferrer" style={s.social}>▶️</a>}
+            {creator.tiktok    && <a href={`https://${creator.tiktok}`}    target="_blank" rel="noreferrer" style={s.social}>🎵</a>}
           </div>
         </div>
 
         {/* Total counter */}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', border: `1.5px solid ${isDark ? '#333' : text}`, borderRadius: 12, padding: '8px 14px', marginBottom: '1rem', background: isDark ? '#1A1A1A' : '#FFF0D8', boxShadow: `3px 3px 0 ${isDark ? '#333' : text}` }}>
-          <span style={{ fontSize: 12, color: isDark ? '#666' : '#B08060' }}>{t.totalCoffees}</span>
-          <span style={{ fontFamily: "'Syne', sans-serif", fontSize: 18, fontWeight: 800, color: text }}>☕ {creator.total_tips_count}</span>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', border: `2px solid ${C.ink}`, borderRadius: 14, padding: '9px 14px', marginBottom: '1.1rem', background: C.soft, boxShadow: `3px 3px 0 ${C.ink}` }}>
+          <span style={{ fontSize: 12, color: '#4A4458', fontWeight: 700 }}>{t.totalCoffees}</span>
+          <span style={{ fontFamily: "'Syne', sans-serif", fontSize: 18, fontWeight: 800, color: C.purple }}>☕ {creator.total_tips_count}</span>
         </div>
 
         <div style={s.divider} />
         <div style={s.sectionLabel}>{t.chooseCoffees}</div>
 
-        {/* Cup selector */}
-        <div style={{ display: 'flex', gap: 8, marginBottom: '1rem' }}>
+        {/* Cup selector — pills */}
+        <div style={{ display: 'flex', gap: 9, marginBottom: '1.1rem' }}>
           {[1, 3, 5].map(cups => {
             const sel = !isAmazing && selectedCups === cups;
             return (
-              <button key={cups} style={s.cupBtn(sel)} onClick={() => { setSelectedCups(cups); setIsAmazing(false); }}>
+              <button key={cups} style={s.cupPill(sel)} onClick={() => { setSelectedCups(cups); setIsAmazing(false); }}>
                 <span style={{ fontSize: cups === 5 ? 22 : 20 }}>{cups === 1 ? '☕' : cups === 3 ? '☕☕☕' : '🫖'}</span>
-                <span style={{ fontSize: 10, color: isDark ? '#666' : '#aaa' }}>{t.cupLabel[cups]}</span>
-                <span style={s.cupAmt(sel)}>{(price * cups).toFixed(3)}</span>
-                <span style={{ fontSize: 9, color: isDark ? '#555' : '#bbb' }}>KD</span>
+                <span style={{ fontSize: 10, opacity: 0.8 }}>{t.cupLabel[cups]}</span>
+                <span style={s.cupAmt}>{(price * cups).toFixed(3)}</span>
+                <span style={{ fontSize: 9, opacity: 0.7 }}>KD</span>
               </button>
             );
           })}
         </div>
 
-        {/* Amazing box */}
+        {/* Custom amount box */}
         {showAmazing && (
-          <div style={{ border: `2px solid ${isAmazing ? text : isDark ? '#2A2A2A' : '#E0E0D8'}`, borderRadius: 14, padding: '12px 14px', marginBottom: '1rem', background: isDark ? '#1A1A1A' : '#FFFDF0', cursor: 'pointer', boxShadow: isAmazing ? `3px 3px 0 ${text}` : 'none', transition: 'all .15s' }}
+          <div style={{ border: `2px solid ${C.ink}`, borderRadius: 18, padding: '12px 14px', marginBottom: '1.1rem', background: isAmazing ? C.soft : C.card, cursor: 'pointer', boxShadow: isAmazing ? `3px 3px 0 ${C.purple}` : 'none', transition: 'all .15s' }}
             onClick={() => setIsAmazing(!isAmazing)}>
-            <div style={{ fontFamily: "'Syne', sans-serif", fontSize: 14, fontWeight: 800, color: text, marginBottom: 4, direction: dir }}>
+            <div style={{ fontFamily: "'Syne', sans-serif", fontSize: 14, fontWeight: 800, color: isAmazing ? C.purple : C.ink, marginBottom: 4, direction: dir }}>
               {isAmazing ? '✓ ' : ''}☀️ {creator.amazing_message || t.amazingDefault}
             </div>
             {isAmazing && (
@@ -247,7 +267,7 @@ export default function TippingClient({ creator, settings, recentTips, showSucce
                 <input type="number" value={amazingAmt} onChange={e => setAmazingAmt(e.target.value)}
                   placeholder={`${settings?.amazing_min_kd || 0.5}`} min={settings?.amazing_min_kd || 0.5} max={settings?.amazing_max_kd || 50} step="0.5"
                   style={{ ...s.input, flex: 1, marginBottom: 0, direction: 'ltr', textAlign: 'center', fontSize: 18, fontWeight: 700 }} />
-                <span style={{ fontSize: 13, fontWeight: 700, color: isDark ? '#666' : '#888' }}>KD</span>
+                <span style={{ fontSize: 13, fontWeight: 800, color: C.purple }}>KD</span>
               </div>
             )}
           </div>
@@ -279,7 +299,7 @@ export default function TippingClient({ creator, settings, recentTips, showSucce
             <div style={s.sectionLabel}>{t.recentSupporters}</div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 7 }}>
               {recentTips.map((tip, i) => (
-                <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12, color: isDark ? '#666' : '#7A6A5A', direction: dir, background: isDark ? '#1A1A1A' : '#FAF5F0', borderRadius: 10, padding: '7px 12px' }}>
+                <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12, color: '#4A4458', direction: dir, background: C.soft, border: `2px solid ${C.ink}`, borderRadius: 12, padding: '8px 12px', fontWeight: 600 }}>
                   <span>☕</span>
                   <span>{tip.supporter_name || t.supporterDefault} {tip.is_amazing ? t.boughtAmazing : t.bought(tip.cups)}</span>
                 </div>
