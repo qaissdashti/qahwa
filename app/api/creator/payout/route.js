@@ -50,6 +50,11 @@ export async function POST(req) {
   });
 
   if (error) {
+    // 23505 = unique_violation on payouts_one_pending_per_creator: a
+    // concurrent request already created a pending payout.
+    if (error.code === '23505') {
+      return Response.json({ error: 'لديك طلب سحب قيد المراجعة' }, { status: 409 });
+    }
     console.error('[creator/payout]', error);
     return Response.json({ error: 'تعذّر إنشاء الطلب' }, { status: 500 });
   }
