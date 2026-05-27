@@ -1,7 +1,7 @@
 import { createAdminClient } from '@/lib/supabase';
 import CreatorRow from '@/components/admin/CreatorRow';
 
-export const metadata = { title: 'المبدعون — الإدارة' };
+export const metadata = { title: 'Creators — Admin' };
 
 export default async function AdminCreators() {
   const admin = createAdminClient();
@@ -13,17 +13,17 @@ export default async function AdminCreators() {
 
   return (
     <div className="space-y-5">
-      <h1 className="text-2xl">المبدعون ({creators?.length || 0})</h1>
+      <h1 className="text-2xl">Creators ({creators?.length || 0})</h1>
 
       <div className="dash-surface rounded-2xl border border-white/10 overflow-x-auto">
         <table className="w-full text-sm min-w-[640px]">
-          <thead className="text-white/40 text-right border-b border-white/10">
+          <thead className="text-white/40 text-left border-b border-white/10">
             <tr>
-              <th className="font-bold px-4 py-3">المبدع</th>
-              <th className="font-bold px-4 py-3">الحالة</th>
-              <th className="font-bold px-4 py-3">الرصيد</th>
-              <th className="font-bold px-4 py-3">الأرباح</th>
-              <th className="font-bold px-4 py-3">التحكم</th>
+              <th className="font-bold px-4 py-3">Creator</th>
+              <th className="font-bold px-4 py-3">Status</th>
+              <th className="font-bold px-4 py-3">Balance</th>
+              <th className="font-bold px-4 py-3">Earnings</th>
+              <th className="font-bold px-4 py-3">Action</th>
             </tr>
           </thead>
           <tbody>
@@ -31,7 +31,7 @@ export default async function AdminCreators() {
           </tbody>
         </table>
         {(!creators || creators.length === 0) && (
-          <p className="text-center text-white/40 py-12 font-medium">لا يوجد مبدعون بعد</p>
+          <p className="text-center text-white/40 py-12 font-medium">No creators yet</p>
         )}
       </div>
     </div>

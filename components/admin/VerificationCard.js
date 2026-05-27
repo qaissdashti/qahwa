@@ -21,7 +21,7 @@ export default function VerificationCard({
       const json = await res.json();
       if (!res.ok) throw new Error(json.error);
       setSelfieUrl(json.url);
-    } catch (e) { setError(e.message || 'تعذّر عرض الصورة'); }
+    } catch (e) { setError(e.message || "Couldn't load photo"); }
   }
 
   async function decide(action) {
@@ -31,21 +31,21 @@ export default function VerificationCard({
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ creatorId, action }),
       });
-      if (!res.ok) throw new Error('فشل');
+      if (!res.ok) throw new Error('failed');
       router.refresh();
-    } catch (e) { setError('صار خطأ'); setBusy(false); }
+    } catch (e) { setError('Something went wrong'); setBusy(false); }
   }
 
   return (
     <div className="dash-surface rounded-2xl border border-white/10 p-5 space-y-3">
       <div>
         <div className="font-bold text-lg">{fullName || '—'}</div>
-        <div className="text-xs text-white/40 font-num" dir="ltr">@{handle} · {email}</div>
+        <div className="text-xs text-white/40 font-num">@{handle} · {email}</div>
       </div>
 
       <div className="grid grid-cols-2 gap-2 text-sm">
-        <Fact label="الواتساب" value={phone || '—'} ok={phoneVerified} ltr />
-        <Fact label="الرقم المدني" value={civilMasked || '—'} ok={!!civilMasked} ltr />
+        <Fact label="WhatsApp" value={phone || '—'} ok={phoneVerified} />
+        <Fact label="Civil ID" value={civilMasked || '—'} ok={!!civilMasked} />
       </div>
 
       {selfieUrl ? (
@@ -54,7 +54,7 @@ export default function VerificationCard({
       ) : (
         <button onClick={viewSelfie} disabled={!hasSelfie}
                 className="w-full text-sm font-bold rounded-xl bg-white/5 hover:bg-white/10 py-2.5 disabled:opacity-40">
-          {hasSelfie ? '📸 عرض الصورة الشخصية' : 'لا توجد صورة'}
+          {hasSelfie ? '📸 View selfie' : 'No photo'}
         </button>
       )}
 
@@ -62,21 +62,21 @@ export default function VerificationCard({
 
       <div className="flex gap-2 pt-1">
         <button onClick={() => decide('approve')} disabled={busy}
-                className="flex-1 q-btn-accent text-sm py-2.5">{busy ? '...' : '✓ قبول'}</button>
+                className="flex-1 q-btn-accent text-sm py-2.5">{busy ? '...' : '✓ Approve'}</button>
         <button onClick={() => decide('reject')} disabled={busy}
                 className="flex-1 text-sm font-bold rounded-xl bg-qahwa-red/20 text-qahwa-red border-2 border-qahwa-red/50 py-2.5">
-          ✕ رفض
+          ✕ Reject
         </button>
       </div>
     </div>
   );
 }
 
-function Fact({ label, value, ok, ltr }) {
+function Fact({ label, value, ok }) {
   return (
     <div className="bg-black/30 rounded-xl px-3 py-2">
       <div className="text-white/40 text-xs">{label}</div>
-      <div className="font-bold font-num flex items-center gap-1" dir={ltr ? 'ltr' : 'rtl'}>
+      <div className="font-bold font-num flex items-center gap-1">
         <span className={ok ? 'text-qahwa-accent' : 'text-qahwa-red'}>{ok ? '✓' : '✕'}</span>
         <span className="truncate">{value}</span>
       </div>

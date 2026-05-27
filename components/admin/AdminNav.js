@@ -4,11 +4,11 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 
 const LINKS = [
-  ['/admin',               'نظرة عامة',  '📊'],
-  ['/admin/creators',      'المبدعون',   '👥'],
-  ['/admin/verifications', 'التحقق',     '🪪'],
-  ['/admin/payouts',       'السحوبات',   '💸'],
-  ['/admin/settings',      'الإعدادات',  '⚙️'],
+  ['/admin',               'Overview',     '📊'],
+  ['/admin/creators',      'Creators',     '👥'],
+  ['/admin/verifications', 'Verification', '🪪'],
+  ['/admin/payouts',       'Payouts',      '💸'],
+  ['/admin/settings',      'Settings',     '⚙️'],
 ];
 
 export default function AdminNav() {

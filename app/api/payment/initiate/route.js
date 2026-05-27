@@ -16,6 +16,11 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY
 );
 
+// Local test mode: simulate a successful payment without MyFatoorah so the
+// full post-payment flow (success screen + confetti) can be exercised.
+// Gated by DEV_OTP_BYPASS and hard-disabled in production.
+const TEST_MODE = process.env.DEV_OTP_BYPASS === 'true' && process.env.NODE_ENV !== 'production';
+
 export async function POST(req) {
   const { creatorHandle, cups, isAmazing, grossAmount, message, supporterName, supporterPhone } =
     await req.json();
@@ -91,6 +96,29 @@ export async function POST(req) {
   if (tipError) {
     console.error('[initiate] Failed to insert tip:', tipError);
     return Response.json({ error: 'Database error' }, { status: 500 });
+  }
+
+  // ── TEST MODE: simulate a paid tip, skip MyFatoorah ──────
+  // Marks the tip paid (fires the balance trigger), then returns a URL
+  // straight to the success screen — mirrors the post-payment redirect.
+  if (TEST_MODE) {
+    await supabase
+      .from('tips')
+      .update({
+        status: 'paid',
+        paid_at: new Date().toISOString(),
+        payment_method: 'test',
+        myfatoorah_invoice_id: `TEST-${tip.id}`,
+        myfatoorah_payment_id: `TEST-${Date.now()}`,
+      })
+      .eq('id', tip.id);
+
+    const base = process.env.NEXT_PUBLIC_BASE_URL || '';
+    return Response.json({
+      paymentUrl: `${base}/${creator.handle}?success=1&tip=${tip.id}`,
+      tipId: tip.id,
+      testMode: true,
+    });
   }
 
   // ── 5. CREATE MYFATOORAH INVOICE ─────────────────────────

@@ -27,18 +27,18 @@ export default async function AdminOverview() {
   const revenue = (paid || []).reduce((s, t) => s + Number(t.platform_fee_kd || 0), 0);
 
   const cards = [
-    ['إجمالي العمولة', kd(revenue), 'KD', 'bg-qahwa-accent text-qahwa-black'],
-    ['حجم المعاملات',  kd(volume),  'KD', 'dash-surface border border-white/10'],
-    ['قهاوي مدفوعة',   paidTips,    '',   'dash-surface border border-white/10'],
-    ['المبدعون',       creators,    '',   'dash-surface border border-white/10'],
-    ['موثّقون',        verified,    '',   'dash-surface border border-white/10'],
-    ['بانتظار التحقق', pendingVer,  '',   pendingVer ? 'bg-qahwa-orange/20 border border-qahwa-orange' : 'dash-surface border border-white/10'],
-    ['سحوبات معلّقة',  pendingPayouts, '', pendingPayouts ? 'bg-qahwa-orange/20 border border-qahwa-orange' : 'dash-surface border border-white/10'],
+    ['Platform fees',        kd(revenue), 'KD', 'bg-qahwa-accent text-qahwa-black'],
+    ['Volume',               kd(volume),  'KD', 'dash-surface border border-white/10'],
+    ['Paid tips',            paidTips,    '',   'dash-surface border border-white/10'],
+    ['Creators',             creators,    '',   'dash-surface border border-white/10'],
+    ['Verified',             verified,    '',   'dash-surface border border-white/10'],
+    ['Pending verification', pendingVer,  '',   pendingVer ? 'bg-qahwa-orange/20 border border-qahwa-orange' : 'dash-surface border border-white/10'],
+    ['Pending payouts',      pendingPayouts, '', pendingPayouts ? 'bg-qahwa-orange/20 border border-qahwa-orange' : 'dash-surface border border-white/10'],
   ];
 
   return (
     <div className="space-y-5">
-      <h1 className="text-2xl">نظرة عامة</h1>
+      <h1 className="text-2xl">Overview</h1>
       <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
         {cards.map(([label, value, unit, cls]) => (
           <div key={label} className={`rounded-2xl p-5 ${cls}`}>

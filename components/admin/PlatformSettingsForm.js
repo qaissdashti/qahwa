@@ -4,18 +4,18 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 
 const NUM_FIELDS = [
-  ['platform_fee_pct',    'نسبة العمولة %'],
-  ['min_payout_kd',       'الحد الأدنى للسحب (د.ك)'],
-  ['max_coffee_price_kd', 'أقصى سعر للقهوة (د.ك)'],
-  ['amazing_min_kd',      'أقل مبلغ حر (د.ك)'],
-  ['amazing_max_kd',      'أعلى مبلغ حر (د.ك)'],
+  ['platform_fee_pct',    'Platform fee %'],
+  ['min_payout_kd',       'Min payout (KD)'],
+  ['max_coffee_price_kd', 'Max coffee price (KD)'],
+  ['amazing_min_kd',      'Min custom amount (KD)'],
+  ['amazing_max_kd',      'Max custom amount (KD)'],
 ];
 const TOGGLES = [
-  ['new_signups_enabled',      'السماح بالتسجيلات الجديدة'],
-  ['manual_approval_required', 'مراجعة يدوية للتحقق'],
-  ['payouts_enabled',          'تفعيل السحوبات'],
-  ['amazing_enabled_global',   'تفعيل المبلغ الحر (عام)'],
-  ['maintenance_mode',         'وضع الصيانة'],
+  ['new_signups_enabled',      'Allow new signups'],
+  ['manual_approval_required', 'Manual verification review'],
+  ['payouts_enabled',          'Enable payouts'],
+  ['amazing_enabled_global',   'Enable custom amount (global)'],
+  ['maintenance_mode',         'Maintenance mode'],
 ];
 
 export default function PlatformSettingsForm({ settings }) {
@@ -47,8 +47,8 @@ export default function PlatformSettingsForm({ settings }) {
         method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(f),
       });
       const json = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(json.error || 'صار خطأ');
-      setMsg({ type: 'ok', text: 'تم الحفظ ✓' });
+      if (!res.ok) throw new Error(json.error || 'Something went wrong');
+      setMsg({ type: 'ok', text: 'Saved ✓' });
       router.refresh();
     } catch (err) { setMsg({ type: 'err', text: err.message }); }
     finally { setLoading(false); }
@@ -61,19 +61,19 @@ export default function PlatformSettingsForm({ settings }) {
   return (
     <form onSubmit={save} className="grid gap-4 max-w-2xl">
       <div className={card}>
-        <h2 className="text-lg">الرسوم والحدود</h2>
+        <h2 className="text-lg">Fees & limits</h2>
         <div className="grid grid-cols-2 gap-3">
           {NUM_FIELDS.map(([k, lbl]) => (
             <div key={k}>
               <label className={label}>{lbl}</label>
-              <input className={input} dir="ltr" type="number" step="0.01" min="0" value={f[k]} onChange={setNum(k)} />
+              <input className={input} type="number" step="0.01" min="0" value={f[k]} onChange={setNum(k)} />
             </div>
           ))}
         </div>
       </div>
 
       <div className={card}>
-        <h2 className="text-lg">المفاتيح</h2>
+        <h2 className="text-lg">Toggles</h2>
         {TOGGLES.map(([k, lbl]) => (
           <label key={k} className="flex items-center justify-between py-1.5 cursor-pointer">
             <span className="font-bold text-sm">{lbl}</span>
@@ -82,16 +82,16 @@ export default function PlatformSettingsForm({ settings }) {
         ))}
         {f.maintenance_mode && (
           <div>
-            <label className={label}>رسالة الصيانة</label>
+            <label className={label}>Maintenance message</label>
             <input className={input.replace('font-num', '')} value={f.maintenance_message}
                    onChange={(e) => setF((p) => ({ ...p, maintenance_message: e.target.value }))}
-                   placeholder="نعود قريباً..." />
+                   placeholder="Back soon..." />
           </div>
         )}
       </div>
 
       <div className="flex items-center gap-3">
-        <button className="q-btn-accent" disabled={loading}>{loading ? '...' : 'حفظ'}</button>
+        <button className="q-btn-accent" disabled={loading}>{loading ? '...' : 'Save'}</button>
         {msg && <span className={`font-bold text-sm ${msg.type === 'ok' ? 'text-qahwa-accent' : 'text-qahwa-red'}`}>{msg.text}</span>}
       </div>
     </form>

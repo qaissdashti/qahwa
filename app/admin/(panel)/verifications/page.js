@@ -1,7 +1,7 @@
 import { createAdminClient } from '@/lib/supabase';
 import VerificationCard from '@/components/admin/VerificationCard';
 
-export const metadata = { title: 'التحقق — الإدارة' };
+export const metadata = { title: 'Verification — Admin' };
 
 export default async function AdminVerifications() {
   const admin = createAdminClient();
@@ -16,12 +16,12 @@ export default async function AdminVerifications() {
 
   return (
     <div className="space-y-5">
-      <h1 className="text-2xl">طلبات التحقق ({rows?.length || 0})</h1>
+      <h1 className="text-2xl">Verification requests ({rows?.length || 0})</h1>
 
       {(!rows || rows.length === 0) ? (
         <div className="dash-surface rounded-2xl border border-white/10 text-center py-16 text-white/40">
           <div className="text-4xl mb-2">✅</div>
-          <p className="font-medium">لا توجد طلبات بانتظار المراجعة</p>
+          <p className="font-medium">No requests pending review</p>
         </div>
       ) : (
         <div className="grid md:grid-cols-2 gap-4">

@@ -5,10 +5,10 @@ import { useRouter } from 'next/navigation';
 
 const kd = (n) => Number(n || 0).toFixed(3);
 const STATUS = {
-  pending:  ['قيد المراجعة', 'text-qahwa-orange'],
-  approved: ['تمت الموافقة', 'text-qahwa-blue'],
-  paid:     ['تم التحويل',   'text-qahwa-accent'],
-  rejected: ['مرفوض',        'text-qahwa-red'],
+  pending:  ['Pending',  'text-qahwa-orange'],
+  approved: ['Approved', 'text-qahwa-blue'],
+  paid:     ['Paid',     'text-qahwa-accent'],
+  rejected: ['Rejected', 'text-qahwa-red'],
 };
 
 export default function AdminPayoutRow({ payout: p }) {
@@ -33,16 +33,16 @@ export default function AdminPayoutRow({ payout: p }) {
       <div className="min-w-0">
         <div className="font-bold">
           {p.creators?.full_name || '—'}{' '}
-          <span className="text-white/40 font-num text-sm" dir="ltr">@{p.creators?.handle}</span>
+          <span className="text-white/40 font-num text-sm">@{p.creators?.handle}</span>
         </div>
-        <div className="text-xs text-white/40 font-num" dir="ltr">
+        <div className="text-xs text-white/40 font-num">
           {p.account_holder} · {p.bank_name || '—'} · {p.iban}
         </div>
-        <div className="text-xs text-white/30">{p.method === 'knet_send' ? 'كي نت' : 'تحويل بنكي'}</div>
+        <div className="text-xs text-white/30">{p.method === 'knet_send' ? 'KNET' : 'Bank transfer'}</div>
       </div>
 
       <div className="flex items-center gap-3 shrink-0">
-        <div className="text-left">
+        <div className="text-right">
           <div className="font-num text-xl font-bold">{kd(p.amount_kd)} <span className="text-sm">KD</span></div>
           <div className={`text-xs font-bold ${cls}`}>{label}</div>
         </div>
@@ -50,16 +50,16 @@ export default function AdminPayoutRow({ payout: p }) {
         {status === 'pending' && (
           <div className="flex gap-1.5">
             <button onClick={() => act('approve')} disabled={busy}
-                    className="text-xs font-bold rounded-lg bg-qahwa-blue/20 text-qahwa-blue border border-qahwa-blue/40 px-3 py-1.5">موافقة</button>
+                    className="text-xs font-bold rounded-lg bg-qahwa-blue/20 text-qahwa-blue border border-qahwa-blue/40 px-3 py-1.5">Approve</button>
             <button onClick={() => act('pay')} disabled={busy}
-                    className="text-xs font-bold rounded-lg bg-qahwa-accent text-qahwa-black px-3 py-1.5">تم التحويل</button>
+                    className="text-xs font-bold rounded-lg bg-qahwa-accent text-qahwa-black px-3 py-1.5">Mark paid</button>
             <button onClick={() => act('reject')} disabled={busy}
-                    className="text-xs font-bold rounded-lg bg-qahwa-red/20 text-qahwa-red border border-qahwa-red/40 px-3 py-1.5">رفض</button>
+                    className="text-xs font-bold rounded-lg bg-qahwa-red/20 text-qahwa-red border border-qahwa-red/40 px-3 py-1.5">Reject</button>
           </div>
         )}
         {status === 'approved' && (
           <button onClick={() => act('pay')} disabled={busy}
-                  className="text-xs font-bold rounded-lg bg-qahwa-accent text-qahwa-black px-3 py-1.5">تم التحويل</button>
+                  className="text-xs font-bold rounded-lg bg-qahwa-accent text-qahwa-black px-3 py-1.5">Mark paid</button>
         )}
       </div>
     </div>

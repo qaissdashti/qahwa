@@ -1,7 +1,7 @@
 import { createAdminClient } from '@/lib/supabase';
 import AdminPayoutRow from '@/components/admin/AdminPayoutRow';
 
-export const metadata = { title: 'السحوبات — الإدارة' };
+export const metadata = { title: 'Payouts — Admin' };
 
 export default async function AdminPayouts() {
   const admin = createAdminClient();
@@ -17,10 +17,10 @@ export default async function AdminPayouts() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl mb-3">سحوبات بانتظار الموافقة ({pending.length})</h1>
+        <h1 className="text-2xl mb-3">Payouts pending approval ({pending.length})</h1>
         {pending.length === 0 ? (
           <div className="dash-surface rounded-2xl border border-white/10 text-center py-12 text-white/40 font-medium">
-            لا توجد طلبات معلّقة
+            No pending requests
           </div>
         ) : (
           <div className="grid gap-3">{pending.map((p) => <AdminPayoutRow key={p.id} payout={p} />)}</div>
@@ -29,7 +29,7 @@ export default async function AdminPayouts() {
 
       {rest.length > 0 && (
         <div>
-          <h2 className="text-lg mb-3 text-white/60">السجل</h2>
+          <h2 className="text-lg mb-3 text-white/60">History</h2>
           <div className="grid gap-3">{rest.map((p) => <AdminPayoutRow key={p.id} payout={p} />)}</div>
         </div>
       )}
