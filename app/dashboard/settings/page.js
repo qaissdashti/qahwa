@@ -10,7 +10,7 @@ export default async function SettingsPage() {
   const admin = createAdminClient();
   const [{ data: creator }, { data: settings }] = await Promise.all([
     admin.from('creators')
-      .select('handle, full_name, bio, avatar_emoji, coffee_price_kd, theme_bg, theme_text, amazing_enabled, amazing_message, instagram, twitter, youtube, tiktok')
+      .select('handle, full_name, bio, avatar_emoji, avatar_url, coffee_price_kd, theme_bg, theme_text, amazing_enabled, amazing_message, instagram, twitter, youtube, tiktok')
       .eq('id', user.id).maybeSingle(),
     admin.from('platform_settings').select('max_coffee_price_kd, amazing_enabled_global').eq('id', 1).maybeSingle(),
   ]);

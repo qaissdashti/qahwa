@@ -31,7 +31,12 @@ export default function VerifyClient({ fullName, initialStep, phoneVerified, civ
 
   async function sendOtp() {
     setError(''); setLoading(true);
-    try { await post('/api/otp/send', { phone }); setOtpSent(true); }
+    try {
+      const res = await post('/api/otp/send', { phone });
+      setOtpSent(true);
+      // dev bypass returns the code so onboarding works without WhatsApp
+      if (res.devCode) setCode(res.devCode);
+    }
     catch (e) { setError(e.message); }
     finally { setLoading(false); }
   }

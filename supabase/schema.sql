@@ -235,12 +235,15 @@ create index if not exists wa_messages_creator_idx on public.whatsapp_messages (
 -- OTP CODES (temp; phone verification during onboarding)
 -- ─────────────────────────────────────────────────────────────
 create table if not exists public.otp_codes (
-  id          uuid primary key default gen_random_uuid(),
-  creator_id  uuid not null references public.creators(id) on delete cascade,
-  phone       text not null,
-  code_hash   text not null,
-  expires_at  timestamptz not null,
-  created_at  timestamptz not null default now(),
+  id           uuid primary key default gen_random_uuid(),
+  creator_id   uuid not null references public.creators(id) on delete cascade,
+  phone        text not null,
+  code_hash    text not null,
+  expires_at   timestamptz not null,
+  created_at   timestamptz not null default now(),
+  last_sent_at timestamptz not null default now(),  -- rate limit: cooldown
+  sends        integer not null default 0,          -- rate limit: send cap
+  attempts     integer not null default 0,          -- rate limit: verify cap
   unique (creator_id, phone)
 );
 

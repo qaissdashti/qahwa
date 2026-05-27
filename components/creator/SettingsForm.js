@@ -21,6 +21,24 @@ export default function SettingsForm({ creator, maxPrice, amazingGlobal }) {
   });
   const [loading, setLoading] = useState(false);
   const [msg, setMsg]         = useState(null); // {type, text}
+  const [avatarUrl, setAvatarUrl] = useState(creator?.avatar_url || null);
+  const [avatarBusy, setAvatarBusy] = useState(false);
+
+  async function uploadAvatar(e) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setMsg(null); setAvatarBusy(true);
+    try {
+      const fd = new FormData();
+      fd.append('avatar', file);
+      const res = await fetch('/api/creator/avatar', { method: 'POST', body: fd });
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(json.error || 'تعذّر رفع الصورة');
+      setAvatarUrl(json.url);
+      router.refresh();
+    } catch (err) { setMsg({ type: 'err', text: err.message }); }
+    finally { setAvatarBusy(false); }
+  }
 
   const set = (k) => (e) => {
     const v = e.target.type === 'checkbox' ? e.target.checked : e.target.value;
@@ -51,6 +69,23 @@ export default function SettingsForm({ creator, maxPrice, amazingGlobal }) {
       {/* profile */}
       <div className={card}>
         <h2 className="text-lg">الملف الشخصي</h2>
+
+        {/* avatar image (uploads immediately) */}
+        <div className="flex items-center gap-4">
+          <div className="w-16 h-16 rounded-full overflow-hidden border border-white/15 bg-black/40 grid place-items-center text-3xl shrink-0">
+            {avatarUrl
+              // eslint-disable-next-line @next/next/no-img-element
+              ? <img src={avatarUrl} alt="avatar" className="w-full h-full object-cover" />
+              : <span>{f.avatar_emoji || '☕'}</span>}
+          </div>
+          <label className="text-sm font-bold rounded-xl bg-white/5 hover:bg-white/10 px-4 py-2 cursor-pointer">
+            {avatarBusy ? '... جاري الرفع' : 'رفع صورة'}
+            <input type="file" accept="image/jpeg,image/png,image/webp" className="hidden"
+                   onChange={uploadAvatar} disabled={avatarBusy} />
+          </label>
+          {avatarUrl && <span className="text-xs text-white/40">الصورة تُستخدم بدل الإيموجي</span>}
+        </div>
+
         <div className="flex gap-3">
           <div className="w-20">
             <label className={label}>الإيموجي</label>
