@@ -45,6 +45,10 @@ export default async function PayoutsPage() {
         />
       </div>
 
+      <p className="text-sm text-white/55 font-medium bg-qahwa-purple/15 border border-qahwa-purple/40 rounded-xl px-4 py-3">
+        💡 رصيدك <b>صافٍ بعد رسوم المنصة</b> — رسوم قهوة (٧٪) تُخصم من كل قهوة وقت الدفع، فأي مبلغ تطلبه تستلمه كاملاً.
+      </p>
+
       <section className="dash-surface rounded-2xl border border-white/10 p-5">
         <h2 className="text-lg mb-3">سجل السحوبات</h2>
         {(!payouts || payouts.length === 0) ? (
@@ -56,7 +60,8 @@ export default async function PayoutsPage() {
               return (
                 <li key={i} className="py-3 flex items-center justify-between">
                   <div>
-                    <div className="font-num font-bold">{kd(p.amount_kd)} KD</div>
+                    <div className="font-num font-bold">المبلغ المطلوب: {kd(p.amount_kd)} KD</div>
+                    <div className="text-xs text-qahwa-accent font-bold">صافٍ بعد رسوم المنصة — تستلمه كاملاً</div>
                     <div className="text-xs text-white/40">{p.method === 'knet_send' ? 'كي نت' : 'تحويل بنكي'}</div>
                   </div>
                   <div className="text-left">

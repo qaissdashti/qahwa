@@ -28,14 +28,20 @@ export default async function AdminOverview() {
   const volume  = (paid || []).reduce((s, t) => s + Number(t.gross_amount_kd || 0), 0);
   const revenue = (paid || []).reduce((s, t) => s + Number(t.platform_fee_kd || 0), 0);
 
+  // Pending payouts (the platform's float): net money creators have earned
+  // but not yet withdrawn = sum of all current balances.
+  const { data: bals } = await admin.from('creators').select('balance_kd').limit(10000);
+  const owed = (bals || []).reduce((s, c) => s + Number(c.balance_kd || 0), 0);
+
   const cards = [
-    ['Platform fees',        kd(revenue), 'KD', 'bg-qahwa-accent text-qahwa-black'],
-    ['Volume',               kd(volume),  'KD', 'dash-surface border border-white/10'],
-    ['Paid tips',            paidTips,    '',   'dash-surface border border-white/10'],
-    ['Creators',             creators,    '',   'dash-surface border border-white/10'],
-    ['Verified',             verified,    '',   'dash-surface border border-white/10'],
-    ['Pending verification', pendingVer,  '',   pendingVer ? 'bg-qahwa-orange/20 border border-qahwa-orange' : 'dash-surface border border-white/10'],
-    ['Pending payouts',      pendingPayouts, '', pendingPayouts ? 'bg-qahwa-orange/20 border border-qahwa-orange' : 'dash-surface border border-white/10'],
+    ['Platform fees',         kd(revenue), 'KD', 'bg-qahwa-accent text-qahwa-black'],
+    ['Pending payouts (float)', kd(owed),  'KD', owed > 0 ? 'bg-qahwa-purple/25 border border-qahwa-purple' : 'dash-surface border border-white/10'],
+    ['Volume',                kd(volume),  'KD', 'dash-surface border border-white/10'],
+    ['Paid tips',             paidTips,    '',   'dash-surface border border-white/10'],
+    ['Creators',              creators,    '',   'dash-surface border border-white/10'],
+    ['Verified',              verified,    '',   'dash-surface border border-white/10'],
+    ['Pending verification',  pendingVer,  '',   pendingVer ? 'bg-qahwa-orange/20 border border-qahwa-orange' : 'dash-surface border border-white/10'],
+    ['Payout requests',       pendingPayouts, '', pendingPayouts ? 'bg-qahwa-orange/20 border border-qahwa-orange' : 'dash-surface border border-white/10'],
   ];
 
   return (

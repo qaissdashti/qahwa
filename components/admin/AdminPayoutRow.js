@@ -44,6 +44,7 @@ export default function AdminPayoutRow({ payout: p }) {
       <div className="flex items-center gap-3 shrink-0">
         <div className="text-right">
           <div className="font-num text-xl font-bold">{kd(p.amount_kd)} <span className="text-sm">KD</span></div>
+          <div className="text-[10px] text-white/35">net of fees — pay in full</div>
           <div className={`text-xs font-bold ${cls}`}>{label}</div>
         </div>
 
