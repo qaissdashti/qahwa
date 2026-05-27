@@ -1,12 +1,11 @@
 'use client';
 
 import { Suspense, useState } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase-browser';
 
 function LoginForm() {
-  const router = useRouter();
   const params = useSearchParams();
   const next   = params.get('next') || '/dashboard';
   const supabase = createClient();
@@ -20,17 +19,28 @@ function LoginForm() {
     e.preventDefault();
     setError('');
     setLoading(true);
-    try {
-      const { error: signErr } = await supabase.auth.signInWithPassword({ email, password });
-      if (signErr) throw signErr;
-      router.push(next);
-      router.refresh();
-    } catch (err) {
-      setError(err.message === 'Invalid login credentials'
+
+    const { data, error: signErr } = await supabase.auth.signInWithPassword({ email, password });
+    if (signErr) {
+      setError(/invalid login credentials/i.test(signErr.message || '')
         ? 'البريد أو كلمة السر غير صحيحة'
-        : (err.message || 'صار خطأ، حاول مرة ثانية'));
+        : (signErr.message || 'صار خطأ، حاول مرة ثانية'));
       setLoading(false);
+      return;
     }
+    if (!data?.session) {
+      setError('تعذّر إنشاء الجلسة، حاول مرة ثانية');
+      setLoading(false);
+      return;
+    }
+
+    // Wait for the session cookie to be written, then hard-navigate so the
+    // server sees it (avoids the cookie-write race that bounces back to login).
+    for (let i = 0; i < 20; i++) {
+      if (document.cookie.includes('auth-token')) break;
+      await new Promise((r) => setTimeout(r, 50));
+    }
+    window.location.href = next;
   }
 
   return (

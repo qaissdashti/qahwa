@@ -1,12 +1,10 @@
 'use client';
 
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase-browser';
 
 export default function SignupPage() {
-  const router = useRouter();
   const supabase = createClient();
 
   const [fullName, setFullName] = useState('');
@@ -52,6 +50,12 @@ export default function SignupPage() {
       // 3. session present (email confirmation disabled) → ensure the
       //    creators row exists BEFORE onboarding/OTP, then continue.
       if (data.session) {
+        // Wait for the session cookie before calling the (auth-gated) init
+        // route and navigating — otherwise both can race the cookie write.
+        for (let i = 0; i < 20; i++) {
+          if (document.cookie.includes('auth-token')) break;
+          await new Promise((r) => setTimeout(r, 50));
+        }
         const initRes = await fetch('/api/creator/init', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -61,8 +65,8 @@ export default function SignupPage() {
           const j = await initRes.json().catch(() => ({}));
           throw new Error(j.error || 'تعذّر تجهيز الحساب');
         }
-        router.push('/verify');
-        router.refresh();
+        // hard navigation so /verify sees the session cookie immediately
+        window.location.href = '/verify';
       } else {
         setEmailSent(true);   // confirmation required
       }
