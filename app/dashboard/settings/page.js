@@ -2,6 +2,7 @@ import { createServerSupabaseClient, createAdminClient } from '@/lib/supabase';
 import SettingsForm from '@/components/creator/SettingsForm';
 
 export const metadata = { title: 'الإعدادات — قهوة' };
+export const dynamic = 'force-dynamic';
 
 export default async function SettingsPage() {
   const auth = createServerSupabaseClient();

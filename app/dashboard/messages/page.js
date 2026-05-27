@@ -1,6 +1,7 @@
 import { createServerSupabaseClient, createAdminClient } from '@/lib/supabase';
 
 export const metadata = { title: 'الرسائل — قهوة' };
+export const dynamic = 'force-dynamic';
 const kd = (n) => Number(n || 0).toFixed(3);
 
 export default async function MessagesPage() {

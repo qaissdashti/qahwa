@@ -1,5 +1,6 @@
 import { getAdminUser } from '@/lib/admin';
 import { createAdminClient } from '@/lib/supabase';
+import { revalidatePath } from 'next/cache';
 
 export async function POST(req) {
   if (!(await getAdminUser())) return Response.json({ error: 'Forbidden' }, { status: 403 });
@@ -11,22 +12,27 @@ export async function POST(req) {
 
   const admin = createAdminClient();
   const now = new Date().toISOString();
+  const approved = action === 'approve';
 
-  if (action === 'approve') {
-    await admin.from('creators')
-      .update({ is_verified: true, verification_status: 'approved' })
-      .eq('id', creatorId);
-    await admin.from('verifications')
-      .update({ status: 'approved', reviewed_at: now, reviewer_notes: notes || null })
-      .eq('creator_id', creatorId);
-  } else {
-    await admin.from('creators')
-      .update({ is_verified: false, verification_status: 'rejected' })
-      .eq('id', creatorId);
-    await admin.from('verifications')
-      .update({ status: 'rejected', reviewed_at: now, reviewer_notes: notes || null })
-      .eq('creator_id', creatorId);
+  // Update creators (is_verified + verification_status) AND the verifications
+  // row together; surface an error if either fails so they can't drift.
+  const { error: cErr } = await admin.from('creators')
+    .update({ is_verified: approved, verification_status: approved ? 'approved' : 'rejected' })
+    .eq('id', creatorId);
+
+  const { error: vErr } = await admin.from('verifications')
+    .update({ status: approved ? 'approved' : 'rejected', reviewed_at: now, reviewer_notes: notes || null })
+    .eq('creator_id', creatorId);
+
+  if (cErr || vErr) {
+    console.error('[admin/verification]', cErr || vErr);
+    return Response.json({ error: 'Update failed' }, { status: 500 });
   }
+
+  // Bust the cached server renders so the queue + creators list update.
+  revalidatePath('/admin/verifications');
+  revalidatePath('/admin/creators');
+  revalidatePath('/admin');
 
   return Response.json({ success: true });
 }

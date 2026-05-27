@@ -1,5 +1,7 @@
 import { createAdminClient } from '@/lib/supabase';
 
+export const dynamic = 'force-dynamic';
+
 const kd = (n) => Number(n || 0).toFixed(3);
 
 async function count(admin, table, filters = (q) => q) {

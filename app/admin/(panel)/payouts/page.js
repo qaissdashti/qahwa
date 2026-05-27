@@ -2,6 +2,7 @@ import { createAdminClient } from '@/lib/supabase';
 import AdminPayoutRow from '@/components/admin/AdminPayoutRow';
 
 export const metadata = { title: 'Payouts — Admin' };
+export const dynamic = 'force-dynamic';
 
 export default async function AdminPayouts() {
   const admin = createAdminClient();

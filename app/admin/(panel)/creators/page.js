@@ -2,6 +2,7 @@ import { createAdminClient } from '@/lib/supabase';
 import CreatorRow from '@/components/admin/CreatorRow';
 
 export const metadata = { title: 'Creators — Admin' };
+export const dynamic = 'force-dynamic';
 
 export default async function AdminCreators() {
   const admin = createAdminClient();

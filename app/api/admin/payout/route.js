@@ -2,6 +2,7 @@
 // deduct_payout_balance() adjusts the creator balance on status change.
 import { getAdminUser } from '@/lib/admin';
 import { createAdminClient } from '@/lib/supabase';
+import { revalidatePath } from 'next/cache';
 
 const NEXT = {
   approve: 'approved',
@@ -28,5 +29,9 @@ export async function POST(req) {
     console.error('[admin/payout]', error);
     return Response.json({ error: 'DB error' }, { status: 500 });
   }
+
+  // creator balance changed (deduct trigger) + payout list/status changed
+  revalidatePath('/admin/payouts');
+  revalidatePath('/admin');
   return Response.json({ success: true });
 }

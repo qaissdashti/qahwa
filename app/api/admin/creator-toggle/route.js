@@ -1,5 +1,6 @@
 import { getAdminUser } from '@/lib/admin';
 import { createAdminClient } from '@/lib/supabase';
+import { revalidatePath } from 'next/cache';
 
 export async function POST(req) {
   if (!(await getAdminUser())) return Response.json({ error: 'Forbidden' }, { status: 403 });
@@ -13,5 +14,6 @@ export async function POST(req) {
     .eq('id', creatorId);
 
   if (error) return Response.json({ error: 'DB error' }, { status: 500 });
+  revalidatePath('/admin/creators');
   return Response.json({ success: true });
 }

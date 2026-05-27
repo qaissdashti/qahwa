@@ -1,6 +1,7 @@
 import { createServerSupabaseClient, createAdminClient } from '@/lib/supabase';
 
 export const metadata = { title: 'القهاوي — قهوة' };
+export const dynamic = 'force-dynamic';
 const kd = (n) => Number(n || 0).toFixed(3);
 
 const STATUS = {

@@ -2,6 +2,8 @@ import { createAdminClient } from '@/lib/supabase';
 import VerificationCard from '@/components/admin/VerificationCard';
 
 export const metadata = { title: 'Verification — Admin' };
+// Always render fresh — this page shows mutable review state.
+export const dynamic = 'force-dynamic';
 
 export default async function AdminVerifications() {
   const admin = createAdminClient();

@@ -2,6 +2,7 @@ import { createServerSupabaseClient, createAdminClient } from '@/lib/supabase';
 import PayoutForm from '@/components/creator/PayoutForm';
 
 export const metadata = { title: 'السحوبات — قهوة' };
+export const dynamic = 'force-dynamic';
 const kd = (n) => Number(n || 0).toFixed(3);
 
 const STATUS = {

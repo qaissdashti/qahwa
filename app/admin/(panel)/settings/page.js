@@ -2,6 +2,7 @@ import { createAdminClient } from '@/lib/supabase';
 import PlatformSettingsForm from '@/components/admin/PlatformSettingsForm';
 
 export const metadata = { title: 'Platform settings — Admin' };
+export const dynamic = 'force-dynamic';
 
 export default async function AdminSettings() {
   const admin = createAdminClient();
