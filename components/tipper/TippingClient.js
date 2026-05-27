@@ -5,7 +5,7 @@
 // ============================================================
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 // ── i18n strings ────────────────────────────────────────────
 const STR = {
@@ -74,6 +74,15 @@ function Confetti() {
 
 export default function TippingClient({ creator, settings, recentTips, showSuccess }) {
   const [lang, setLang]                 = useState('ar');
+
+  // Persist the supporter's language across the payment redirect (same
+  // origin), so the success screen shows in the language they chose.
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem('qahwa_lang');
+      if (stored === 'ar' || stored === 'en') setLang(stored);
+    } catch {}
+  }, []);
   const [selectedCups, setSelectedCups] = useState(1);
   const [isAmazing, setIsAmazing]       = useState(false);
   const [amazingAmt, setAmazingAmt]     = useState('');
@@ -147,7 +156,11 @@ export default function TippingClient({ creator, settings, recentTips, showSucce
     langBtn: { position: 'absolute', top: 14, insetInlineEnd: 14, border: `1.5px solid ${isDark ? '#2A2A2A' : '#E0E0D8'}`, background: isDark ? '#1A1A1A' : '#FFF8F0', color: text, borderRadius: 10, padding: '5px 12px', fontSize: 13, fontWeight: 800, fontFamily: "'Syne', sans-serif", cursor: 'pointer', zIndex: 2 },
   };
 
-  const toggleLang = () => setLang((l) => (l === 'ar' ? 'en' : 'ar'));
+  const toggleLang = () => setLang((l) => {
+    const next = l === 'ar' ? 'en' : 'ar';
+    try { localStorage.setItem('qahwa_lang', next); } catch {}
+    return next;
+  });
 
   if (success) {
     return (

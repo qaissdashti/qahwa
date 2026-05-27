@@ -1,11 +1,9 @@
 'use client';
 
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase-browser';
 
 export default function AdminLogin() {
-  const router = useRouter();
   const supabase = createClient();
   const [email, setEmail]       = useState('');
   const [password, setPassword] = useState('');
@@ -18,9 +16,10 @@ export default function AdminLogin() {
     try {
       const { error: signErr } = await supabase.auth.signInWithPassword({ email, password });
       if (signErr) throw signErr;
-      // the /admin layout enforces admin_users membership
-      router.push('/admin');
-      router.refresh();
+      // Hard navigation so the server immediately sees the new session
+      // cookie (a client-side router.push can race the cookie write and
+      // bounce back to login). The /admin layout enforces admin_users.
+      window.location.assign('/admin');
     } catch (err) {
       setError('Invalid credentials');
       setLoading(false);
