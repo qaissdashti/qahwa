@@ -13,17 +13,32 @@ export default function AdminLogin() {
   async function onSubmit(e) {
     e.preventDefault();
     setError(''); setLoading(true);
-    try {
-      const { error: signErr } = await supabase.auth.signInWithPassword({ email, password });
-      if (signErr) throw signErr;
-      // Hard navigation so the server immediately sees the new session
-      // cookie (a client-side router.push can race the cookie write and
-      // bounce back to login). The /admin layout enforces admin_users.
-      window.location.assign('/admin');
-    } catch (err) {
-      setError('Invalid credentials');
+
+    const { data, error: signErr } = await supabase.auth.signInWithPassword({ email, password });
+
+    // Wrong password / unknown user → show a clear, specific message so it's
+    // obvious this is a credential problem, not a navigation bug.
+    if (signErr) {
+      setError(/invalid login credentials/i.test(signErr.message || '')
+        ? 'Wrong email or password'
+        : (signErr.message || 'Sign-in failed'));
       setLoading(false);
+      return;
     }
+    if (!data?.session) {
+      setError('Could not establish a session — please try again.');
+      setLoading(false);
+      return;
+    }
+
+    // Sign-in succeeded. Wait until the session cookie is actually written
+    // (up to ~1s) before the hard redirect, so the server sees it on /admin
+    // instead of bouncing back to login (the cookie-write race).
+    for (let i = 0; i < 20; i++) {
+      if (document.cookie.includes('auth-token')) break;
+      await new Promise((r) => setTimeout(r, 50));
+    }
+    window.location.href = '/admin';
   }
 
   return (
