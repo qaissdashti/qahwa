@@ -17,10 +17,24 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY
 );
 
-// Local test mode: simulate a successful payment without MyFatoorah so the
-// full post-payment flow (success screen + confetti) can be exercised.
-// Gated by DEV_OTP_BYPASS and hard-disabled in production.
-const TEST_MODE = process.env.DEV_OTP_BYPASS === 'true' && process.env.NODE_ENV !== 'production';
+// Payment test mode: simulate a successful KNET payment when MyFatoorah
+// isn't configured, so the post-payment flow (balance trigger, success
+// screen, confetti) can be exercised end-to-end without real KNET keys.
+//
+// Activates when the key is missing AND it's safe to do so:
+//   • NODE_ENV !== 'production'        — always-on outside prod
+//   • PAYMENT_TEST_MODE === 'true'      — opt-in explicitly (e.g. on a
+//                                         Vercel deployment before real
+//                                         MyFatoorah creds are wired).
+//
+// In production with the safety env unset, a missing key produces a
+// clean 503 instead of a cryptic MyFatoorah error.
+function paymentTestMode() {
+  const hasKey = !!(process.env.MYFATOORAH_API_KEY && process.env.MYFATOORAH_API_KEY.trim());
+  if (hasKey) return false;
+  if (process.env.NODE_ENV !== 'production') return true;
+  return process.env.PAYMENT_TEST_MODE === 'true';
+}
 
 export async function POST(req) {
   const { creatorHandle, cups, isAmazing, grossAmount, message, supporterName, supporterPhone } =
@@ -105,9 +119,10 @@ export async function POST(req) {
   }
 
   // ── TEST MODE: simulate a paid tip, skip MyFatoorah ──────
-  // Marks the tip paid (fires the balance trigger), then returns a URL
-  // straight to the success screen — mirrors the post-payment redirect.
-  if (TEST_MODE) {
+  // Marks the tip paid (fires the balance trigger that credits the
+  // creator), then returns a URL straight to the success screen —
+  // mirrors the real post-payment redirect from MyFatoorah.
+  if (paymentTestMode()) {
     await supabase
       .from('tips')
       .update({
@@ -124,6 +139,17 @@ export async function POST(req) {
       tipId: tip.id,
       testMode: true,
     });
+  }
+
+  // Production guard: if we're here, real key is required but missing.
+  if (!process.env.MYFATOORAH_API_KEY) {
+    console.error('[initiate] MYFATOORAH_API_KEY missing and test mode not enabled');
+    // Roll back the pending tip so it doesn't sit forever as 'pending'.
+    await supabase.from('tips').delete().eq('id', tip.id);
+    return Response.json(
+      { error: 'Payment system is not configured yet. Please try again later.' },
+      { status: 503 },
+    );
   }
 
   // ── 5. CREATE MYFATOORAH INVOICE ─────────────────────────
