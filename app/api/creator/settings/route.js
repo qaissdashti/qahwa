@@ -2,8 +2,9 @@
 import { createAdminClient, createServerSupabaseClient } from '@/lib/supabase';
 import { encrypt, maskIban } from '@/lib/encryption';
 
-const HEX     = /^#[0-9a-fA-F]{6}$/;
-const IBAN_KW = /^KW\d{2}[A-Z0-9]{22}$/i; // Kuwait IBAN is 30 chars
+const HEX = /^#[0-9a-fA-F]{6}$/;
+// IBAN format intentionally not validated — accept any non-empty text for
+// now. Add proper Kuwait IBAN validation before production.
 const clampStr = (v, max) => (typeof v === 'string' ? v.trim().slice(0, max) : null);
 
 export async function POST(req) {
@@ -53,14 +54,12 @@ export async function POST(req) {
   if (body.account_holder !== undefined) update.account_holder = clampStr(body.account_holder, 80);
 
   if (body.iban !== undefined) {
-    const raw = String(body.iban || '').replace(/\s+/g, '').toUpperCase();
+    // Accept any non-empty IBAN text (no format check for now — pre-prod).
+    const raw = String(body.iban || '').trim();
     if (raw === '') {
       update.iban_encrypted = null;
       update.iban_masked    = null;
     } else {
-      if (!IBAN_KW.test(raw)) {
-        return Response.json({ error: 'رقم آيبان كويتي غير صحيح (يبدأ بـ KW وطوله 30 خانة)' }, { status: 400 });
-      }
       update.iban_encrypted = encrypt(raw);
       update.iban_masked    = maskIban(raw);
     }

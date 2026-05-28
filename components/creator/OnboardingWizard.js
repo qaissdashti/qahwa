@@ -14,7 +14,8 @@ import LangToggle from '@/components/LangToggle';
 const STEP_KEYS = ['onb.step.basic', 'onb.step.bank', 'onb.step.phone', 'onb.step.identity', 'onb.step.review'];
 const EMOJI_PRESETS = ['☕', '🎨', '🎙️', '📚', '🎮', '🎵', '✨', '🌟'];
 
-const IBAN_KW = /^KW\d{2}[A-Z0-9]{22}$/i;
+// IBAN format check intentionally relaxed — accept any non-empty text for
+// now. Add proper Kuwait IBAN validation before production.
 const PHONE_KW = /^\+?965\d{8}$/;
 
 async function postJson(url, body) {
@@ -134,8 +135,8 @@ export default function OnboardingWizard({ startStep = 1, initial = {}, authed =
     setErr(''); setBusy(true);
     try {
       if (!accountHolder.trim()) throw new Error(t('sset.accountHolder'));
-      const ibanToSave = iban ? iban.replace(/\s+/g, '').toUpperCase() : null;
-      if (ibanToSave && !IBAN_KW.test(ibanToSave)) throw new Error('Invalid Kuwait IBAN (KW + 28 chars)');
+      // No format validation — accept any non-empty IBAN text for now.
+      const ibanToSave = iban ? iban.trim() : null;
       if (!ibanToSave && !ibanMasked) throw new Error('IBAN is required');
 
       const body = { bank_name: bankName, account_holder: accountHolder };
