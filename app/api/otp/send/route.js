@@ -43,7 +43,9 @@ export async function POST(req) {
     }
   }
 
-  const code    = String(Math.floor(100000 + Math.random() * 900000));
+  // Dev bypass uses a fixed, well-known code (000000) so it's predictable
+  // for local testing; real WhatsApp delivery still uses a random 6-digit.
+  const code    = BYPASS ? '000000' : String(Math.floor(100000 + Math.random() * 900000));
   const hash    = crypto.createHash('sha256').update(code).digest('hex');
   const expires = new Date(Date.now() + TTL_MS).toISOString();
   const sends   = active ? existing.sends + 1 : 1;

@@ -18,9 +18,9 @@ export default async function DashboardLayout({ children }) {
     .eq('id', user.id)
     .maybeSingle();
 
-  // not cleared yet → finish onboarding first
+  // not cleared yet → resume the onboarding wizard
   if (!creator || (!creator.is_verified && creator.verification_status !== 'approved')) {
-    redirect('/verify');
+    redirect('/onboard');
   }
 
   return (
