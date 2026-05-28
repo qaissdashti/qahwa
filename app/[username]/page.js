@@ -1,22 +1,29 @@
 // PUBLIC TIPPING PAGE — qahwa.kw/[username]
 // Supporters land here. No auth required.
+// IMPORTANT: the tipping UI is ONLY shown for creators that have been
+// approved by the god admin (is_verified=true AND verification_status
+// ='approved'). Unapproved (or under-review) creators get a read-only
+// pending-approval page with no tipping/payment UI of any kind.
 import { createAdminClient } from '@/lib/supabase';
 import { notFound } from 'next/navigation';
 import TippingClient from '@/components/tipper/TippingClient';
+import PendingApprovalPage from '@/components/tipper/PendingApprovalPage';
 
 export async function generateMetadata({ params }) {
   const supabase = createAdminClient();
   const { data: creator } = await supabase
     .from('creators')
-    .select('full_name, bio, avatar_url')
+    .select('full_name, bio, avatar_url, is_verified, verification_status')
     .eq('handle', params.username.toLowerCase())
-    .eq('is_active', true)
     .eq('is_disabled', false)
-    .single();
+    .maybeSingle();
   if (!creator) return { title: 'قهوة' };
+  const approved = creator.is_verified && creator.verification_status === 'approved';
   return {
-    title: `${creator.full_name} ☕ قهوة`,
-    description: creator.bio || `ادعم ${creator.full_name} بقهوة`,
+    title: `${creator.full_name} ☕ قهوة${approved ? '' : ' — قيد المراجعة'}`,
+    description: approved
+      ? (creator.bio || `ادعم ${creator.full_name} بقهوة`)
+      : `صفحة ${creator.full_name} قيد مراجعة الإدارة`,
     openGraph: { images: creator.avatar_url ? [creator.avatar_url] : [] },
   };
 }
@@ -24,20 +31,31 @@ export async function generateMetadata({ params }) {
 export default async function TippingPage({ params, searchParams }) {
   const supabase = createAdminClient();
 
+  // Fetch without the verification filter so we can decide between
+  // "pending approval" and "tipping" based on the creator's status.
   const { data: creator } = await supabase
     .from('creators')
     .select(`id, full_name, handle, bio, avatar_url, avatar_emoji,
              coffee_price_kd, theme_bg, theme_text,
              amazing_enabled, amazing_message,
              instagram, twitter, youtube, tiktok,
-             total_tips_count, is_verified`)
+             total_tips_count, is_verified, is_active, is_disabled,
+             verification_status`)
     .eq('handle', params.username.toLowerCase())
-    .eq('is_active', true)
-    .eq('is_disabled', false)
-    .single();
+    .maybeSingle();
 
-  if (!creator) notFound();
+  // Genuinely no such creator, or admin-disabled, or creator-deactivated
+  // → 404 (we don't reveal anything about disabled accounts).
+  if (!creator || creator.is_disabled || creator.is_active === false) notFound();
 
+  // Not yet cleared by the god admin → show the pending page.
+  // NO tipping UI, NO payment button, NO amount input is rendered.
+  const approved = creator.is_verified && creator.verification_status === 'approved';
+  if (!approved) {
+    return <PendingApprovalPage creator={creator} />;
+  }
+
+  // Approved → real tipping page.
   const { data: settings } = await supabase
     .from('platform_settings')
     .select('amazing_enabled_global, amazing_max_kd, amazing_min_kd, maintenance_mode')

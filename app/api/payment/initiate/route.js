@@ -34,7 +34,7 @@ export async function POST(req) {
   const [{ data: creator }, { data: settings }] = await Promise.all([
     supabase
       .from('creators')
-      .select('id, full_name, handle, coffee_price_kd, is_active, is_disabled')
+      .select('id, full_name, handle, coffee_price_kd, is_active, is_disabled, is_verified, verification_status')
       .eq('handle', creatorHandle.toLowerCase())
       .single(),
     supabase
@@ -49,6 +49,11 @@ export async function POST(req) {
   }
   if (!creator.is_active || creator.is_disabled) {
     return Response.json({ error: 'This page is not accepting tips right now' }, { status: 403 });
+  }
+  // Defense in depth — the public page hides the tipping UI for
+  // unapproved creators; this also blocks any direct API call.
+  if (!creator.is_verified || creator.verification_status !== 'approved') {
+    return Response.json({ error: 'This page is not approved to accept tips yet' }, { status: 403 });
   }
   if (settings?.maintenance_mode) {
     return Response.json({ error: 'Platform is in maintenance mode' }, { status: 503 });
