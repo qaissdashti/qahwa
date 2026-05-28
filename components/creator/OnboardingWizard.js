@@ -42,7 +42,7 @@ async function waitForAuthCookie() {
   }
 }
 
-export default function OnboardingWizard({ startStep = 1, initial = {}, authed = false }) {
+export default function OnboardingWizard({ startStep = 1, initial = {}, authed = false, whatsappOk = true }) {
   const router = useRouter();
   const supabase = createClient();
   const { t, dir, lang } = useLang();
@@ -243,7 +243,8 @@ export default function OnboardingWizard({ startStep = 1, initial = {}, authed =
           )}
           {step === 3 && (
             <Step3 t={t} phone={phone} setPhone={setPhone} otpSent={otpSent}
-                   code={code} setCode={setCode} sendOtp={sendOtp} busy={busy} />
+                   code={code} setCode={setCode} sendOtp={sendOtp} busy={busy}
+                   whatsappOk={whatsappOk} />
           )}
           {step === 4 && (
             <Step4 t={t} civilId={civilId} setCivilId={setCivilId}
@@ -261,10 +262,13 @@ export default function OnboardingWizard({ startStep = 1, initial = {}, authed =
             <span className="text-xs text-black/40">{step < 5 ? t('onb.savedAuto') : ''}</span>
             {step === 1 && <button className="q-btn-accent" onClick={submitStep1} disabled={busy}>{busy ? t('common.loading') : t('onb.next')}</button>}
             {step === 2 && <button className="q-btn-accent" onClick={submitStep2} disabled={busy}>{busy ? t('common.loading') : t('onb.next')}</button>}
-            {step === 3 && !otpSent && (
+            {step === 3 && !whatsappOk && (
+              <button className="q-btn-accent" onClick={() => setStep(4)} disabled={busy}>{t('onb.s3.skip')}</button>
+            )}
+            {step === 3 && whatsappOk && !otpSent && (
               <button className="q-btn-accent" onClick={sendOtp} disabled={busy || !phone}>{busy ? t('common.loading') : t('auth.verify.phone.send')}</button>
             )}
-            {step === 3 && otpSent && (
+            {step === 3 && whatsappOk && otpSent && (
               <button className="q-btn-accent" onClick={verifyOtp} disabled={busy || code.length < 6}>{busy ? t('common.loading') : t('auth.verify.confirm')}</button>
             )}
             {step === 4 && <button className="q-btn-accent" onClick={submitStep4} disabled={busy}>{busy ? t('common.loading') : t('onb.next')}</button>}
@@ -402,7 +406,25 @@ function Step2({ t, bankName, setBankName, accountHolder, setAccountHolder, iban
   );
 }
 
-function Step3({ t, phone, setPhone, otpSent, code, setCode, sendOtp, busy }) {
+function Step3({ t, phone, setPhone, otpSent, code, setCode, sendOtp, busy, whatsappOk }) {
+  // WhatsApp not configured on the server → render a Skip-only panel so
+  // onboarding can complete end-to-end without WhatsApp wired up.
+  if (!whatsappOk) {
+    return (
+      <>
+        <h2 className="text-xl">{t('onb.step.phone')}</h2>
+        <div className="bg-qahwa-purple/10 border-2 border-qahwa-purple/40 rounded-xl p-4">
+          <div className="flex items-center gap-2 mb-1.5">
+            <span className="text-xl">📵</span>
+            <span className="font-extrabold text-qahwa-purple text-sm" style={{ fontFamily: "'Syne',sans-serif" }}>
+              {t('onb.s3.notConfigured')}
+            </span>
+          </div>
+          <p className="text-sm text-black/60 font-medium">{t('onb.s3.notConfBody')}</p>
+        </div>
+      </>
+    );
+  }
   return (
     <>
       <h2 className="text-xl">{t('onb.step.phone')}</h2>

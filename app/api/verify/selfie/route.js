@@ -30,7 +30,15 @@ export async function POST(req) {
     .eq('creator_id', user.id)
     .maybeSingle();
 
-  if (!v?.phone_verified || !v?.civil_id_encrypted) {
+  // Phone-verification is only required when WhatsApp is actually
+  // configured (real Meta token or local dev bypass). On a deployment
+  // where WhatsApp isn't wired up yet, step 3 was skipped — so we don't
+  // gate selfie submission on phone_verified here.
+  const whatsappOk =
+    (!!process.env.WHATSAPP_API_TOKEN && process.env.WHATSAPP_API_TOKEN.trim()) ||
+    (process.env.DEV_OTP_BYPASS === 'true' && process.env.NODE_ENV !== 'production');
+
+  if (!v?.civil_id_encrypted || (whatsappOk && !v?.phone_verified)) {
     return Response.json({ error: 'أكمل الخطوات السابقة أولاً' }, { status: 400 });
   }
 
