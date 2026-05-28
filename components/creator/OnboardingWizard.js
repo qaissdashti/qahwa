@@ -98,7 +98,14 @@ export default function OnboardingWizard({ startStep = 1, initial = {}, authed =
 
         const { data, error: signErr } = await supabase.auth.signUp({
           email, password,
-          options: { data: { is_creator: 'true', full_name: fullName.trim(), handle: cleanHandle } },
+          options: {
+            data: { is_creator: 'true', full_name: fullName.trim(), handle: cleanHandle },
+            // If email confirmation is enabled in Supabase, the link in
+            // the confirmation email comes back to whichever origin the
+            // user signed up on — works on localhost, Vercel previews,
+            // and production without any code change.
+            emailRedirectTo: `${window.location.origin}/auth/callback?next=/onboard`,
+          },
         });
         // Map raw Supabase errors (rate-limit, invalid email, etc.) to
         // friendly translated text — never surface the raw API message.

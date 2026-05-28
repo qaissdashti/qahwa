@@ -10,6 +10,7 @@
 
 import { createClient } from '@supabase/supabase-js';
 import { createInvoice } from '@/lib/myfatoorah';
+import { getBaseUrl } from '@/lib/baseUrl';
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL,
@@ -118,9 +119,8 @@ export async function POST(req) {
       })
       .eq('id', tip.id);
 
-    const base = process.env.NEXT_PUBLIC_BASE_URL || '';
     return Response.json({
-      paymentUrl: `${base}/${creator.handle}?success=1&tip=${tip.id}`,
+      paymentUrl: `${getBaseUrl()}/${creator.handle}?success=1&tip=${tip.id}`,
       tipId: tip.id,
       testMode: true,
     });
