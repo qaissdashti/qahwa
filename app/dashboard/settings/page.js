@@ -1,5 +1,5 @@
 import { createServerSupabaseClient, createAdminClient } from '@/lib/supabase';
-import SettingsForm from '@/components/creator/SettingsForm';
+import SettingsPageClient from '@/components/creator/SettingsPageClient';
 
 export const metadata = { title: 'الإعدادات — قهوة' };
 export const dynamic = 'force-dynamic';
@@ -17,13 +17,10 @@ export default async function SettingsPage() {
   ]);
 
   return (
-    <div className="space-y-5">
-      <h1 className="text-2xl">إعدادات الصفحة</h1>
-      <SettingsForm
-        creator={creator}
-        maxPrice={Number(settings?.max_coffee_price_kd ?? 10)}
-        amazingGlobal={!!settings?.amazing_enabled_global}
-      />
-    </div>
+    <SettingsPageClient
+      creator={creator}
+      maxPrice={Number(settings?.max_coffee_price_kd ?? 10)}
+      amazingGlobal={!!settings?.amazing_enabled_global}
+    />
   );
 }

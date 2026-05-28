@@ -1,4 +1,5 @@
 import './globals.css';
+import LangProvider from '@/components/LangProvider';
 
 export const metadata = {
   title: 'قهوة — Qahwa',
@@ -6,9 +7,13 @@ export const metadata = {
 };
 
 export default function RootLayout({ children }) {
+  // Server defaults to ar/rtl; LangProvider syncs <html dir> from the
+  // persisted preference (localStorage qahwa_lang) on mount.
   return (
     <html lang="ar" dir="rtl">
-      <body>{children}</body>
+      <body>
+        <LangProvider><>{children}</></LangProvider>
+      </body>
     </html>
   );
 }

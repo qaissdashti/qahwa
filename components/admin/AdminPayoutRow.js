@@ -2,20 +2,22 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { useLang } from '@/components/LangProvider';
+import { fmtKd } from '@/lib/i18n';
 
-const kd = (n) => Number(n || 0).toFixed(3);
-const STATUS = {
-  pending:  ['Pending',  'text-qahwa-orange'],
-  approved: ['Approved', 'text-qahwa-blue'],
-  paid:     ['Paid',     'text-qahwa-accent'],
-  rejected: ['Rejected', 'text-qahwa-red'],
+const STATUS_COLOR = {
+  pending:  'text-qahwa-orange',
+  approved: 'text-qahwa-blue',
+  paid:     'text-qahwa-accent',
+  rejected: 'text-qahwa-red',
 };
 
 export default function AdminPayoutRow({ payout: p }) {
   const router = useRouter();
+  const { t } = useLang();
   const [busy, setBusy] = useState(false);
   const [status, setStatus] = useState(p.status);
-  const [label, cls] = STATUS[status] || [status, 'text-white/40'];
+  const cls = STATUS_COLOR[status] || 'text-white/40';
 
   async function act(action) {
     setBusy(true);
@@ -38,29 +40,29 @@ export default function AdminPayoutRow({ payout: p }) {
         <div className="text-xs text-white/40 font-num">
           {p.account_holder} · {p.bank_name || '—'} · {p.iban}
         </div>
-        <div className="text-xs text-white/30">{p.method === 'knet_send' ? 'KNET' : 'Bank transfer'}</div>
+        <div className="text-xs text-white/30">{p.method === 'knet_send' ? t('po.method.knet') : t('po.method.bank')}</div>
       </div>
 
       <div className="flex items-center gap-3 shrink-0">
-        <div className="text-right">
-          <div className="font-num text-xl font-bold">{kd(p.amount_kd)} <span className="text-sm">KD</span></div>
-          <div className="text-[10px] text-white/35">net of fees — pay in full</div>
-          <div className={`text-xs font-bold ${cls}`}>{label}</div>
+        <div className="text-start">
+          <div className="font-num text-xl font-bold">{fmtKd(p.amount_kd)} <span className="text-sm">KD</span></div>
+          <div className="text-[10px] text-white/35">{t('admin.po.netNote')}</div>
+          <div className={`text-xs font-bold ${cls}`}>{t(`admin.po.status.${status}`)}</div>
         </div>
 
         {status === 'pending' && (
           <div className="flex gap-1.5">
             <button onClick={() => act('approve')} disabled={busy}
-                    className="text-xs font-bold rounded-lg bg-qahwa-blue/20 text-qahwa-blue border border-qahwa-blue/40 px-3 py-1.5">Approve</button>
+                    className="text-xs font-bold rounded-lg bg-qahwa-blue/20 text-qahwa-blue border border-qahwa-blue/40 px-3 py-1.5">{t('admin.po.approve')}</button>
             <button onClick={() => act('pay')} disabled={busy}
-                    className="text-xs font-bold rounded-lg bg-qahwa-accent text-qahwa-black px-3 py-1.5">Mark paid</button>
+                    className="text-xs font-bold rounded-lg bg-qahwa-accent text-qahwa-black px-3 py-1.5">{t('admin.po.markPaid')}</button>
             <button onClick={() => act('reject')} disabled={busy}
-                    className="text-xs font-bold rounded-lg bg-qahwa-red/20 text-qahwa-red border border-qahwa-red/40 px-3 py-1.5">Reject</button>
+                    className="text-xs font-bold rounded-lg bg-qahwa-red/20 text-qahwa-red border border-qahwa-red/40 px-3 py-1.5">{t('admin.po.reject')}</button>
           </div>
         )}
         {status === 'approved' && (
           <button onClick={() => act('pay')} disabled={busy}
-                  className="text-xs font-bold rounded-lg bg-qahwa-accent text-qahwa-black px-3 py-1.5">Mark paid</button>
+                  className="text-xs font-bold rounded-lg bg-qahwa-accent text-qahwa-black px-3 py-1.5">{t('admin.po.markPaid')}</button>
         )}
       </div>
     </div>

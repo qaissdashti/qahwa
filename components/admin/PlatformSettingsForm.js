@@ -2,24 +2,26 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { useLang } from '@/components/LangProvider';
 
 const NUM_FIELDS = [
-  ['platform_fee_pct',    'Platform fee %'],
-  ['min_payout_kd',       'Min payout (KD)'],
-  ['max_coffee_price_kd', 'Max coffee price (KD)'],
-  ['amazing_min_kd',      'Min custom amount (KD)'],
-  ['amazing_max_kd',      'Max custom amount (KD)'],
+  ['platform_fee_pct',    'admin.ps.platformFee'],
+  ['min_payout_kd',       'admin.ps.minPayout'],
+  ['max_coffee_price_kd', 'admin.ps.maxCoffee'],
+  ['amazing_min_kd',      'admin.ps.minAmazing'],
+  ['amazing_max_kd',      'admin.ps.maxAmazing'],
 ];
 const TOGGLES = [
-  ['new_signups_enabled',      'Allow new signups'],
-  ['manual_approval_required', 'Manual verification review'],
-  ['payouts_enabled',          'Enable payouts'],
-  ['amazing_enabled_global',   'Enable custom amount (global)'],
-  ['maintenance_mode',         'Maintenance mode'],
+  ['new_signups_enabled',      'admin.ps.newSignups'],
+  ['manual_approval_required', 'admin.ps.manualReview'],
+  ['payouts_enabled',          'admin.ps.enablePayouts'],
+  ['amazing_enabled_global',   'admin.ps.amazingGlobal'],
+  ['maintenance_mode',         'admin.ps.maintenance'],
 ];
 
 export default function PlatformSettingsForm({ settings }) {
   const router = useRouter();
+  const { t } = useLang();
   const [f, setF] = useState({
     platform_fee_pct:    settings.platform_fee_pct ?? 7,
     min_payout_kd:       settings.min_payout_kd ?? 5,
@@ -47,8 +49,8 @@ export default function PlatformSettingsForm({ settings }) {
         method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(f),
       });
       const json = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(json.error || 'Something went wrong');
-      setMsg({ type: 'ok', text: 'Saved ✓' });
+      if (!res.ok) throw new Error(json.error || t('common.somethingWrong'));
+      setMsg({ type: 'ok', text: t('common.saved') });
       router.refresh();
     } catch (err) { setMsg({ type: 'err', text: err.message }); }
     finally { setLoading(false); }
@@ -61,11 +63,11 @@ export default function PlatformSettingsForm({ settings }) {
   return (
     <form onSubmit={save} className="grid gap-4 max-w-2xl">
       <div className={card}>
-        <h2 className="text-lg">Fees & limits</h2>
+        <h2 className="text-lg">{t('admin.ps.feesLimits')}</h2>
         <div className="grid grid-cols-2 gap-3">
-          {NUM_FIELDS.map(([k, lbl]) => (
+          {NUM_FIELDS.map(([k, lk]) => (
             <div key={k}>
-              <label className={label}>{lbl}</label>
+              <label className={label}>{t(lk)}</label>
               <input className={input} type="number" step="0.01" min="0" value={f[k]} onChange={setNum(k)} />
             </div>
           ))}
@@ -73,25 +75,25 @@ export default function PlatformSettingsForm({ settings }) {
       </div>
 
       <div className={card}>
-        <h2 className="text-lg">Toggles</h2>
-        {TOGGLES.map(([k, lbl]) => (
+        <h2 className="text-lg">{t('admin.ps.toggles')}</h2>
+        {TOGGLES.map(([k, lk]) => (
           <label key={k} className="flex items-center justify-between py-1.5 cursor-pointer">
-            <span className="font-bold text-sm">{lbl}</span>
+            <span className="font-bold text-sm">{t(lk)}</span>
             <input type="checkbox" checked={f[k]} onChange={setBool(k)} className="w-5 h-5 accent-qahwa-accent" />
           </label>
         ))}
         {f.maintenance_mode && (
           <div>
-            <label className={label}>Maintenance message</label>
+            <label className={label}>{t('admin.ps.maintenanceMsg')}</label>
             <input className={input.replace('font-num', '')} value={f.maintenance_message}
                    onChange={(e) => setF((p) => ({ ...p, maintenance_message: e.target.value }))}
-                   placeholder="Back soon..." />
+                   placeholder={t('admin.ps.maintenancePh')} />
           </div>
         )}
       </div>
 
       <div className="flex items-center gap-3">
-        <button className="q-btn-accent" disabled={loading}>{loading ? '...' : 'Save'}</button>
+        <button className="q-btn-accent" disabled={loading}>{loading ? t('common.loading') : t('common.save')}</button>
         {msg && <span className={`font-bold text-sm ${msg.type === 'ok' ? 'text-qahwa-accent' : 'text-qahwa-red'}`}>{msg.text}</span>}
       </div>
     </form>

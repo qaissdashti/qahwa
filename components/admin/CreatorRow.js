@@ -2,21 +2,22 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { useLang } from '@/components/LangProvider';
+import { fmtKd } from '@/lib/i18n';
 
-const kd = (n) => Number(n || 0).toFixed(3);
-
-const VER = {
-  approved:     ['Verified',     'text-qahwa-accent'],
-  under_review: ['Under review', 'text-qahwa-orange'],
-  pending:      ['Incomplete',   'text-white/40'],
-  rejected:     ['Rejected',     'text-qahwa-red'],
+const VER_COLOR = {
+  approved:     'text-qahwa-accent',
+  under_review: 'text-qahwa-orange',
+  pending:      'text-white/40',
+  rejected:     'text-qahwa-red',
 };
 
 export default function CreatorRow({ creator }) {
   const router = useRouter();
+  const { t } = useLang();
   const [disabled, setDisabled] = useState(creator.is_disabled);
   const [busy, setBusy] = useState(false);
-  const [ver] = [VER[creator.verification_status] || [creator.verification_status, 'text-white/40']];
+  const verCls = VER_COLOR[creator.verification_status] || 'text-white/40';
 
   async function toggle() {
     setBusy(true);
@@ -36,15 +37,15 @@ export default function CreatorRow({ creator }) {
         <div className="text-xs text-white/40 font-num">@{creator.handle} · {creator.email}</div>
       </td>
       <td className="px-4 py-3">
-        <span className={`font-bold ${ver[1]}`}>{ver[0]}</span>
-        {disabled && <span className="block text-xs text-qahwa-red font-bold">Disabled</span>}
+        <span className={`font-bold ${verCls}`}>{t(`admin.cr.ver.${creator.verification_status}`)}</span>
+        {disabled && <span className="block text-xs text-qahwa-red font-bold">{t('admin.cr.disabled')}</span>}
       </td>
-      <td className="px-4 py-3 font-num">{kd(creator.balance_kd)}</td>
-      <td className="px-4 py-3 font-num text-white/60">{kd(creator.total_earned_kd)}</td>
+      <td className="px-4 py-3 font-num">{fmtKd(creator.balance_kd)}</td>
+      <td className="px-4 py-3 font-num text-white/60">{fmtKd(creator.total_earned_kd)}</td>
       <td className="px-4 py-3">
         <button onClick={toggle} disabled={busy}
           className={`text-xs font-bold rounded-lg px-3 py-1.5 ${disabled ? 'bg-qahwa-accent text-qahwa-black' : 'bg-qahwa-red/20 text-qahwa-red border border-qahwa-red/40'}`}>
-          {busy ? '...' : disabled ? 'Enable' : 'Disable'}
+          {busy ? t('common.loading') : disabled ? t('admin.cr.enable') : t('admin.cr.disable')}
         </button>
       </td>
     </tr>

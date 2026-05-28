@@ -2,11 +2,13 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { useLang } from '@/components/LangProvider';
 
 export default function VerificationCard({
   creatorId, fullName, handle, email, phone, phoneVerified, civilMasked, hasSelfie,
 }) {
   const router = useRouter();
+  const { t } = useLang();
   const [selfieUrl, setSelfieUrl] = useState(null);
   const [busy, setBusy]   = useState(false);
   const [error, setError] = useState('');
@@ -21,7 +23,7 @@ export default function VerificationCard({
       const json = await res.json();
       if (!res.ok) throw new Error(json.error);
       setSelfieUrl(json.url);
-    } catch (e) { setError(e.message || "Couldn't load photo"); }
+    } catch (e) { setError(e.message || t('admin.vf.loadFail')); }
   }
 
   async function decide(action) {
@@ -33,7 +35,7 @@ export default function VerificationCard({
       });
       if (!res.ok) throw new Error('failed');
       router.refresh();
-    } catch (e) { setError('Something went wrong'); setBusy(false); }
+    } catch (e) { setError(t('common.somethingWrong')); setBusy(false); }
   }
 
   return (
@@ -44,8 +46,8 @@ export default function VerificationCard({
       </div>
 
       <div className="grid grid-cols-2 gap-2 text-sm">
-        <Fact label="WhatsApp" value={phone || '—'} ok={phoneVerified} />
-        <Fact label="Civil ID" value={civilMasked || '—'} ok={!!civilMasked} />
+        <Fact label={t('admin.vf.whatsapp')} value={phone || '—'} ok={phoneVerified} />
+        <Fact label={t('admin.vf.civilId')} value={civilMasked || '—'} ok={!!civilMasked} />
       </div>
 
       {selfieUrl ? (
@@ -54,7 +56,7 @@ export default function VerificationCard({
       ) : (
         <button onClick={viewSelfie} disabled={!hasSelfie}
                 className="w-full text-sm font-bold rounded-xl bg-white/5 hover:bg-white/10 py-2.5 disabled:opacity-40">
-          {hasSelfie ? '📸 View selfie' : 'No photo'}
+          {hasSelfie ? t('admin.vf.viewSelfie') : t('admin.vf.noPhoto')}
         </button>
       )}
 
@@ -62,10 +64,10 @@ export default function VerificationCard({
 
       <div className="flex gap-2 pt-1">
         <button onClick={() => decide('approve')} disabled={busy}
-                className="flex-1 q-btn-accent text-sm py-2.5">{busy ? '...' : '✓ Approve'}</button>
+                className="flex-1 q-btn-accent text-sm py-2.5">{busy ? t('common.loading') : t('admin.vf.approve')}</button>
         <button onClick={() => decide('reject')} disabled={busy}
                 className="flex-1 text-sm font-bold rounded-xl bg-qahwa-red/20 text-qahwa-red border-2 border-qahwa-red/50 py-2.5">
-          ✕ Reject
+          {t('admin.vf.reject')}
         </button>
       </div>
     </div>

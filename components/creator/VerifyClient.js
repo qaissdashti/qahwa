@@ -2,14 +2,17 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-
-const STEPS = ['رقم الواتساب', 'الرقم المدني', 'صورة شخصية'];
+import { useLang } from '@/components/LangProvider';
+import LangToggle from '@/components/LangToggle';
 
 export default function VerifyClient({ fullName, initialStep, phoneVerified, civilDone }) {
   const router = useRouter();
+  const { t, dir } = useLang();
   const [step, setStep]       = useState(initialStep);
   const [error, setError]     = useState('');
   const [loading, setLoading] = useState(false);
+
+  const STEPS = [t('auth.verify.step.phone'), t('auth.verify.step.civil'), t('auth.verify.step.selfie')];
 
   // step 1 — phone + otp
   const [phone, setPhone]     = useState('');
@@ -25,7 +28,7 @@ export default function VerifyClient({ fullName, initialStep, phoneVerified, civ
   async function post(url, body) {
     const res  = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
     const json = await res.json().catch(() => ({}));
-    if (!res.ok) throw new Error(json.error || 'صار خطأ');
+    if (!res.ok) throw new Error(json.error || t('common.somethingWrong'));
     return json;
   }
 
@@ -34,10 +37,8 @@ export default function VerifyClient({ fullName, initialStep, phoneVerified, civ
     try {
       const res = await post('/api/otp/send', { phone });
       setOtpSent(true);
-      // dev bypass returns the code so onboarding works without WhatsApp
       if (res.devCode) setCode(res.devCode);
-    }
-    catch (e) { setError(e.message); }
+    } catch (e) { setError(e.message); }
     finally { setLoading(false); }
   }
 
@@ -57,26 +58,27 @@ export default function VerifyClient({ fullName, initialStep, phoneVerified, civ
 
   async function submitSelfie() {
     setError('');
-    if (!selfie) return setError('اختر صورة');
+    if (!selfie) return setError(t('auth.verify.selfie.noFile'));
     setLoading(true);
     try {
       const fd = new FormData();
       fd.append('selfie', selfie);
       const res  = await fetch('/api/verify/selfie', { method: 'POST', body: fd });
       const json = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(json.error || 'صار خطأ');
-      router.refresh(); // page now shows the under-review screen
+      if (!res.ok) throw new Error(json.error || t('common.somethingWrong'));
+      router.refresh();
     } catch (e) { setError(e.message); setLoading(false); }
   }
 
   return (
-    <main className="min-h-screen flex items-center justify-center px-5 py-10">
-      <div className="w-full max-w-md">
+    <main className="min-h-screen flex items-center justify-center px-5 py-10" dir={dir}>
+      <div className="w-full max-w-md relative">
+        <div className="absolute top-0 right-0 z-10"><LangToggle /></div>
         <h1 className="text-center text-2xl font-extrabold mb-1" style={{ fontFamily: 'Syne' }}>
           قهوة <span className="text-qahwa-accent">☕</span>
         </h1>
         <p className="text-center text-black/50 font-medium mb-6">
-          أهلاً {fullName}، نحتاج نتأكد من هويتك
+          {t('auth.verify.welcome', { name: fullName })}
         </p>
 
         {/* stepper */}
@@ -100,16 +102,16 @@ export default function VerifyClient({ fullName, initialStep, phoneVerified, civ
         <div className="q-card p-6">
           {step === 1 && (
             <div className="space-y-4">
-              <h2 className="text-xl">رقم الواتساب</h2>
-              <p className="text-sm text-black/55 font-medium">بنرسل لك رمز تحقق على هذا الرقم. هذا الرقم بيستقبل إشعارات القهوة.</p>
+              <h2 className="text-xl">{t('auth.verify.step.phone')}</h2>
+              <p className="text-sm text-black/55 font-medium">{t('auth.verify.phone.hint')}</p>
               <div>
-                <label className="q-label">رقم الجوال</label>
+                <label className="q-label">{t('auth.verify.phone.label')}</label>
                 <input className="q-input font-num" dir="ltr" value={phone} disabled={otpSent}
                        onChange={(e) => setPhone(e.target.value)} placeholder="+96550001234" />
               </div>
               {otpSent && (
                 <div>
-                  <label className="q-label">رمز التحقق</label>
+                  <label className="q-label">{t('auth.verify.code.label')}</label>
                   <input className="q-input font-num tracking-[0.4em] text-center" dir="ltr" value={code}
                          onChange={(e) => setCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
                          placeholder="••••••" inputMode="numeric" />
@@ -117,47 +119,57 @@ export default function VerifyClient({ fullName, initialStep, phoneVerified, civ
               )}
               {error && <p className="q-error">{error}</p>}
               {!otpSent
-                ? <button className="q-btn-accent w-full" onClick={sendOtp} disabled={loading || phone.length < 8}>{loading ? '...' : 'أرسل الرمز'}</button>
+                ? <button className="q-btn-accent w-full" onClick={sendOtp} disabled={loading || phone.length < 8}>
+                    {loading ? t('common.loading') : t('auth.verify.phone.send')}
+                  </button>
                 : <div className="flex gap-2">
-                    <button className="q-btn-accent flex-1" onClick={verifyOtp} disabled={loading || code.length < 4}>{loading ? '...' : 'تأكيد'}</button>
-                    <button className="q-btn-white" onClick={() => { setOtpSent(false); setCode(''); }} disabled={loading}>تغيير الرقم</button>
+                    <button className="q-btn-accent flex-1" onClick={verifyOtp} disabled={loading || code.length < 4}>
+                      {loading ? t('common.loading') : t('auth.verify.confirm')}
+                    </button>
+                    <button className="q-btn-white" onClick={() => { setOtpSent(false); setCode(''); }} disabled={loading}>
+                      {t('auth.verify.changeNum')}
+                    </button>
                   </div>}
             </div>
           )}
 
           {step === 2 && (
             <div className="space-y-4">
-              <h2 className="text-xl">الرقم المدني</h2>
-              <p className="text-sm text-black/55 font-medium">نخزّنه مشفّراً ولا يظهر لأحد. مطلوب للتحقق والتحويلات.</p>
+              <h2 className="text-xl">{t('auth.verify.step.civil')}</h2>
+              <p className="text-sm text-black/55 font-medium">{t('auth.verify.civil.hint')}</p>
               <div>
-                <label className="q-label">الرقم المدني (12 رقم)</label>
+                <label className="q-label">{t('auth.verify.civil.label')}</label>
                 <input className="q-input font-num tracking-widest" dir="ltr" value={civilId}
                        onChange={(e) => setCivilId(e.target.value.replace(/\D/g, '').slice(0, 12))}
                        placeholder="290000000000" inputMode="numeric" />
               </div>
               {error && <p className="q-error">{error}</p>}
-              <button className="q-btn-accent w-full" onClick={saveCivil} disabled={loading || civilId.length !== 12}>{loading ? '...' : 'حفظ ومتابعة'}</button>
+              <button className="q-btn-accent w-full" onClick={saveCivil} disabled={loading || civilId.length !== 12}>
+                {loading ? t('common.loading') : t('auth.verify.civil.save')}
+              </button>
             </div>
           )}
 
           {step === 3 && (
             <div className="space-y-4">
-              <h2 className="text-xl">صورة شخصية</h2>
-              <p className="text-sm text-black/55 font-medium">ارفع صورة سيلفي واضحة لوجهك للتحقق من الهوية.</p>
+              <h2 className="text-xl">{t('auth.verify.step.selfie')}</h2>
+              <p className="text-sm text-black/55 font-medium">{t('auth.verify.selfie.hint')}</p>
               <label className="block border-2 border-dashed border-qahwa-black rounded-xl p-6 text-center cursor-pointer hover:bg-black/5">
                 <input type="file" accept="image/jpeg,image/png,image/webp" className="hidden"
                        onChange={(e) => setSelfie(e.target.files?.[0] || null)} />
                 <div className="text-4xl mb-1">{selfie ? '✅' : '📸'}</div>
-                <span className="text-sm font-bold">{selfie ? selfie.name : 'اضغط لاختيار صورة'}</span>
+                <span className="text-sm font-bold">{selfie ? selfie.name : t('auth.verify.selfie.pick')}</span>
               </label>
               {error && <p className="q-error">{error}</p>}
-              <button className="q-btn-accent w-full" onClick={submitSelfie} disabled={loading || !selfie}>{loading ? '...' : 'إرسال للمراجعة'}</button>
+              <button className="q-btn-accent w-full" onClick={submitSelfie} disabled={loading || !selfie}>
+                {loading ? t('common.loading') : t('auth.verify.selfie.submit')}
+              </button>
             </div>
           )}
         </div>
 
         <form action="/auth/signout" method="post" className="text-center mt-5">
-          <button className="text-sm font-bold text-black/40 underline">تسجيل الخروج</button>
+          <button className="text-sm font-bold text-black/40 underline">{t('common.signout')}</button>
         </form>
       </div>
     </main>

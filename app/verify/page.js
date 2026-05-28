@@ -2,6 +2,7 @@
 import { redirect } from 'next/navigation';
 import { createServerSupabaseClient, createAdminClient } from '@/lib/supabase';
 import VerifyClient from '@/components/creator/VerifyClient';
+import VerifyReviewScreen from '@/components/creator/VerifyReviewScreen';
 
 export const metadata = { title: 'التحقق — قهوة' };
 
@@ -47,20 +48,7 @@ export default async function VerifyPage() {
     creator?.verification_status === 'under_review' || verification?.status === 'under_review';
 
   if (underReview) {
-    return (
-      <main className="min-h-screen flex items-center justify-center px-5">
-        <div className="q-card p-8 max-w-md text-center">
-          <div className="text-6xl mb-4">🕵️</div>
-          <h1 className="text-2xl mb-2">طلبك قيد المراجعة</h1>
-          <p className="text-black/60 font-medium">
-            استلمنا بياناتك ونراجعها الحين. بنفعّل صفحتك خلال ٢٤ ساعة ونعلمك عبر واتساب.
-          </p>
-          <form action="/auth/signout" method="post" className="mt-6">
-            <button className="q-btn-white text-sm">تسجيل الخروج</button>
-          </form>
-        </div>
-      </main>
-    );
+    return <VerifyReviewScreen />;
   }
 
   const initialStep = !verification?.phone_verified ? 1
