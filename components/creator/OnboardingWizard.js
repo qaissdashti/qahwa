@@ -24,6 +24,16 @@ async function postJson(url, body) {
   return json;
 }
 
+// Map Supabase auth errors into friendly localised messages.
+function friendlyAuthError(t, err) {
+  const msg = String(err?.message || err || '');
+  if (/rate.*limit/i.test(msg) || /too.*many.*request/i.test(msg)) return t('onb.err.rateLimit');
+  if (/invalid/i.test(msg) && /email/i.test(msg))                  return t('onb.err.emailInvalid');
+  if (/already.*regist|user.*exists|already.*registered/i.test(msg)) return t('onb.err.userExists');
+  if (/password/i.test(msg) && /(weak|short|at least)/i.test(msg))   return t('onb.err.passwordWeak');
+  return msg || t('common.somethingWrong');
+}
+
 async function waitForAuthCookie() {
   for (let i = 0; i < 30; i++) {
     if (typeof document !== 'undefined' && document.cookie.includes('auth-token')) return;
@@ -89,7 +99,9 @@ export default function OnboardingWizard({ startStep = 1, initial = {}, authed =
           email, password,
           options: { data: { is_creator: 'true', full_name: fullName.trim(), handle: cleanHandle } },
         });
-        if (signErr) throw signErr;
+        // Map raw Supabase errors (rate-limit, invalid email, etc.) to
+        // friendly translated text — never surface the raw API message.
+        if (signErr) throw new Error(friendlyAuthError(t, signErr));
         if (!data.session) {
           // email confirmation is on → can't proceed past step 1 in-app
           throw new Error(t('auth.signup.emailSentTitle') + ' (' + email + ')');

@@ -25,9 +25,12 @@ function LoginForm() {
 
     const { data, error: signErr } = await supabase.auth.signInWithPassword({ email, password });
     if (signErr) {
-      setError(/invalid login credentials/i.test(signErr.message || '')
-        ? t('auth.login.wrongCreds')
-        : (signErr.message || t('common.somethingWrong')));
+      const m = signErr.message || '';
+      setError(
+        /invalid login credentials/i.test(m) ? t('auth.login.wrongCreds') :
+        /rate.*limit|too.*many.*request/i.test(m) ? t('onb.err.rateLimit') :
+        (m || t('common.somethingWrong'))
+      );
       setLoading(false);
       return;
     }
