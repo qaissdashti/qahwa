@@ -74,7 +74,15 @@ create table if not exists public.creators (
   is_verified         boolean not null default false,
   is_active           boolean not null default true,
   is_disabled         boolean not null default false,
-  verification_status verification_status not null default 'pending'
+  verification_status verification_status not null default 'pending',
+
+  -- Saved payout/bank details — entered once in settings, reused per
+  -- payout request. iban is stored encrypted at rest (AES-256-GCM via
+  -- lib/encryption.js) with a masked form for safe display.
+  iban_encrypted      text,
+  iban_masked         text,
+  bank_name           text,
+  account_holder      text
 );
 
 create index if not exists creators_handle_idx on public.creators (handle);

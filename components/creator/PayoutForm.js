@@ -1,20 +1,21 @@
 'use client';
 
 import { useState } from 'react';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 
-export default function PayoutForm({ balance, minPayout, payoutsEnabled, hasPending }) {
+export default function PayoutForm({
+  balance, minPayout, payoutsEnabled, hasPending,
+  hasBank, bankName, accountHolder, ibanMasked,
+}) {
   const router = useRouter();
   const [amount, setAmount]   = useState('');
-  const [holder, setHolder]   = useState('');
-  const [bank, setBank]       = useState('');
-  const [iban, setIban]       = useState('');
   const [method, setMethod]   = useState('bank_transfer');
   const [loading, setLoading] = useState(false);
   const [error, setError]     = useState('');
   const [done, setDone]       = useState(false);
 
-  const disabled = !payoutsEnabled || hasPending || balance < minPayout;
+  const disabled = !payoutsEnabled || hasPending || balance < minPayout || !hasBank;
 
   async function submit(e) {
     e.preventDefault();
@@ -22,7 +23,7 @@ export default function PayoutForm({ balance, minPayout, payoutsEnabled, hasPend
     try {
       const res = await fetch('/api/creator/payout', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ amount, account_holder: holder, bank_name: bank, iban, method }),
+        body: JSON.stringify({ amount, method }),
       });
       const json = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(json.error || 'صار خطأ');
@@ -42,14 +43,40 @@ export default function PayoutForm({ balance, minPayout, payoutsEnabled, hasPend
     );
   }
 
+  // If the creator hasn't saved bank details yet, prompt them to go to settings
+  // instead of showing the request form — they should enter bank details once.
+  if (!hasBank) {
+    return (
+      <div className="q-card p-5 text-qahwa-black space-y-3">
+        <h2 className="text-lg">طلب سحب</h2>
+        <p className="text-sm text-black/70 font-medium">
+          أضف تفاصيل حسابك البنكي مرة واحدة في الإعدادات قبل أول طلب سحب.
+        </p>
+        <Link href="/dashboard/settings" className="q-btn-black inline-flex text-sm">
+          ⚙️ اذهب للإعدادات لإضافة البنك
+        </Link>
+      </div>
+    );
+  }
+
   return (
     <form onSubmit={submit} className="q-card p-5 text-qahwa-black space-y-3">
-      <h2 className="text-lg">طلب سحب</h2>
+      <div className="flex items-start justify-between gap-3">
+        <h2 className="text-lg">طلب سحب</h2>
+        {!payoutsEnabled && <p className="q-error">السحوبات معطّلة حالياً</p>}
+        {payoutsEnabled && hasPending && <p className="q-error">لديك طلب قيد المراجعة</p>}
+      </div>
 
-      {!payoutsEnabled && <p className="q-error">السحوبات معطّلة حالياً من الإدارة</p>}
-      {payoutsEnabled && hasPending && <p className="q-error">لديك طلب قيد المراجعة</p>}
-      {payoutsEnabled && !hasPending && balance < minPayout &&
-        <p className="q-error">الحد الأدنى للسحب {minPayout} د.ك</p>}
+      {/* Saved bank details — read-only summary with edit link */}
+      <div className="bg-black/5 border-2 border-qahwa-black/20 rounded-xl p-3 text-sm">
+        <div className="flex items-center justify-between mb-1">
+          <span className="font-bold text-black/70">الحساب المحفوظ</span>
+          <Link href="/dashboard/settings" className="text-xs font-bold underline text-qahwa-purple">تعديل</Link>
+        </div>
+        <div className="font-bold">{accountHolder}</div>
+        <div className="text-xs text-black/60">{bankName || '—'}</div>
+        <div className="text-xs text-black/60 font-num" dir="ltr">{ibanMasked}</div>
+      </div>
 
       <div>
         <label className="q-label">المبلغ (د.ك)</label>
@@ -57,29 +84,17 @@ export default function PayoutForm({ balance, minPayout, payoutsEnabled, hasPend
                onChange={(e) => setAmount(e.target.value)} placeholder={`${minPayout}.000`} disabled={disabled} />
       </div>
       <div>
-        <label className="q-label">اسم صاحب الحساب</label>
-        <input className="q-input" value={holder} onChange={(e) => setHolder(e.target.value)} disabled={disabled} />
-      </div>
-      <div className="grid grid-cols-2 gap-2">
-        <div>
-          <label className="q-label">البنك</label>
-          <input className="q-input" value={bank} onChange={(e) => setBank(e.target.value)} disabled={disabled} />
-        </div>
-        <div>
-          <label className="q-label">الطريقة</label>
-          <select className="q-input" value={method} onChange={(e) => setMethod(e.target.value)} disabled={disabled}>
-            <option value="bank_transfer">تحويل بنكي</option>
-            <option value="knet_send">كي نت</option>
-          </select>
-        </div>
-      </div>
-      <div>
-        <label className="q-label">آيبان (IBAN)</label>
-        <input className="q-input font-num" dir="ltr" value={iban}
-               onChange={(e) => setIban(e.target.value.toUpperCase())} placeholder="KW00XXXX..." disabled={disabled} />
+        <label className="q-label">طريقة التحويل</label>
+        <select className="q-input" value={method} onChange={(e) => setMethod(e.target.value)} disabled={disabled}>
+          <option value="bank_transfer">تحويل بنكي</option>
+          <option value="knet_send">كي نت</option>
+        </select>
       </div>
 
+      {payoutsEnabled && !hasPending && balance < minPayout &&
+        <p className="q-error">الحد الأدنى للسحب {minPayout} د.ك</p>}
       {error && <p className="q-error">{error}</p>}
+
       <button className="q-btn-black w-full" disabled={disabled || loading}>
         {loading ? '...' : 'إرسال الطلب'}
       </button>

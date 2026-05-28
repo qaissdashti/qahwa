@@ -19,7 +19,12 @@ export default function SettingsForm({ creator, maxPrice, amazingGlobal }) {
     twitter:         creator?.twitter || '',
     youtube:         creator?.youtube || '',
     tiktok:          creator?.tiktok || '',
+    bank_name:       creator?.bank_name || '',
+    account_holder:  creator?.account_holder || '',
   });
+  // IBAN entry is separate: input starts empty, current value shown masked
+  // alongside; sending an empty string keeps the saved one.
+  const [ibanNew, setIbanNew] = useState('');
   const [loading, setLoading] = useState(false);
   const [msg, setMsg]         = useState(null);
   const [avatarUrl, setAvatarUrl] = useState(creator?.avatar_url || null);
@@ -50,12 +55,17 @@ export default function SettingsForm({ creator, maxPrice, amazingGlobal }) {
     e.preventDefault();
     setMsg(null); setLoading(true);
     try {
+      // Only send `iban` if the user typed a new value — empty keeps the
+      // saved one. The route validates + encrypts when present.
+      const body = { ...f };
+      if (ibanNew.trim()) body.iban = ibanNew.replace(/\s+/g, '').toUpperCase();
       const res = await fetch('/api/creator/settings', {
-        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(f),
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body),
       });
       const json = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(json.error || 'صار خطأ');
       setMsg({ type: 'ok', text: 'تم الحفظ ✓' });
+      setIbanNew('');
       router.refresh();
     } catch (err) { setMsg({ type: 'err', text: err.message }); }
     finally { setLoading(false); }
@@ -120,6 +130,31 @@ export default function SettingsForm({ creator, maxPrice, amazingGlobal }) {
               )}
             </>
           )}
+        </div>
+
+        {/* bank details (used for payouts) */}
+        <div className={card}>
+          <h2 className="text-lg">تفاصيل الحساب البنكي</h2>
+          <p className="text-xs text-white/50 font-medium">تُستخدم تلقائياً عند طلب السحب — تدخلها هنا مرة واحدة فقط.</p>
+          <div className="grid grid-cols-2 gap-2">
+            <div>
+              <label className={label}>اسم البنك</label>
+              <input className={input} value={f.bank_name} onChange={set('bank_name')} placeholder="بنك الكويت الوطني" />
+            </div>
+            <div>
+              <label className={label}>اسم صاحب الحساب</label>
+              <input className={input} value={f.account_holder} onChange={set('account_holder')} placeholder="كما يظهر في البنك" />
+            </div>
+          </div>
+          <div>
+            <label className={label}>آيبان (IBAN)</label>
+            {creator?.iban_masked && (
+              <div className="text-xs text-qahwa-accent font-num mb-1.5" dir="ltr">المحفوظ: {creator.iban_masked}</div>
+            )}
+            <input className={`${input} font-num`} dir="ltr" value={ibanNew}
+                   onChange={(e) => setIbanNew(e.target.value.toUpperCase())}
+                   placeholder={creator?.iban_masked ? 'اترك فارغاً للإبقاء — أو أدخل آيبان جديد' : 'KW81NBOK0000000000001234560101'} />
+          </div>
         </div>
 
         {/* socials */}
