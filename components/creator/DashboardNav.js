@@ -20,7 +20,9 @@ export default function DashboardNav() {
       {LINKS.map(([href, key, icon]) => {
         const active = pathname === href;
         return (
-          <Link key={href} href={href}
+          // prefetch={false} so balance/tips/etc. always re-fetch on click
+          // instead of using a cached prefetched RSC payload.
+          <Link key={href} href={href} prefetch={false}
             className={`flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-bold transition-colors
               ${active ? 'bg-qahwa-accent text-qahwa-black' : 'text-white/70 hover:bg-white/5'}`}>
             <span className="text-lg">{icon}</span>

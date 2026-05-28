@@ -20,7 +20,7 @@ export default function AdminNav() {
       {LINKS.map(([href, key, icon]) => {
         const active = pathname === href;
         return (
-          <Link key={href} href={href}
+          <Link key={href} href={href} prefetch={false}
             className={`flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-bold transition-colors
               ${active ? 'bg-qahwa-accent text-qahwa-black' : 'text-white/70 hover:bg-white/5'}`}>
             <span className="text-lg">{icon}</span>
