@@ -48,7 +48,7 @@ export default function DashboardOverviewClient({ creator, recentTips }) {
                   </div>
                   {tip.message && <p className="text-sm text-white/60 mt-0.5 line-clamp-2">&quot;{tip.message}&quot;</p>}
                 </div>
-                <div className="text-left shrink-0">
+                <div className="text-end shrink-0">
                   <div className="font-num font-bold text-qahwa-accent">+{fmtKd(tip.net_amount_kd)} KD</div>
                   <div className="text-xs text-white/30 font-num">
                     {tip.paid_at ? new Date(tip.paid_at).toLocaleDateString(dateLoc) : ''}

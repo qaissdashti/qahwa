@@ -16,7 +16,9 @@ body {
   background: var(--cream);
   color: var(--black);
   font-family: 'Tajawal', 'DM Sans', sans-serif;
-  direction: rtl;
+  /* Direction is driven by <html dir="..."> (set by LangProvider).
+     Hardcoding direction here forced everything RTL even when the html
+     attribute was ltr — leave it unset so the dir attribute cascades. */
 }
 
 /* Syne for headings */

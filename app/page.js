@@ -48,7 +48,7 @@ export default function Home() {
           ['💬', 'إشعار واتساب', 'يوصلك إشعار بكل قهوة، وترد على داعمك مباشرة.'],
           ['🔒', 'بدون حساب للداعم', 'متابعك يدفع بضغطة وحدة، ما يحتاج تسجيل.'],
         ].map(([emoji, title, desc]) => (
-          <div key={title} className="q-card p-5 text-right">
+          <div key={title} className="q-card p-5 text-start">
             <div className="text-3xl mb-2">{emoji}</div>
             <h3 className="text-lg mb-1">{title}</h3>
             <p className="text-sm text-black/60 font-medium">{desc}</p>

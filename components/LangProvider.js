@@ -21,9 +21,13 @@ export default function LangProvider({ children, defaultLang = 'ar' }) {
     } catch {}
   }, []);
 
-  // Keep <html dir> in sync so all CSS/RTL behaviours follow the choice.
+  // Keep <html dir> + <html lang> in sync so all CSS/RTL behaviours
+  // follow the choice and accessibility/SEO sees the right language.
   useEffect(() => {
-    try { document.documentElement.setAttribute('dir', lang === 'ar' ? 'rtl' : 'ltr'); } catch {}
+    try {
+      document.documentElement.setAttribute('dir',  lang === 'ar' ? 'rtl' : 'ltr');
+      document.documentElement.setAttribute('lang', lang);
+    } catch {}
   }, [lang]);
 
   const dir = lang === 'ar' ? 'rtl' : 'ltr';
