@@ -2,6 +2,7 @@
 // settings (entered once); the request itself only carries amount + method.
 import { createAdminClient, createServerSupabaseClient } from '@/lib/supabase';
 import { decrypt } from '@/lib/encryption';
+import { notifyPayoutRequested } from '@/lib/adminNotify';
 
 export async function POST(req) {
   const auth = createServerSupabaseClient();
@@ -13,7 +14,7 @@ export async function POST(req) {
 
   const [{ data: creator }, { data: settings }] = await Promise.all([
     admin.from('creators')
-      .select('balance_kd, bank_name, account_holder, iban_encrypted')
+      .select('balance_kd, bank_name, account_holder, iban_encrypted, full_name, handle, email')
       .eq('id', user.id).maybeSingle(),
     admin.from('platform_settings').select('min_payout_kd, payouts_enabled').eq('id', 1).maybeSingle(),
   ]);
@@ -68,6 +69,17 @@ export async function POST(req) {
     console.error('[creator/payout]', error);
     return Response.json({ error: 'تعذّر إنشاء الطلب' }, { status: 500 });
   }
+
+  // Fire-and-forget: confirmation to creator + notification to admin.
+  // Helper swallows its own errors so a notification fault never breaks
+  // payout creation.
+  notifyPayoutRequested({
+    creatorEmail: creator.email || user.email,
+    fullName:     creator.full_name,
+    handle:       creator.handle,
+    amount:       amt,
+    bankName:     creator.bank_name,
+  }).catch((err) => console.error('[creator/payout] notify', err));
 
   return Response.json({ success: true });
 }
