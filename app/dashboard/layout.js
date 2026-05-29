@@ -3,6 +3,7 @@
 import { redirect } from 'next/navigation';
 import { createServerSupabaseClient, createAdminClient } from '@/lib/supabase';
 import DashboardSidebar from '@/components/creator/DashboardSidebar';
+import DashboardMobileChrome from '@/components/creator/DashboardMobileChrome';
 
 export const metadata = { title: 'لوحة التحكم — قهوة' };
 
@@ -25,7 +26,8 @@ export default async function DashboardLayout({ children }) {
 
   return (
     <div className="dash-bg min-h-screen text-white">
-      <div className="mx-auto max-w-6xl flex flex-col md:flex-row gap-4 p-4">
+      <DashboardMobileChrome creator={creator} />
+      <div className="mx-auto max-w-6xl flex flex-col md:flex-row gap-4 p-3 sm:p-4 pb-24 md:pb-4">
         <DashboardSidebar creator={creator} />
         <main className="flex-1 min-w-0">{children}</main>
       </div>

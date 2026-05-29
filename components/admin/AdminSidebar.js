@@ -7,7 +7,7 @@ import { useLang } from '@/components/LangProvider';
 export default function AdminSidebar({ admin }) {
   const { t } = useLang();
   return (
-    <aside className="dash-surface rounded-2xl border border-white/10 p-4 md:w-60 md:min-h-[calc(100vh-2rem)] flex md:flex-col justify-between gap-4">
+    <aside className="hidden md:flex dash-surface rounded-2xl border border-white/10 p-4 md:w-60 md:min-h-[calc(100vh-2rem)] flex-col justify-between gap-4">
       <div className="flex-1">
         <div className="flex items-start justify-between gap-2 px-2 mb-6">
           <div>

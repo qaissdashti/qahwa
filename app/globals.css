@@ -12,6 +12,11 @@
 
 * { box-sizing: border-box; }
 
+html, body {
+  /* No horizontal scrolling on any page (mobile audit). */
+  overflow-x: hidden;
+}
+
 body {
   background: var(--cream);
   color: var(--black);
@@ -20,6 +25,15 @@ body {
      Hardcoding direction here forced everything RTL even when the html
      attribute was ltr — leave it unset so the dir attribute cascades. */
 }
+
+/* iOS auto-zooms text inputs whose font-size is < 16px. Enforce ≥ 16px
+   on all inputs/textareas/selects globally so focusing on mobile never
+   triggers the unwanted zoom. */
+input, textarea, select { font-size: 16px; }
+
+/* Bottom tab bar / sticky bars: respect iOS safe area. */
+.safe-pb { padding-bottom: max(env(safe-area-inset-bottom), 0px); }
+.safe-pt { padding-top:    max(env(safe-area-inset-top),    0px); }
 
 /* Syne for headings */
 h1, h2, h3 { font-family: 'Syne', sans-serif; font-weight: 800; letter-spacing: -0.04em; }

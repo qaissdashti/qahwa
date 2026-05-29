@@ -64,7 +64,7 @@ export default function PlatformSettingsForm({ settings }) {
     <form onSubmit={save} className="grid gap-4 max-w-2xl">
       <div className={card}>
         <h2 className="text-lg">{t('admin.ps.feesLimits')}</h2>
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           {NUM_FIELDS.map(([k, lk]) => (
             <div key={k}>
               <label className={label}>{t(lk)}</label>

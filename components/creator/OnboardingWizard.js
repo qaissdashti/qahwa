@@ -204,7 +204,8 @@ export default function OnboardingWizard({ startStep = 1, initial = {}, authed =
         </h1>
         <p className="text-center text-black/55 font-medium mb-5">{t('onb.title')}</p>
 
-        {/* stepper */}
+        {/* stepper — on mobile (< sm) only the ACTIVE label is shown so
+            the labels don't truncate at 375px width */}
         <div className="flex items-center justify-between mb-6">
           {STEP_KEYS.map((key, i) => {
             const n = i + 1;
@@ -218,7 +219,8 @@ export default function OnboardingWizard({ startStep = 1, initial = {}, authed =
                   {done ? '✓' : n}
                 </div>
                 <span className={`text-[10px] mt-1 font-bold text-center px-1 truncate w-full
-                  ${active ? 'text-qahwa-purple' : 'text-black/40'}`}>{t(key)}</span>
+                  ${active ? 'text-qahwa-purple' : 'text-black/40'}
+                  ${active ? '' : 'hidden sm:block'}`}>{t(key)}</span>
               </div>
             );
           })}

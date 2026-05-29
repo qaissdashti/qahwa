@@ -138,7 +138,7 @@ export default function SettingsForm({ creator, maxPrice, amazingGlobal }) {
         <div className={card}>
           <h2 className="text-lg">{t('sset.bank')}</h2>
           <p className="text-xs text-white/50 font-medium">{t('sset.bankNote')}</p>
-          <div className="grid grid-cols-2 gap-2">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
             <div>
               <label className={label}>{t('sset.bankName')}</label>
               <input className={input} value={f.bank_name} onChange={set('bank_name')} placeholder={t('sset.bankNamePh')} />
@@ -162,7 +162,7 @@ export default function SettingsForm({ creator, maxPrice, amazingGlobal }) {
         {/* socials */}
         <div className={card}>
           <h2 className="text-lg">{t('sset.socials')}</h2>
-          <div className="grid grid-cols-2 gap-2">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
             {['instagram', 'twitter', 'youtube', 'tiktok'].map((sName) => (
               <input key={sName} className={`${input} font-num`} dir="ltr" placeholder={sName} value={f[sName]} onChange={set(sName)} />
             ))}
