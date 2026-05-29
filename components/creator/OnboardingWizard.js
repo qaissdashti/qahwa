@@ -12,6 +12,7 @@ import { useLang } from '@/components/LangProvider';
 import LangToggle from '@/components/LangToggle';
 import Spinner from '@/components/Spinner';
 import { xhrUpload } from '@/lib/xhrUpload';
+import { KUWAIT_BANKS, bankLabel } from '@/lib/kuwaitBanks';
 
 const STEP_KEYS = ['onb.step.basic', 'onb.step.bank', 'onb.step.phone', 'onb.step.identity', 'onb.step.review'];
 const EMOJI_PRESETS = ['☕', '🎨', '🎙️', '📚', '🎮', '🎵', '✨', '🌟'];
@@ -65,11 +66,11 @@ export default function OnboardingWizard({ startStep = 1, initial = {}, authed =
   const [avatarUrl, setAvatarUrl]     = useState(c0.avatar_url || null);
   const [avatarFile, setAvatarFile]   = useState(null);
 
-  // Step 2 — bank
+  // Step 2 — bank. Payout method is fixed to bank_transfer for now (the
+  // KNET-send option was removed since we don't actually support it yet).
   const [bankName, setBankName]           = useState(c0.bank_name || '');
   const [accountHolder, setAccountHolder] = useState(c0.account_holder || '');
   const [iban, setIban]                   = useState('');
-  const [method, setMethod]               = useState('bank_transfer');
   const ibanMasked = c0.iban_masked || null;
 
   // Step 3 — phone OTP
@@ -244,8 +245,7 @@ export default function OnboardingWizard({ startStep = 1, initial = {}, authed =
           {step === 2 && (
             <Step2 t={t} bankName={bankName} setBankName={setBankName}
                    accountHolder={accountHolder} setAccountHolder={setAccountHolder}
-                   iban={iban} setIban={setIban} ibanMasked={ibanMasked}
-                   method={method} setMethod={setMethod} />
+                   iban={iban} setIban={setIban} ibanMasked={ibanMasked} />
           )}
           {step === 3 && (
             <Step3 t={t} phone={phone} setPhone={setPhone} otpSent={otpSent}
@@ -390,14 +390,19 @@ function Step1({ t, fullName, setFullName, handle, setHandle, cleanHandle, email
   );
 }
 
-function Step2({ t, bankName, setBankName, accountHolder, setAccountHolder, iban, setIban, ibanMasked, method, setMethod }) {
+function Step2({ t, bankName, setBankName, accountHolder, setAccountHolder, iban, setIban, ibanMasked }) {
   return (
     <>
       <h2 className="text-xl">{t('onb.step.bank')}</h2>
       <p className="text-sm text-black/55 font-medium">{t('onb.s2.subtitle')}</p>
       <div>
         <label className="q-label">{t('sset.bankName')}</label>
-        <input className="q-input" value={bankName} onChange={(e) => setBankName(e.target.value)} placeholder={t('sset.bankNamePh')} />
+        <select className="q-input" value={bankName} onChange={(e) => setBankName(e.target.value)}>
+          <option value="">{t('sset.bankNamePh')}</option>
+          {KUWAIT_BANKS.map((b) => (
+            <option key={b.en} value={b.value}>{bankLabel(b)}</option>
+          ))}
+        </select>
       </div>
       <div>
         <label className="q-label">{t('sset.accountHolder')}</label>
@@ -411,18 +416,6 @@ function Step2({ t, bankName, setBankName, accountHolder, setAccountHolder, iban
         <input className="q-input font-num" dir="ltr" value={iban}
                onChange={(e) => setIban(e.target.value.toUpperCase())}
                placeholder={ibanMasked ? t('sset.ibanPlaceholderSaved') : t('sset.ibanPlaceholderEmpty')} />
-      </div>
-      <div>
-        <label className="q-label">{t('onb.s2.methodLabel')}</label>
-        <div className="grid grid-cols-2 gap-2">
-          {[['bank_transfer', 'po.method.bank'], ['knet_send', 'po.method.knet']].map(([v, k]) => (
-            <button key={v} type="button" onClick={() => setMethod(v)}
-              className={`q-btn border-2 border-qahwa-black font-bold rounded-xl py-3 ${method === v ? 'bg-qahwa-purple text-white' : 'bg-white text-qahwa-black'}`}
-              style={{ boxShadow: method === v ? '3px 3px 0 #0D0D0D' : 'none' }}>
-              {t(k)}
-            </button>
-          ))}
-        </div>
       </div>
     </>
   );
