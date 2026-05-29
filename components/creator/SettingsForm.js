@@ -6,6 +6,7 @@ import { useLang } from '@/components/LangProvider';
 import Spinner from '@/components/Spinner';
 import { xhrUpload } from '@/lib/xhrUpload';
 import { KUWAIT_BANKS, bankLabel } from '@/lib/kuwaitBanks';
+import { COFFEE_PRICE_OPTIONS } from '@/lib/coffeePrices';
 
 // Flewd palette (mirrors the live tipping page) for the preview panel
 const F = { bg: '#F5F0FF', card: '#FFFFFF', ink: '#0D0D0D', accent: '#C8F55A', purple: '#7B2FBE', violet: '#9B4DCA', soft: '#EDE4FB' };
@@ -123,8 +124,22 @@ export default function SettingsForm({ creator, maxPrice, amazingGlobal }) {
         <div className={card}>
           <h2 className="text-lg">{t('sset.pricing')}</h2>
           <div>
-            <label className={label}>{t('sset.cupPrice', { max: maxPrice })}</label>
-            <input className={`${input} font-num`} dir="ltr" inputMode="decimal" type="number" step="0.1" min="0.1" max={maxPrice} value={f.coffee_price_kd} onChange={set('coffee_price_kd')} />
+            <label className={label}>{t('sset.cupPricePick')}</label>
+            <div className="flex flex-wrap gap-1.5" role="radiogroup" aria-label={t('sset.cupPricePick')}>
+              {COFFEE_PRICE_OPTIONS.map((p) => {
+                const selected = Number(f.coffee_price_kd) === p;
+                return (
+                  <button key={p} type="button" role="radio" aria-checked={selected}
+                    onClick={() => setF((prev) => ({ ...prev, coffee_price_kd: p }))}
+                    className={`px-3.5 py-2 rounded-xl border-2 font-bold font-num text-sm transition-all
+                      ${selected
+                        ? 'bg-qahwa-purple text-white border-qahwa-purple'
+                        : 'bg-black/40 text-white border-white/15 hover:border-white/40'}`}>
+                    {p.toFixed(1)} <span className="opacity-70 text-xs">KD</span>
+                  </button>
+                );
+              })}
+            </div>
           </div>
           {amazingGlobal && (
             <>

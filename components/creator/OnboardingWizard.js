@@ -13,6 +13,7 @@ import LangToggle from '@/components/LangToggle';
 import Spinner from '@/components/Spinner';
 import { xhrUpload } from '@/lib/xhrUpload';
 import { KUWAIT_BANKS, bankLabel } from '@/lib/kuwaitBanks';
+import { COFFEE_PRICE_OPTIONS } from '@/lib/coffeePrices';
 
 const STEP_KEYS = ['onb.step.basic', 'onb.step.bank', 'onb.step.phone', 'onb.step.identity', 'onb.step.review'];
 const EMOJI_PRESETS = ['☕', '🎨', '🎙️', '📚', '🎮', '🎵', '✨', '🌟'];
@@ -60,7 +61,9 @@ export default function OnboardingWizard({ startStep = 1, initial = {}, authed =
   const [handle, setHandle]     = useState(c0.handle || '');
   const [email, setEmail]       = useState('');
   const [password, setPassword] = useState('');
-  const [coffeePrice, setCoffeePrice] = useState(String(c0.coffee_price_kd ?? '1'));
+  // Cup price is now picked from a fixed chip set (0.5-KD multiples).
+  // Stored as a Number so the chip selected-state comparison is exact.
+  const [coffeePrice, setCoffeePrice] = useState(Number(c0.coffee_price_kd ?? 1));
   const [bio, setBio]           = useState(c0.bio || '');
   const [avatarEmoji, setAvatarEmoji] = useState(c0.avatar_emoji || '☕');
   const [avatarUrl, setAvatarUrl]     = useState(c0.avatar_url || null);
@@ -96,7 +99,9 @@ export default function OnboardingWizard({ startStep = 1, initial = {}, authed =
       if (!fullName.trim())       throw new Error(t('auth.signup.errName'));
       if (cleanHandle.length < 3) throw new Error(t('auth.signup.errHandle'));
       const price = Number(coffeePrice);
-      if (!(price > 0))           throw new Error('Coffee price must be > 0');
+      if (!COFFEE_PRICE_OPTIONS.includes(Number(price.toFixed(1)))) {
+        throw new Error(t('sset.priceMustBeChip'));
+      }
 
       if (!authed) {
         if (password.length < 8)  throw new Error(t('auth.signup.errPassword'));
@@ -376,9 +381,21 @@ function Step1({ t, fullName, setFullName, handle, setHandle, cleanHandle, email
       )}
 
       <div>
-        <label className="q-label">{t('sset.cupPrice', { max: 10 })}</label>
-        <input className="q-input font-num" dir="ltr" type="number" step="0.1" min="0.1" max="10"
-               value={coffeePrice} onChange={(e) => setCoffeePrice(e.target.value)} />
+        <label className="q-label">{t('sset.cupPricePick')}</label>
+        <div className="flex flex-wrap gap-1.5" role="radiogroup" aria-label={t('sset.cupPricePick')}>
+          {COFFEE_PRICE_OPTIONS.map((p) => {
+            const selected = Number(coffeePrice) === p;
+            return (
+              <button key={p} type="button" role="radio" aria-checked={selected}
+                onClick={() => setCoffeePrice(p)}
+                className={`px-3.5 py-2 rounded-xl border-2 border-qahwa-black font-bold font-num text-sm transition-all
+                  ${selected ? 'bg-qahwa-purple text-white' : 'bg-white text-qahwa-black'}`}
+                style={{ boxShadow: selected ? '3px 3px 0 #0D0D0D' : 'none' }}>
+                {p.toFixed(1)} <span className="opacity-70 text-xs">KD</span>
+              </button>
+            );
+          })}
+        </div>
       </div>
 
       <div>

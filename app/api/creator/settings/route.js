@@ -1,6 +1,7 @@
 // Updates the authenticated creator's public-page settings + bank details.
 import { createAdminClient, createServerSupabaseClient } from '@/lib/supabase';
 import { encrypt, maskIban } from '@/lib/encryption';
+import { COFFEE_PRICE_OPTIONS, isAllowedCoffeePrice } from '@/lib/coffeePrices';
 
 const HEX = /^#[0-9a-fA-F]{6}$/;
 // IBAN format intentionally not validated — accept any non-empty text for
@@ -15,10 +16,10 @@ export async function POST(req) {
   const body = await req.json();
   const admin = createAdminClient();
 
-  // coffee price is bounded by the platform max
-  const { data: settings } = await admin
-    .from('platform_settings').select('max_coffee_price_kd').eq('id', 1).maybeSingle();
-  const maxPrice = Number(settings?.max_coffee_price_kd ?? 10);
+  // Cup price is now hard-restricted to a fixed set of 0.5-KD multiples
+  // (see lib/coffeePrices.js). The legacy platform_settings.max_coffee_price_kd
+  // is no longer consulted here — every allowed value is below that ceiling
+  // by construction.
 
   const update = {};
 
@@ -33,11 +34,15 @@ export async function POST(req) {
   }
 
   if (body.coffee_price_kd !== undefined) {
-    const price = Number(body.coffee_price_kd);
-    if (!(price > 0) || price > maxPrice) {
-      return Response.json({ error: `سعر القهوة لازم بين 0 و ${maxPrice} د.ك` }, { status: 400 });
+    if (!isAllowedCoffeePrice(body.coffee_price_kd)) {
+      return Response.json({
+        error: `Coffee price must be one of ${COFFEE_PRICE_OPTIONS.map((p) => p.toFixed(1)).join(', ')} KD`,
+      }, { status: 400 });
     }
-    update.coffee_price_kd = Number(price.toFixed(3));
+    // Snap to the canonical 1dp value so the DB never holds 1.500000001-style
+    // floats coming back from JSON. The set is hard-restricted to multiples
+    // of 0.5 — store with 1dp precision instead of 3.
+    update.coffee_price_kd = Number(Number(body.coffee_price_kd).toFixed(1));
   }
 
   for (const themeKey of ['theme_bg', 'theme_text']) {
