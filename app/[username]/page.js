@@ -9,6 +9,19 @@ import { notFound } from 'next/navigation';
 import TippingClient from '@/components/tipper/TippingClient';
 import PendingApprovalPage from '@/components/tipper/PendingApprovalPage';
 
+// Build the ISO timestamp for "today, 00:00 Asia/Kuwait" (UTC+3, no DST).
+// We add 3h to UTC to read the Kuwait local date, then emit that date at
+// midnight with the +03:00 offset — Postgres parses it without conversion
+// ambiguity. Used to count tips paid since today's Kuwait midnight for
+// the social-proof popup.
+function kuwaitMidnightIso() {
+  const k = new Date(Date.now() + 3 * 60 * 60 * 1000);
+  const y = k.getUTCFullYear();
+  const m = String(k.getUTCMonth() + 1).padStart(2, '0');
+  const d = String(k.getUTCDate()).padStart(2, '0');
+  return `${y}-${m}-${d}T00:00:00+03:00`;
+}
+
 export async function generateMetadata({ params }) {
   const supabase = createAdminClient();
   const { data: creator } = await supabase
@@ -74,19 +87,34 @@ export default async function TippingPage({ params, searchParams }) {
     );
   }
 
-  const { data: recentTips } = await supabase
-    .from('tips')
-    .select('supporter_name, cups, is_amazing, gross_amount_kd, created_at')
-    .eq('creator_id', creator.id)
-    .eq('status', 'paid')
-    .order('paid_at', { ascending: false })
-    .limit(5);
+  // Recent tips list + today's-count for the social-proof popup,
+  // fired in parallel — both read the same `tips` table for this creator.
+  const sinceKuwaitMidnight = kuwaitMidnightIso();
+  const [
+    { data: recentTips },
+    { count: todayCount },
+  ] = await Promise.all([
+    supabase
+      .from('tips')
+      .select('supporter_name, cups, is_amazing, gross_amount_kd, created_at')
+      .eq('creator_id', creator.id)
+      .eq('status', 'paid')
+      .order('paid_at', { ascending: false })
+      .limit(5),
+    supabase
+      .from('tips')
+      .select('id', { count: 'exact', head: true })
+      .eq('creator_id', creator.id)
+      .eq('status', 'paid')
+      .gte('paid_at', sinceKuwaitMidnight),
+  ]);
 
   return (
     <TippingClient
       creator={creator}
       settings={settings}
       recentTips={recentTips || []}
+      todayCount={todayCount || 0}
       showSuccess={searchParams?.success === '1'}
     />
   );

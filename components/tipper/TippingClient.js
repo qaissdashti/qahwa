@@ -40,6 +40,8 @@ const STR = {
     supporterDefault: 'داعم',
     boughtAmazing: 'أرسل مبلغًا حرًا',
     bought: (n) => `اشترى ${n} ${n === 1 ? 'قهوة' : 'قهوات'}`,
+    todayProof: (n, name) => `☕ اشترى ${n} ${n === 2 ? 'شخصان' : 'أشخاص'} اليوم قهوة لـ ${name}!`,
+    closeAria: 'إغلاق',
     successTitle: 'وصلت قهوتك!',
     successBody: (n) => `ستتلقى ردًا شخصيًا من ${n} قريباً 🤍`,
     sendAnother: '☕ أرسل قهوة أخرى',
@@ -62,6 +64,8 @@ const STR = {
     supporterDefault: 'Someone',
     boughtAmazing: 'sent a custom amount',
     bought: (n) => `bought ${n} ${n === 1 ? 'coffee' : 'coffees'}`,
+    todayProof: (n, name) => `☕ ${n} people have bought ${name} a coffee today!`,
+    closeAria: 'Close',
     successTitle: 'Your coffee is on its way!',
     successBody: (n) => `You'll get a personal reply from ${n} soon 🤍`,
     sendAnother: '☕ Send another coffee',
@@ -94,7 +98,59 @@ function Confetti() {
 // canonical fmtKd from lib/i18n.js.
 const fmtKd1 = (v) => Number(v || 0).toFixed(1);
 
-export default function TippingClient({ creator, settings, recentTips, showSuccess }) {
+// ─────────────────────────────────────────────────────────────
+// Social-proof toast — animates in at the top of the page on
+// load, auto-dismisses after 4s, has an X to close early.
+// Flewd palette: lavender bg, purple border, Syne bold headline.
+// Render gate (count >= 2) lives in the parent so this stays dumb.
+// ─────────────────────────────────────────────────────────────
+function SocialProofToast({ message, closeAria, dir }) {
+  const [open, setOpen] = useState(true);
+  const [entered, setEntered] = useState(false);
+
+  useEffect(() => {
+    // Trigger slide-in on the next frame so the initial transform
+    // commits before transitioning to the final state.
+    const r = requestAnimationFrame(() => setEntered(true));
+    const t = setTimeout(() => setOpen(false), 4000);
+    return () => { cancelAnimationFrame(r); clearTimeout(t); };
+  }, []);
+
+  if (!open) return null;
+  return (
+    <div role="status" aria-live="polite" dir={dir}
+      style={{
+        position: 'fixed', top: 12, left: '50%',
+        transform: `translateX(-50%) translateY(${entered ? '0' : '-120%'})`,
+        opacity: entered ? 1 : 0,
+        transition: 'transform .35s cubic-bezier(.2,.9,.3,1.2), opacity .25s',
+        background: '#F5F0FF',
+        border: '2px solid #7B2FBE',
+        color: '#0D0D0D',
+        borderRadius: 14,
+        boxShadow: '4px 4px 0 #0D0D0D',
+        padding: '10px 14px',
+        display: 'flex', alignItems: 'center', gap: 10,
+        maxWidth: 'min(92vw, 420px)',
+        fontFamily: "'Syne', sans-serif",
+        fontWeight: 800,
+        fontSize: 13.5,
+        letterSpacing: '-0.01em',
+        lineHeight: 1.35,
+        zIndex: 50,
+      }}>
+      <span style={{ flex: 1 }}>{message}</span>
+      <button type="button" onClick={() => setOpen(false)} aria-label={closeAria}
+        style={{
+          background: 'transparent', border: 'none', cursor: 'pointer',
+          color: '#7B2FBE', fontWeight: 900, fontSize: 18, lineHeight: 1,
+          padding: '0 4px',
+        }}>×</button>
+    </div>
+  );
+}
+
+export default function TippingClient({ creator, settings, recentTips, todayCount = 0, showSuccess }) {
   const [lang, setLang]                 = useState('ar');
 
   // Persist the supporter's language across the payment redirect (same origin).
@@ -217,6 +273,17 @@ export default function TippingClient({ creator, settings, recentTips, showSucce
 
   return (
     <div style={s.page} dir={dir}>
+      {/* Daily social-proof toast — only shown when today's tip count
+          is 2+ (i.e. the 3rd+ visitor sees the warmth). Auto-dismisses
+          after 4s; key={todayCount} resets state on prop change. */}
+      {todayCount >= 2 && (
+        <SocialProofToast
+          key={`proof-${todayCount}-${lang}`}
+          message={t.todayProof(todayCount, creator.full_name)}
+          closeAria={t.closeAria}
+          dir={dir}
+        />
+      )}
       <div style={s.card}>
         <button style={s.langBtn} onClick={toggleLang} aria-label={t.otherName}>{t.other}</button>
 
