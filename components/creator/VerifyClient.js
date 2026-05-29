@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useLang } from '@/components/LangProvider';
 import LangToggle from '@/components/LangToggle';
+import Spinner from '@/components/Spinner';
 
 export default function VerifyClient({ fullName, initialStep, phoneVerified, civilDone }) {
   const router = useRouter();
@@ -119,12 +120,14 @@ export default function VerifyClient({ fullName, initialStep, phoneVerified, civ
               )}
               {error && <p className="q-error">{error}</p>}
               {!otpSent
-                ? <button className="q-btn-accent w-full" onClick={sendOtp} disabled={loading || phone.length < 8}>
-                    {loading ? t('common.loading') : t('auth.verify.phone.send')}
+                ? <button className="q-btn-accent w-full inline-flex items-center justify-center gap-2" onClick={sendOtp} disabled={loading || phone.length < 8}>
+                    {loading && <Spinner size={16} />}
+                    {loading ? t('common.processing') : t('auth.verify.phone.send')}
                   </button>
                 : <div className="flex gap-2">
-                    <button className="q-btn-accent flex-1" onClick={verifyOtp} disabled={loading || code.length < 4}>
-                      {loading ? t('common.loading') : t('auth.verify.confirm')}
+                    <button className="q-btn-accent flex-1 inline-flex items-center justify-center gap-2" onClick={verifyOtp} disabled={loading || code.length < 4}>
+                      {loading && <Spinner size={16} />}
+                      {loading ? t('common.processing') : t('auth.verify.confirm')}
                     </button>
                     <button className="q-btn-white" onClick={() => { setOtpSent(false); setCode(''); }} disabled={loading}>
                       {t('auth.verify.changeNum')}
@@ -144,8 +147,9 @@ export default function VerifyClient({ fullName, initialStep, phoneVerified, civ
                        placeholder="290000000000" inputMode="numeric" />
               </div>
               {error && <p className="q-error">{error}</p>}
-              <button className="q-btn-accent w-full" onClick={saveCivil} disabled={loading || civilId.length !== 12}>
-                {loading ? t('common.loading') : t('auth.verify.civil.save')}
+              <button className="q-btn-accent w-full inline-flex items-center justify-center gap-2" onClick={saveCivil} disabled={loading || civilId.length !== 12}>
+                {loading && <Spinner size={16} />}
+                {loading ? t('common.processing') : t('auth.verify.civil.save')}
               </button>
             </div>
           )}
@@ -161,8 +165,9 @@ export default function VerifyClient({ fullName, initialStep, phoneVerified, civ
                 <span className="text-sm font-bold">{selfie ? selfie.name : t('auth.verify.selfie.pick')}</span>
               </label>
               {error && <p className="q-error">{error}</p>}
-              <button className="q-btn-accent w-full" onClick={submitSelfie} disabled={loading || !selfie}>
-                {loading ? t('common.loading') : t('auth.verify.selfie.submit')}
+              <button className="q-btn-accent w-full inline-flex items-center justify-center gap-2" onClick={submitSelfie} disabled={loading || !selfie}>
+                {loading && <Spinner size={16} />}
+                {loading ? t('common.processing') : t('auth.verify.selfie.submit')}
               </button>
             </div>
           )}

@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useLang } from '@/components/LangProvider';
 import { fmtKd } from '@/lib/i18n';
+import Spinner from '@/components/Spinner';
 
 const VER_COLOR = {
   approved:     'text-qahwa-accent',
@@ -44,8 +45,9 @@ export default function CreatorRow({ creator }) {
       <td className="px-4 py-3 font-num text-white/60">{fmtKd(creator.total_earned_kd)}</td>
       <td className="px-4 py-3">
         <button onClick={toggle} disabled={busy}
-          className={`text-xs font-bold rounded-lg px-3 py-1.5 ${disabled ? 'bg-qahwa-accent text-qahwa-black' : 'bg-qahwa-red/20 text-qahwa-red border border-qahwa-red/40'}`}>
-          {busy ? t('common.loading') : disabled ? t('admin.cr.enable') : t('admin.cr.disable')}
+          className={`text-xs font-bold rounded-lg px-3 py-1.5 inline-flex items-center gap-1.5 min-h-[32px] ${disabled ? 'bg-qahwa-accent text-qahwa-black' : 'bg-qahwa-red/20 text-qahwa-red border border-qahwa-red/40'}`}>
+          {busy && <Spinner size={12} />}
+          {busy ? t('common.processing') : disabled ? t('admin.cr.enable') : t('admin.cr.disable')}
         </button>
       </td>
     </tr>

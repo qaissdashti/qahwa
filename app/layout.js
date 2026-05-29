@@ -1,5 +1,7 @@
+import { Suspense } from 'react';
 import './globals.css';
 import LangProvider from '@/components/LangProvider';
+import NavigationProgress from '@/components/NavigationProgress';
 
 export const metadata = {
   title: 'قهوة — Qahwa',
@@ -26,6 +28,7 @@ export default function RootLayout({ children }) {
         <script dangerouslySetInnerHTML={{ __html: SET_DIR_SCRIPT }} />
       </head>
       <body>
+        <Suspense fallback={null}><NavigationProgress /></Suspense>
         <LangProvider><>{children}</></LangProvider>
       </body>
     </html>

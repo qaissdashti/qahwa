@@ -3,6 +3,8 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useLang } from '@/components/LangProvider';
+import Spinner from '@/components/Spinner';
+import { xhrUpload } from '@/lib/xhrUpload';
 
 // Flewd palette (mirrors the live tipping page) for the preview panel
 const F = { bg: '#F5F0FF', card: '#FFFFFF', ink: '#0D0D0D', accent: '#C8F55A', purple: '#7B2FBE', violet: '#9B4DCA', soft: '#EDE4FB' };
@@ -31,21 +33,20 @@ export default function SettingsForm({ creator, maxPrice, amazingGlobal }) {
   const [msg, setMsg]         = useState(null);
   const [avatarUrl, setAvatarUrl] = useState(creator?.avatar_url || null);
   const [avatarBusy, setAvatarBusy] = useState(false);
+  const [avatarPct, setAvatarPct] = useState(0);
 
   async function uploadAvatar(e) {
     const file = e.target.files?.[0];
     if (!file) return;
-    setMsg(null); setAvatarBusy(true);
+    setMsg(null); setAvatarBusy(true); setAvatarPct(0);
     try {
       const fd = new FormData();
       fd.append('avatar', file);
-      const res = await fetch('/api/creator/avatar', { method: 'POST', body: fd });
-      const json = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(json.error || t('sset.uploadFail'));
+      const json = await xhrUpload('/api/creator/avatar', fd, (p) => setAvatarPct(p));
       setAvatarUrl(json.url);
       router.refresh();
-    } catch (err) { setMsg({ type: 'err', text: err.message }); }
-    finally { setAvatarBusy(false); }
+    } catch (err) { setMsg({ type: 'err', text: err.message || t('sset.uploadFail') }); }
+    finally { setAvatarBusy(false); setAvatarPct(0); }
   }
 
   const set = (k) => (e) => {
@@ -91,11 +92,14 @@ export default function SettingsForm({ creator, maxPrice, amazingGlobal }) {
                 ? <img src={avatarUrl} alt="avatar" className="w-full h-full object-cover" />
                 : <span>{f.avatar_emoji || '☕'}</span>}
             </div>
-            <label className="text-sm font-bold rounded-xl bg-white/5 hover:bg-white/10 px-4 py-2 cursor-pointer">
-              {avatarBusy ? t('sset.uploading') : t('sset.uploadAvatar')}
+            <label className="text-sm font-bold rounded-xl bg-white/5 hover:bg-white/10 px-4 py-2 cursor-pointer inline-flex items-center gap-2">
+              {avatarBusy && <Spinner size={14} />}
+              {avatarBusy
+                ? (avatarPct > 0 ? t('common.uploading', { pct: avatarPct }) : t('common.processing'))
+                : t('sset.uploadAvatar')}
               <input type="file" accept="image/jpeg,image/png,image/webp" className="hidden" onChange={uploadAvatar} disabled={avatarBusy} />
             </label>
-            {avatarUrl && <span className="text-xs text-white/40">{t('sset.avatarUsesImage')}</span>}
+            {avatarUrl && !avatarBusy && <span className="text-xs text-white/40">{t('sset.avatarUsesImage')}</span>}
           </div>
           <div className="flex gap-3">
             <div className="w-20">
@@ -170,7 +174,10 @@ export default function SettingsForm({ creator, maxPrice, amazingGlobal }) {
         </div>
 
         <div className="flex items-center gap-3">
-          <button className="q-btn-accent" disabled={loading}>{loading ? t('common.loading') : t('common.saveChanges')}</button>
+          <button className="q-btn-accent inline-flex items-center justify-center gap-2 min-w-[140px]" disabled={loading}>
+            {loading && <Spinner size={16} />}
+            {loading ? t('common.processing') : t('common.saveChanges')}
+          </button>
           {msg && <span className={`font-bold text-sm ${msg.type === 'ok' ? 'text-qahwa-accent' : 'text-qahwa-red'}`}>{msg.text}</span>}
         </div>
       </form>

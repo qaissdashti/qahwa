@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { createClient } from '@/lib/supabase-browser';
 import { useLang } from '@/components/LangProvider';
 import LangToggle from '@/components/LangToggle';
+import Spinner from '@/components/Spinner';
 
 export default function AdminLogin() {
   const supabase = createClient();
@@ -49,7 +50,10 @@ export default function AdminLogin() {
           <input className="w-full bg-black/40 border border-white/15 rounded-xl px-3 py-2.5 outline-none focus:border-qahwa-accent font-num"
                  type="password" placeholder="••••••••" value={password} onChange={(e) => setPassword(e.target.value)} />
           {error && <p className="text-qahwa-red text-sm font-bold">{error}</p>}
-          <button className="q-btn-accent w-full" disabled={loading}>{loading ? t('common.loading') : t('admin.signin')}</button>
+          <button className="q-btn-accent w-full inline-flex items-center justify-center gap-2" disabled={loading}>
+            {loading && <Spinner size={16} />}
+            {loading ? t('common.processing') : t('admin.signin')}
+          </button>
         </form>
       </div>
     </main>

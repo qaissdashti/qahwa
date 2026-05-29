@@ -10,6 +10,8 @@ import Link from 'next/link';
 import { createClient } from '@/lib/supabase-browser';
 import { useLang } from '@/components/LangProvider';
 import LangToggle from '@/components/LangToggle';
+import Spinner from '@/components/Spinner';
+import { xhrUpload } from '@/lib/xhrUpload';
 
 const STEP_KEYS = ['onb.step.basic', 'onb.step.bank', 'onb.step.phone', 'onb.step.identity', 'onb.step.review'];
 const EMOJI_PRESETS = ['☕', '🎨', '🎙️', '📚', '🎮', '🎵', '✨', '🌟'];
@@ -80,6 +82,10 @@ export default function OnboardingWizard({ startStep = 1, initial = {}, authed =
   const [civilId, setCivilId] = useState('');
   const [selfie, setSelfie]   = useState(null);
 
+  // Live upload progress (0–100). Drives the button label when an image
+  // is in flight; reset to 0 when idle.
+  const [uploadPct, setUploadPct] = useState(0);
+
   const cleanHandle = handle.toLowerCase().replace(/[^a-z0-9_]/g, '');
 
   // ── step handlers ───────────────────────────────────────────
@@ -128,14 +134,13 @@ export default function OnboardingWizard({ startStep = 1, initial = {}, authed =
 
       if (avatarFile) {
         const fd = new FormData(); fd.append('avatar', avatarFile);
-        const res = await fetch('/api/creator/avatar', { method: 'POST', body: fd });
-        const j = await res.json().catch(() => ({}));
-        if (!res.ok) throw new Error(j.error || t('sset.uploadFail'));
+        const j = await xhrUpload('/api/creator/avatar', fd, (pct) => setUploadPct(pct))
+          .catch((e) => { throw new Error(e.message || t('sset.uploadFail')); });
         setAvatarUrl(j.url);
       }
       setStep(2);
     } catch (e) { setErr(e.message); }
-    finally { setBusy(false); }
+    finally { setBusy(false); setUploadPct(0); }
   }
 
   async function submitStep2() {
@@ -183,12 +188,11 @@ export default function OnboardingWizard({ startStep = 1, initial = {}, authed =
       if (!selfie) throw new Error(t('auth.verify.selfie.noFile'));
       await postJson('/api/verify/civil-id', { civilId });
       const fd = new FormData(); fd.append('selfie', selfie);
-      const res = await fetch('/api/verify/selfie', { method: 'POST', body: fd });
-      const j = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(j.error || t('common.somethingWrong'));
+      await xhrUpload('/api/verify/selfie', fd, (pct) => setUploadPct(pct))
+        .catch((e) => { throw new Error(e.message || t('common.somethingWrong')); });
       setStep(5);
     } catch (e) { setErr(e.message); }
-    finally { setBusy(false); }
+    finally { setBusy(false); setUploadPct(0); }
   }
 
   // ── render ──────────────────────────────────────────────────
@@ -262,18 +266,18 @@ export default function OnboardingWizard({ startStep = 1, initial = {}, authed =
 
           <div className="flex items-center gap-2 justify-between pt-2">
             <span className="text-xs text-black/40">{step < 5 ? t('onb.savedAuto') : ''}</span>
-            {step === 1 && <button className="q-btn-accent" onClick={submitStep1} disabled={busy}>{busy ? t('common.loading') : t('onb.next')}</button>}
-            {step === 2 && <button className="q-btn-accent" onClick={submitStep2} disabled={busy}>{busy ? t('common.loading') : t('onb.next')}</button>}
+            {step === 1 && <WizardBtn busy={busy} pct={uploadPct} onClick={submitStep1} t={t} label={t('onb.next')} />}
+            {step === 2 && <WizardBtn busy={busy} onClick={submitStep2} t={t} label={t('onb.next')} />}
             {step === 3 && !whatsappOk && (
-              <button className="q-btn-accent" onClick={() => setStep(4)} disabled={busy}>{t('onb.s3.skip')}</button>
+              <WizardBtn busy={busy} onClick={() => setStep(4)} t={t} label={t('onb.s3.skip')} />
             )}
             {step === 3 && whatsappOk && !otpSent && (
-              <button className="q-btn-accent" onClick={sendOtp} disabled={busy || !phone}>{busy ? t('common.loading') : t('auth.verify.phone.send')}</button>
+              <WizardBtn busy={busy} disabled={!phone} onClick={sendOtp} t={t} label={t('auth.verify.phone.send')} />
             )}
             {step === 3 && whatsappOk && otpSent && (
-              <button className="q-btn-accent" onClick={verifyOtp} disabled={busy || code.length < 6}>{busy ? t('common.loading') : t('auth.verify.confirm')}</button>
+              <WizardBtn busy={busy} disabled={code.length < 6} onClick={verifyOtp} t={t} label={t('auth.verify.confirm')} />
             )}
-            {step === 4 && <button className="q-btn-accent" onClick={submitStep4} disabled={busy}>{busy ? t('common.loading') : t('onb.next')}</button>}
+            {step === 4 && <WizardBtn busy={busy} pct={uploadPct} onClick={submitStep4} t={t} label={t('onb.next')} />}
             {step === 5 && (
               <Link href={`/${cleanHandle || c0.handle || ''}`} className="q-btn-accent">{t('onb.s5.viewPage')}</Link>
             )}
@@ -287,6 +291,22 @@ export default function OnboardingWizard({ startStep = 1, initial = {}, authed =
         )}
       </div>
     </main>
+  );
+}
+
+// Shared wizard CTA button — Spinner + smart label (idle / processing /
+// uploading X%). Stays disabled while busy so a quick double-tap won't
+// fire the handler twice.
+function WizardBtn({ busy, disabled, pct = 0, onClick, t, label }) {
+  return (
+    <button type="button" onClick={onClick}
+      disabled={busy || disabled}
+      className="q-btn-accent inline-flex items-center justify-center gap-2 min-w-[120px]">
+      {busy && <Spinner size={16} />}
+      {busy
+        ? (pct > 0 ? t('common.uploading', { pct }) : t('common.processing'))
+        : label}
+    </button>
   );
 }
 

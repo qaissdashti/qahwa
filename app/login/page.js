@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { createClient } from '@/lib/supabase-browser';
 import { useLang } from '@/components/LangProvider';
 import LangToggle from '@/components/LangToggle';
+import Spinner from '@/components/Spinner';
 
 function LoginForm() {
   const params = useSearchParams();
@@ -75,8 +76,9 @@ function LoginForm() {
                      autoComplete="current-password" />
             </div>
             {error && <p className="q-error">{error}</p>}
-            <button className="q-btn-accent w-full text-lg py-4" disabled={loading}>
-              {loading ? t('common.loading') : t('auth.login.submit')}
+            <button className="q-btn-accent w-full text-lg py-4 inline-flex items-center justify-center gap-2" disabled={loading}>
+              {loading && <Spinner size={18} />}
+              {loading ? t('common.processing') : t('auth.login.submit')}
             </button>
           </form>
           <p className="text-center text-sm text-black/60 mt-5 font-medium">

@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useLang } from '@/components/LangProvider';
+import Spinner from '@/components/Spinner';
 
 const NUM_FIELDS = [
   ['platform_fee_pct',    'admin.ps.platformFee'],
@@ -93,7 +94,10 @@ export default function PlatformSettingsForm({ settings }) {
       </div>
 
       <div className="flex items-center gap-3">
-        <button className="q-btn-accent" disabled={loading}>{loading ? t('common.loading') : t('common.save')}</button>
+        <button className="q-btn-accent inline-flex items-center justify-center gap-2 min-w-[120px]" disabled={loading}>
+          {loading && <Spinner size={16} />}
+          {loading ? t('common.processing') : t('common.save')}
+        </button>
         {msg && <span className={`font-bold text-sm ${msg.type === 'ok' ? 'text-qahwa-accent' : 'text-qahwa-red'}`}>{msg.text}</span>}
       </div>
     </form>

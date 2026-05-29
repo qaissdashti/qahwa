@@ -4,6 +4,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useLang } from '@/components/LangProvider';
+import Spinner from '@/components/Spinner';
 
 export default function PayoutForm({
   balance, minPayout, payoutsEnabled, hasPending,
@@ -94,8 +95,9 @@ export default function PayoutForm({
         <p className="q-error">{t('pof.minErr', { min: minPayout })}</p>}
       {error && <p className="q-error">{error}</p>}
 
-      <button className="q-btn-black w-full" disabled={disabled || loading}>
-        {loading ? t('common.loading') : t('pof.submit')}
+      <button className="q-btn-black w-full inline-flex items-center justify-center gap-2" disabled={disabled || loading}>
+        {loading && <Spinner size={16} color="#FAFAF7" />}
+        {loading ? t('common.processing') : t('pof.submit')}
       </button>
     </form>
   );

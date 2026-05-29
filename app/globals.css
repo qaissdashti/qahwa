@@ -35,6 +35,25 @@ input, textarea, select { font-size: 16px; }
 .safe-pb { padding-bottom: max(env(safe-area-inset-bottom), 0px); }
 .safe-pt { padding-top:    max(env(safe-area-inset-top),    0px); }
 
+/* Skeleton shimmer used while server pages stream in (loading.js). */
+@keyframes qahwa-shimmer {
+  0%   { background-position: -200% 0; }
+  100% { background-position:  200% 0; }
+}
+.qahwa-skeleton {
+  background: linear-gradient(90deg, rgba(255,255,255,0.04) 0%, rgba(255,255,255,0.10) 50%, rgba(255,255,255,0.04) 100%);
+  background-size: 200% 100%;
+  animation: qahwa-shimmer 1.4s infinite linear;
+  border-radius: 8px;
+}
+
+/* Subtle "processing" pulse for the tipping page pay button. */
+@keyframes qahwa-pulse {
+  0%, 100% { transform: scale(1);    box-shadow: 4px 4px 0 #0D0D0D; }
+  50%      { transform: scale(0.985); box-shadow: 2px 2px 0 #0D0D0D; }
+}
+.qahwa-pulse { animation: qahwa-pulse 0.9s ease-in-out infinite; }
+
 /* Syne for headings */
 h1, h2, h3 { font-family: 'Syne', sans-serif; font-weight: 800; letter-spacing: -0.04em; }
 

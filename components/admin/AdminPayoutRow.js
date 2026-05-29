@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useLang } from '@/components/LangProvider';
 import { fmtKd } from '@/lib/i18n';
+import Spinner from '@/components/Spinner';
 
 const STATUS_COLOR = {
   pending:  'text-qahwa-orange',
@@ -16,18 +17,19 @@ export default function AdminPayoutRow({ payout: p }) {
   const router = useRouter();
   const { t } = useLang();
   const [busy, setBusy] = useState(false);
+  const [pendingAction, setPendingAction] = useState(null);
   const [status, setStatus] = useState(p.status);
   const cls = STATUS_COLOR[status] || 'text-white/40';
 
   async function act(action) {
-    setBusy(true);
+    setBusy(true); setPendingAction(action);
     try {
       const res = await fetch('/api/admin/payout', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ payoutId: p.id, action }),
       });
       if (res.ok) router.refresh();
-    } finally { setBusy(false); }
+    } finally { setBusy(false); setPendingAction(null); }
   }
 
   return (
@@ -53,16 +55,28 @@ export default function AdminPayoutRow({ payout: p }) {
         {status === 'pending' && (
           <div className="flex gap-1.5">
             <button onClick={() => act('approve')} disabled={busy}
-                    className="text-xs font-bold rounded-lg bg-qahwa-blue/20 text-qahwa-blue border border-qahwa-blue/40 px-3 py-1.5">{t('admin.po.approve')}</button>
+                    className="text-xs font-bold rounded-lg bg-qahwa-blue/20 text-qahwa-blue border border-qahwa-blue/40 px-3 py-1.5 inline-flex items-center gap-1.5 min-h-[36px]">
+              {busy && pendingAction === 'approve' && <Spinner size={12} />}
+              {t('admin.po.approve')}
+            </button>
             <button onClick={() => act('pay')} disabled={busy}
-                    className="text-xs font-bold rounded-lg bg-qahwa-accent text-qahwa-black px-3 py-1.5">{t('admin.po.markPaid')}</button>
+                    className="text-xs font-bold rounded-lg bg-qahwa-accent text-qahwa-black px-3 py-1.5 inline-flex items-center gap-1.5 min-h-[36px]">
+              {busy && pendingAction === 'pay' && <Spinner size={12} />}
+              {t('admin.po.markPaid')}
+            </button>
             <button onClick={() => act('reject')} disabled={busy}
-                    className="text-xs font-bold rounded-lg bg-qahwa-red/20 text-qahwa-red border border-qahwa-red/40 px-3 py-1.5">{t('admin.po.reject')}</button>
+                    className="text-xs font-bold rounded-lg bg-qahwa-red/20 text-qahwa-red border border-qahwa-red/40 px-3 py-1.5 inline-flex items-center gap-1.5 min-h-[36px]">
+              {busy && pendingAction === 'reject' && <Spinner size={12} />}
+              {t('admin.po.reject')}
+            </button>
           </div>
         )}
         {status === 'approved' && (
           <button onClick={() => act('pay')} disabled={busy}
-                  className="text-xs font-bold rounded-lg bg-qahwa-accent text-qahwa-black px-3 py-1.5">{t('admin.po.markPaid')}</button>
+                  className="text-xs font-bold rounded-lg bg-qahwa-accent text-qahwa-black px-3 py-1.5 inline-flex items-center gap-1.5 min-h-[36px]">
+            {busy && <Spinner size={12} />}
+            {t('admin.po.markPaid')}
+          </button>
         )}
       </div>
     </div>

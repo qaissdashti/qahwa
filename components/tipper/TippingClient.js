@@ -6,6 +6,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import Spinner from '@/components/Spinner';
 
 // ── Flewd palette (fixed, light-only) ───────────────────────
 const C = {
@@ -31,6 +32,7 @@ const STR = {
     namePlaceholder: 'اسمك (اختياري)',
     phonePlaceholder: '+965 XXXX XXXX (لتلقي الرد)',
     payBtn: (amt) => `☕ أرسل القهوة · ${amt} KD`,
+    processing: 'جاري المعالجة...',
     amazingDefault: 'أنت رائع! حدد مبلغًا بإرادتك',
     minErr: (m) => `الحد الأدنى ${m} KD`,
     genericErr: 'حدث خطأ',
@@ -52,6 +54,7 @@ const STR = {
     namePlaceholder: 'Your name (optional)',
     phonePlaceholder: '+965 XXXX XXXX (to get a reply)',
     payBtn: (amt) => `☕ Send coffee · ${amt} KD`,
+    processing: 'Processing...',
     amazingDefault: "You're amazing! Pick any amount",
     minErr: (m) => `Minimum ${m} KD`,
     genericErr: 'Something went wrong',
@@ -282,8 +285,15 @@ export default function TippingClient({ creator, settings, recentTips, showSucce
 
         {error && <div style={s.errorBox}>{error}</div>}
 
-        <button style={s.payBtn} onClick={handlePay} disabled={loading}>
-          {loading ? '...' : t.payBtn(grossAmount.toFixed(3))}
+        <button style={s.payBtn} onClick={handlePay} disabled={loading}
+                className={loading ? 'qahwa-pulse' : ''}
+                aria-busy={loading}>
+          {loading ? (
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 10 }}>
+              <Spinner size={18} color={C.ink} />
+              {t.processing}
+            </span>
+          ) : t.payBtn(grossAmount.toFixed(3))}
         </button>
 
         <div style={s.pmRow}>

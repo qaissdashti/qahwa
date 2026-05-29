@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useLang } from '@/components/LangProvider';
 import { fmtKd } from '@/lib/i18n';
+import Spinner from '@/components/Spinner';
 
 const VER_COLOR = {
   approved:     'text-qahwa-accent',
@@ -54,9 +55,10 @@ export default function CreatorCard({ creator }) {
           <span className="font-num font-bold ms-1.5">{fmtKd(creator.total_earned_kd)}</span>
         </div>
         <button onClick={toggle} disabled={busy}
-          className={`text-xs font-bold rounded-lg px-3 py-2 min-h-[36px]
+          className={`text-xs font-bold rounded-lg px-3 py-2 min-h-[36px] inline-flex items-center gap-1.5
             ${disabled ? 'bg-qahwa-accent text-qahwa-black' : 'bg-qahwa-red/20 text-qahwa-red border border-qahwa-red/40'}`}>
-          {busy ? t('common.loading') : disabled ? t('admin.cr.enable') : t('admin.cr.disable')}
+          {busy && <Spinner size={12} />}
+          {busy ? t('common.processing') : disabled ? t('admin.cr.enable') : t('admin.cr.disable')}
         </button>
       </div>
     </li>

@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useLang } from '@/components/LangProvider';
+import Spinner from '@/components/Spinner';
 
 export default function VerificationCard({
   creatorId, fullName, handle, email, phone, phoneVerified, civilMasked, hasSelfie,
@@ -11,6 +12,7 @@ export default function VerificationCard({
   const { t } = useLang();
   const [selfieUrl, setSelfieUrl] = useState(null);
   const [busy, setBusy]   = useState(false);
+  const [action, setAction] = useState(null); // 'approve' | 'reject' | null
   const [error, setError] = useState('');
 
   async function viewSelfie() {
@@ -26,16 +28,16 @@ export default function VerificationCard({
     } catch (e) { setError(e.message || t('admin.vf.loadFail')); }
   }
 
-  async function decide(action) {
-    setBusy(true); setError('');
+  async function decide(a) {
+    setBusy(true); setAction(a); setError('');
     try {
       const res = await fetch('/api/admin/verification', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ creatorId, action }),
+        body: JSON.stringify({ creatorId, action: a }),
       });
       if (!res.ok) throw new Error('failed');
       router.refresh();
-    } catch (e) { setError(t('common.somethingWrong')); setBusy(false); }
+    } catch (e) { setError(t('common.somethingWrong')); setBusy(false); setAction(null); }
   }
 
   return (
@@ -64,10 +66,14 @@ export default function VerificationCard({
 
       <div className="flex gap-2 pt-1">
         <button onClick={() => decide('approve')} disabled={busy}
-                className="flex-1 q-btn-accent text-sm py-2.5">{busy ? t('common.loading') : t('admin.vf.approve')}</button>
+                className="flex-1 q-btn-accent text-sm py-2.5 inline-flex items-center justify-center gap-2">
+          {busy && action === 'approve' && <Spinner size={14} />}
+          {busy && action === 'approve' ? t('common.processing') : t('admin.vf.approve')}
+        </button>
         <button onClick={() => decide('reject')} disabled={busy}
-                className="flex-1 text-sm font-bold rounded-xl bg-qahwa-red/20 text-qahwa-red border-2 border-qahwa-red/50 py-2.5">
-          {t('admin.vf.reject')}
+                className="flex-1 text-sm font-bold rounded-xl bg-qahwa-red/20 text-qahwa-red border-2 border-qahwa-red/50 py-2.5 inline-flex items-center justify-center gap-2 min-h-[44px]">
+          {busy && action === 'reject' && <Spinner size={14} />}
+          {busy && action === 'reject' ? t('common.processing') : t('admin.vf.reject')}
         </button>
       </div>
     </div>
