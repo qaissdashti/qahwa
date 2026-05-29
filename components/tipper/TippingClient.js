@@ -87,6 +87,13 @@ function Confetti() {
   );
 }
 
+// Display-only KD formatter for the tipping page. Shows one decimal
+// place (e.g. "1.5 KD") so supporters read a friendly number — the
+// underlying value submitted to the payment gateway keeps fils-level
+// (3-decimal) precision. Dashboard / admin / receipts still use the
+// canonical fmtKd from lib/i18n.js.
+const fmtKd1 = (v) => Number(v || 0).toFixed(1);
+
 export default function TippingClient({ creator, settings, recentTips, showSuccess }) {
   const [lang, setLang]                 = useState('ar');
 
@@ -121,7 +128,7 @@ export default function TippingClient({ creator, settings, recentTips, showSucce
   async function handlePay() {
     if (loading) return;
     if (isAmazing && (!amazingAmt || grossAmount < (settings?.amazing_min_kd || 0.5))) {
-      setError(t.minErr(settings?.amazing_min_kd || 0.5));
+      setError(t.minErr(fmtKd1(settings?.amazing_min_kd || 0.5)));
       return;
     }
     setLoading(true);
@@ -255,7 +262,7 @@ export default function TippingClient({ creator, settings, recentTips, showSucce
               <button key={cups} style={s.cupPill(sel)} onClick={() => { setSelectedCups(cups); setIsAmazing(false); }}>
                 <span style={{ fontSize: cups === 5 ? 22 : 20 }}>{cups === 1 ? '☕' : cups === 3 ? '☕☕☕' : '🫖'}</span>
                 <span style={{ fontSize: 10, opacity: 0.8 }}>{t.cupLabel[cups]}</span>
-                <span style={s.cupAmt}>{(price * cups).toFixed(3)}</span>
+                <span style={s.cupAmt}>{fmtKd1(price * cups)}</span>
                 <span style={{ fontSize: 9, opacity: 0.7 }}>KD</span>
               </button>
             );
@@ -297,7 +304,7 @@ export default function TippingClient({ creator, settings, recentTips, showSucce
               <Spinner size={18} color={C.ink} />
               {t.processing}
             </span>
-          ) : t.payBtn(grossAmount.toFixed(3))}
+          ) : t.payBtn(fmtKd1(grossAmount))}
         </button>
 
         <div style={s.pmRow}>
