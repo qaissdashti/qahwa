@@ -54,6 +54,24 @@ input, textarea, select { font-size: 16px; }
 }
 .qahwa-pulse { animation: qahwa-pulse 0.9s ease-in-out infinite; }
 
+/* Landing-page phone-mockup notification cycle.
+   Two notifs stacked at the same anchor — each visible for ~2s of the
+   4s cycle, the second one offset by 2s so they alternate cleanly. */
+@keyframes qahwa-notif {
+  0%        { transform: translateY(-130%); opacity: 0; }
+  8%, 48%   { transform: translateY(0);     opacity: 1; }
+  56%, 100% { transform: translateY(-130%); opacity: 0; }
+}
+.qahwa-notif       { animation: qahwa-notif 4s ease-in-out infinite; }
+.qahwa-notif-late  { animation: qahwa-notif 4s ease-in-out infinite; animation-delay: 2s; }
+
+/* Gentle floating bob for the landing-page social-brand badges. */
+@keyframes qahwa-bob {
+  0%, 100% { transform: translateY(0); }
+  50%      { transform: translateY(-10px); }
+}
+.qahwa-bob { animation: qahwa-bob 4.2s ease-in-out infinite; }
+
 /* Syne for headings */
 h1, h2, h3 { font-family: 'Syne', sans-serif; font-weight: 800; letter-spacing: -0.04em; }
 
