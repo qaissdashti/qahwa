@@ -1,6 +1,7 @@
 // Receives the selfie upload, stores it in the private `selfies` bucket,
 // and moves the creator into 'under_review' to finalise onboarding.
 import { createAdminClient, createServerSupabaseClient } from '@/lib/supabase';
+import { notifyAdminPendingReview } from '@/lib/adminNotify';
 
 const MAX_BYTES = 6 * 1024 * 1024; // 6 MB
 const ALLOWED = ['image/jpeg', 'image/png', 'image/webp'];
@@ -62,6 +63,25 @@ export async function POST(req) {
   await supabase.from('creators')
     .update({ verification_status: 'under_review' })
     .eq('id', user.id);
+
+  // Fire-and-forget admin notification. Never block the response on it —
+  // the notify helper swallows its own errors so onboarding always succeeds.
+  try {
+    const { data: c } = await supabase
+      .from('creators')
+      .select('full_name, handle, email')
+      .eq('id', user.id)
+      .maybeSingle();
+
+    // Don't await — but do log if it rejects (it shouldn't, helper is safe).
+    notifyAdminPendingReview({
+      fullName: c?.full_name,
+      handle:   c?.handle,
+      email:    c?.email || user.email,
+    }).catch((err) => console.error('[verify/selfie] notifyAdmin', err));
+  } catch (err) {
+    console.error('[verify/selfie] notify lookup failed', err);
+  }
 
   return Response.json({ success: true });
 }
