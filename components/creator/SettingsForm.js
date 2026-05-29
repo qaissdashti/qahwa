@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useLang } from '@/components/LangProvider';
 import Spinner from '@/components/Spinner';
 import { xhrUpload } from '@/lib/xhrUpload';
+import { KUWAIT_BANKS, bankLabel } from '@/lib/kuwaitBanks';
 
 // Flewd palette (mirrors the live tipping page) for the preview panel
 const F = { bg: '#F5F0FF', card: '#FFFFFF', ink: '#0D0D0D', accent: '#C8F55A', purple: '#7B2FBE', violet: '#9B4DCA', soft: '#EDE4FB' };
@@ -145,7 +146,17 @@ export default function SettingsForm({ creator, maxPrice, amazingGlobal }) {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
             <div>
               <label className={label}>{t('sset.bankName')}</label>
-              <input className={input} value={f.bank_name} onChange={set('bank_name')} placeholder={t('sset.bankNamePh')} />
+              <select className={input} value={f.bank_name} onChange={set('bank_name')}>
+                <option value="">{t('sset.bankNamePh')}</option>
+                {/* If the saved value is legacy free-text that doesn't match
+                    a known bank, keep it visible so we don't silently lose it. */}
+                {f.bank_name && !KUWAIT_BANKS.some((b) => b.value === f.bank_name) && (
+                  <option value={f.bank_name}>{f.bank_name}</option>
+                )}
+                {KUWAIT_BANKS.map((b) => (
+                  <option key={b.en} value={b.value}>{bankLabel(b)}</option>
+                ))}
+              </select>
             </div>
             <div>
               <label className={label}>{t('sset.accountHolder')}</label>

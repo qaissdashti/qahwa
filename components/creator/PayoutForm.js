@@ -13,7 +13,6 @@ export default function PayoutForm({
   const router = useRouter();
   const { t } = useLang();
   const [amount, setAmount]   = useState('');
-  const [method, setMethod]   = useState('bank_transfer');
   const [loading, setLoading] = useState(false);
   const [error, setError]     = useState('');
   const [done, setDone]       = useState(false);
@@ -26,7 +25,9 @@ export default function PayoutForm({
     try {
       const res = await fetch('/api/creator/payout', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ amount, method }),
+        // Method is fixed to bank_transfer for now — KNET-send isn't
+        // actually supported, so we don't expose a choice.
+        body: JSON.stringify({ amount, method: 'bank_transfer' }),
       });
       const json = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(json.error || t('common.somethingWrong'));
@@ -82,13 +83,6 @@ export default function PayoutForm({
         <label className="q-label">{t('pof.amount')}</label>
         <input className="q-input font-num" dir="ltr" inputMode="decimal" value={amount}
                onChange={(e) => setAmount(e.target.value)} placeholder={`${minPayout}.000`} disabled={disabled} />
-      </div>
-      <div>
-        <label className="q-label">{t('pof.method')}</label>
-        <select className="q-input" value={method} onChange={(e) => setMethod(e.target.value)} disabled={disabled}>
-          <option value="bank_transfer">{t('po.method.bank')}</option>
-          <option value="knet_send">{t('po.method.knet')}</option>
-        </select>
       </div>
 
       {payoutsEnabled && !hasPending && balance < minPayout &&
