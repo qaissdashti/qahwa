@@ -213,10 +213,14 @@ export default function TippingClient({ creator, settings, recentTips, showSucce
       <div style={s.card}>
         <button style={s.langBtn} onClick={toggleLang} aria-label={t.otherName}>{t.other}</button>
 
-        {/* Avatar */}
+        {/* Avatar — display:grid + placeItems:center because flex doesn't
+            reliably resolve cross-axis percentage heights for replaced
+            elements (the <img> collapses to its intrinsic aspect ratio in
+            Safari/iOS). Same pattern as PendingApprovalPage + SettingsForm. */}
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: '1.25rem' }}>
-          <div style={{ width: 84, height: 84, borderRadius: '50%', border: `2px solid ${C.ink}`, boxShadow: `3px 3px 0 ${C.ink}`, overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', background: C.soft, fontSize: 38, marginBottom: 12 }}>
+          <div style={{ width: 84, height: 84, borderRadius: '50%', border: `2px solid ${C.ink}`, boxShadow: `3px 3px 0 ${C.ink}`, overflow: 'hidden', display: 'grid', placeItems: 'center', background: C.soft, fontSize: 38, marginBottom: 12 }}>
             {creator.avatar_url
+              // eslint-disable-next-line @next/next/no-img-element
               ? <img src={creator.avatar_url} alt={creator.full_name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
               : (creator.avatar_emoji || '🎙️')}
           </div>
