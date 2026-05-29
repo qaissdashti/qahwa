@@ -3,6 +3,7 @@
 // row exists before anything FK-references it (e.g. otp_codes).
 // Belt-and-suspenders alongside the handle_new_user() DB trigger.
 import { createAdminClient, createServerSupabaseClient } from '@/lib/supabase';
+import { dbErr } from '@/lib/apiError';
 
 export async function POST(req) {
   const auth = createServerSupabaseClient();
@@ -38,9 +39,6 @@ export async function POST(req) {
     handle,
   });
 
-  if (error) {
-    console.error('[creator/init]', error);
-    return Response.json({ error: 'تعذّر إنشاء الحساب' }, { status: 500 });
-  }
+  if (error) return dbErr('تعذّر إنشاء الحساب', error, 500, '[creator/init]');
   return Response.json({ success: true, created: true });
 }

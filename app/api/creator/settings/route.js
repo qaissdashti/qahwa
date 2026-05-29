@@ -2,6 +2,7 @@
 import { createAdminClient, createServerSupabaseClient } from '@/lib/supabase';
 import { encrypt, maskIban } from '@/lib/encryption';
 import { COFFEE_PRICE_OPTIONS, isAllowedCoffeePrice } from '@/lib/coffeePrices';
+import { dbErr } from '@/lib/apiError';
 
 const HEX = /^#[0-9a-fA-F]{6}$/;
 // IBAN format intentionally not validated — accept any non-empty text for
@@ -75,10 +76,7 @@ export async function POST(req) {
   }
 
   const { error } = await admin.from('creators').update(update).eq('id', user.id);
-  if (error) {
-    console.error('[creator/settings]', error);
-    return Response.json({ error: 'تعذّر الحفظ' }, { status: 500 });
-  }
+  if (error) return dbErr('تعذّر الحفظ', error, 500, '[creator/settings]');
 
   return Response.json({ success: true });
 }

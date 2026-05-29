@@ -1,5 +1,6 @@
 // Uploads a creator avatar to the public `avatars` bucket and stores the URL.
 import { createAdminClient, createServerSupabaseClient } from '@/lib/supabase';
+import { dbErr } from '@/lib/apiError';
 
 const MAX_BYTES = 4 * 1024 * 1024; // 4 MB
 const ALLOWED = ['image/jpeg', 'image/png', 'image/webp'];
@@ -29,14 +30,13 @@ export async function POST(req) {
   const { error: upErr } = await admin.storage
     .from('avatars')
     .upload(path, bytes, { contentType: file.type, upsert: true });
-  if (upErr) {
-    console.error('[creator/avatar] upload', upErr);
-    return Response.json({ error: 'تعذّر رفع الصورة' }, { status: 500 });
-  }
+  if (upErr) return dbErr('تعذّر رفع الصورة', upErr, 500, '[creator/avatar] upload');
 
   // avatars bucket is public → public URL is fine
   const { data } = admin.storage.from('avatars').getPublicUrl(path);
-  await admin.from('creators').update({ avatar_url: data.publicUrl }).eq('id', user.id);
+  const { error: updErr } = await admin
+    .from('creators').update({ avatar_url: data.publicUrl }).eq('id', user.id);
+  if (updErr) return dbErr('تعذّر حفظ رابط الصورة', updErr, 500, '[creator/avatar] db-update');
 
   return Response.json({ success: true, url: data.publicUrl });
 }

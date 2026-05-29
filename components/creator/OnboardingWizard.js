@@ -25,18 +25,45 @@ const PHONE_KW = /^\+?965\d{8}$/;
 async function postJson(url, body) {
   const res = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
   const json = await res.json().catch(() => ({}));
-  if (!res.ok) throw new Error(json.error || 'Request failed');
+  if (!res.ok) {
+    // Preserve the raw Supabase error metadata if the route surfaced any
+    // — onboarding catches this and renders the details below the friendly
+    // message so devs can see what's actually failing on Vercel.
+    const e = new Error(json.error || 'Request failed');
+    e.url = url;
+    e.status = res.status;
+    e.details = json.details || null;
+    console.error('[postJson] failed', url, res.status, json);
+    throw e;
+  }
   return json;
 }
 
-// Map Supabase auth errors into friendly localised messages.
+// Map Supabase auth errors into friendly localised messages. Raw message
+// is kept on `err.message` so the caller can append it to the displayed
+// text (useful when a generic trigger error fires during signUp).
 function friendlyAuthError(t, err) {
   const msg = String(err?.message || err || '');
   if (/rate.*limit/i.test(msg) || /too.*many.*request/i.test(msg)) return t('onb.err.rateLimit');
   if (/invalid/i.test(msg) && /email/i.test(msg))                  return t('onb.err.emailInvalid');
   if (/already.*regist|user.*exists|already.*registered/i.test(msg)) return t('onb.err.userExists');
   if (/password/i.test(msg) && /(weak|short|at least)/i.test(msg))   return t('onb.err.passwordWeak');
+  // The signature Supabase Auth message when our handle_new_user() DB
+  // trigger raises — usually a column/RLS mismatch on the creators table.
+  // Include the raw text so the dev sees exactly what failed on Vercel.
+  if (/database error/i.test(msg)) return `${msg} — likely a creators-table trigger / RLS issue on the server. Check Vercel function logs for [creator/init].`;
   return msg || t('common.somethingWrong');
+}
+
+// Compose a single error string that includes both the friendly message
+// and the raw Supabase metadata (when present). Devs can see code/hint
+// immediately — end users still see a localised summary.
+function errorWithDetails(e) {
+  if (!e?.details) return e?.message || 'Error';
+  const d = e.details;
+  const code = d.code ? ` [${d.code}]` : '';
+  const hint = d.hint ? ` · hint: ${d.hint}` : '';
+  return `${e.message || 'Error'} — ${d.message || ''}${code}${hint}`.trim();
 }
 
 async function waitForAuthCookie() {
@@ -168,7 +195,10 @@ export default function OnboardingWizard({ startStep = 1, initial = {}, authed =
           },
         });
         if (signErr) {
-          // Map raw Supabase errors to friendly text + a target field.
+          // Full object in devtools so devs can see status/code/origin —
+          // particularly useful when the server returns a generic
+          // "Database error saving new user" from the handle_new_user trigger.
+          console.error('[onboard] signUp failed', signErr);
           const friendly = friendlyAuthError(t, signErr);
           const raw = (signErr.message || '').toLowerCase();
           if (/email|already|registered|invalid|exists/.test(raw))         setFieldError('email', friendly);
@@ -195,12 +225,13 @@ export default function OnboardingWizard({ startStep = 1, initial = {}, authed =
 
       if (avatarFile) {
         const fd = new FormData(); fd.append('avatar', avatarFile);
-        const j = await xhrUpload('/api/creator/avatar', fd, (pct) => setUploadPct(pct))
-          .catch((e) => { throw new Error(e.message || t('sset.uploadFail')); });
+        // Re-throw the original error so its .details survive into the
+        // catch — losing them would mask the actual storage/RLS issue.
+        const j = await xhrUpload('/api/creator/avatar', fd, (pct) => setUploadPct(pct));
         setAvatarUrl(j.url);
       }
       setStep(2);
-    } catch (e) { setFieldError('form', e.message); }
+    } catch (e) { setFieldError('form', errorWithDetails(e)); }
     finally { setBusy(false); setUploadPct(0); }
   }
 
@@ -216,7 +247,7 @@ export default function OnboardingWizard({ startStep = 1, initial = {}, authed =
       if (ibanToSave) body.iban = ibanToSave;
       await postJson('/api/creator/settings', body);
       setStep(3);
-    } catch (e) { setFieldError('form', e.message); }
+    } catch (e) { setFieldError('form', errorWithDetails(e)); }
     finally { setBusy(false); }
   }
 
@@ -228,7 +259,7 @@ export default function OnboardingWizard({ startStep = 1, initial = {}, authed =
       const r = await postJson('/api/otp/send', { phone: num });
       setOtpSent(true);
       if (r.devCode) setCode(r.devCode);
-    } catch (e) { setFieldError('form', e.message); }
+    } catch (e) { setFieldError('form', errorWithDetails(e)); }
     finally { setBusy(false); }
   }
 
@@ -238,7 +269,7 @@ export default function OnboardingWizard({ startStep = 1, initial = {}, authed =
       const num = (phone.startsWith('+965') ? phone : '+965' + phone).replace(/\s+/g, '');
       await postJson('/api/otp/verify', { phone: num, code });
       setStep(4);
-    } catch (e) { setFieldError('form', e.message); }
+    } catch (e) { setFieldError('form', errorWithDetails(e)); }
     finally { setBusy(false); }
   }
 
@@ -249,10 +280,10 @@ export default function OnboardingWizard({ startStep = 1, initial = {}, authed =
       if (!selfie) throw new Error(t('auth.verify.selfie.noFile'));
       await postJson('/api/verify/civil-id', { civilId });
       const fd = new FormData(); fd.append('selfie', selfie);
-      await xhrUpload('/api/verify/selfie', fd, (pct) => setUploadPct(pct))
-        .catch((e) => { throw new Error(e.message || t('common.somethingWrong')); });
+      // Let xhrUpload errors propagate with .details intact for visibility.
+      await xhrUpload('/api/verify/selfie', fd, (pct) => setUploadPct(pct));
       setStep(5);
-    } catch (e) { setFieldError('form', e.message); }
+    } catch (e) { setFieldError('form', errorWithDetails(e)); }
     finally { setBusy(false); setUploadPct(0); }
   }
 
