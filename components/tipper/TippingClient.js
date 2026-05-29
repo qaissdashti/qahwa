@@ -44,6 +44,12 @@ const STR = {
     closeAria: 'إغلاق',
     successTitle: 'وصلت قهوتك!',
     successBody: (n) => `ستتلقى ردًا شخصيًا من ${n} قريباً 🤍`,
+    successBodyMsg:   (n) => `اسمك ورسالتك وصلت لـ ${n} 🤍`,
+    successBodyNoMsg: (n) => `قهوتك في طريقها لـ ${n} ☕`,
+    shareBtn:    'مشاركة على واتساب',
+    copyBtn:     'نسخ الرابط',
+    copiedBtn:   '✓ تم النسخ',
+    shareText:   (n, url) => `ادعم ${n} على قهوة: ${url} ☕`,
     sendAnother: '☕ أرسل قهوة أخرى',
   },
   en: {
@@ -68,22 +74,45 @@ const STR = {
     closeAria: 'Close',
     successTitle: 'Your coffee is on its way!',
     successBody: (n) => `You'll get a personal reply from ${n} soon 🤍`,
+    successBodyMsg:   (n) => `Your name and message reached ${n} 🤍`,
+    successBodyNoMsg: (n) => `Your coffee is on its way to ${n} ☕`,
+    shareBtn:    'Share on WhatsApp',
+    copyBtn:     'Copy link',
+    copiedBtn:   '✓ Copied',
+    shareText:   (n, url) => `Support ${n} on Qahwa: ${url} ☕`,
     sendAnother: '☕ Send another coffee',
   },
 };
 
+// Full-screen confetti for the success screen. ~150 pieces, mixed
+// shapes/colors, all complete within ~3s (fall 2.0-2.8s + stagger
+// 0-0.4s). Self-unmounts via parent state after 3s so it never lingers.
 function Confetti() {
-  const colors = [C.accent, C.purple, C.violet, '#FF5A5A', '#38BDF8'];
+  const colors = [
+    C.accent,   // qahwa green
+    C.purple,   // Flewd purple
+    C.violet,   // Flewd violet
+    '#FF5A5A',  // coral
+    '#38BDF8',  // sky
+    '#FFD166',  // sunflower
+    '#FF8FB1',  // pink
+    '#76E4B5',  // mint
+  ];
   return (
     <div aria-hidden style={{ position: 'fixed', inset: 0, pointerEvents: 'none', overflow: 'hidden', zIndex: 50 }}>
       <style>{`@keyframes qahwa-fall{0%{transform:translateY(-12vh) rotate(0);opacity:1}100%{transform:translateY(112vh) rotate(720deg);opacity:.85}}@keyframes qahwa-pop{0%{transform:scale(0)}60%{transform:scale(1.25)}100%{transform:scale(1)}}`}</style>
-      {Array.from({ length: 70 }).map((_, i) => {
-        const size = 6 + Math.random() * 9;
+      {Array.from({ length: 150 }).map((_, i) => {
+        const size = 6 + Math.random() * 11;
+        // Mix two shapes — rectangles (most) and small circles (~30%).
+        const isCircle = i % 3 === 0;
         return (
           <span key={i} style={{
             position: 'absolute', left: `${Math.random() * 100}%`, top: '-12vh',
-            width: size, height: size * 0.6, background: colors[i % colors.length], borderRadius: 2,
-            animation: `qahwa-fall ${2.6 + Math.random() * 2}s ${Math.random() * 0.5}s linear forwards`,
+            width: size,
+            height: isCircle ? size : size * 0.55,
+            background: colors[i % colors.length],
+            borderRadius: isCircle ? '50%' : 2,
+            animation: `qahwa-fall ${2.0 + Math.random() * 0.8}s ${Math.random() * 0.4}s linear forwards`,
           }} />
         );
       })}
@@ -97,6 +126,102 @@ function Confetti() {
 // (3-decimal) precision. Dashboard / admin / receipts still use the
 // canonical fmtKd from lib/i18n.js.
 const fmtKd1 = (v) => Number(v || 0).toFixed(1);
+
+// ─────────────────────────────────────────────────────────────
+// Success screen — separated out because it now owns its own
+// state (confetti gate + copy-feedback) and a fair bit of JSX.
+// Pulls C / s / t / dir from the parent to keep the visual
+// language identical.
+// ─────────────────────────────────────────────────────────────
+function SuccessScreen({ C, s, t, dir, creator, message, onSendAnother, onToggleLang }) {
+  // Cap the confetti at 3s — the qahwa-fall animation finishes in
+  // ~2.4s for every piece, so 3000ms is a safe cutoff with grace.
+  const [showConfetti, setShowConfetti] = useState(true);
+  const [copied, setCopied] = useState(false);
+
+  useEffect(() => {
+    const id = setTimeout(() => setShowConfetti(false), 3000);
+    return () => clearTimeout(id);
+  }, []);
+
+  const pageUrl = typeof window !== 'undefined'
+    ? `${window.location.origin}/${creator.handle}`
+    : `/${creator.handle}`;
+  const shareUrl = `https://wa.me/?text=${encodeURIComponent(t.shareText(creator.full_name, pageUrl))}`;
+
+  async function copyLink() {
+    try {
+      await navigator.clipboard.writeText(pageUrl);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      // Older browsers / blocked clipboard — fall back to a temp prompt.
+      window.prompt(t.copyBtn, pageUrl);
+    }
+  }
+
+  // Personalised subtitle — message present vs not.
+  const subtitle = message
+    ? t.successBodyMsg(creator.full_name)
+    : t.successBodyNoMsg(creator.full_name);
+
+  // Buttons all share the brutalist 2px black border + 3×3 shadow.
+  const baseBtn = {
+    border: `2px solid ${C.ink}`, borderRadius: 14,
+    padding: '12px 16px', fontFamily: "'Syne', sans-serif",
+    fontSize: 14, fontWeight: 800, cursor: 'pointer',
+    boxShadow: `3px 3px 0 ${C.ink}`, transition: 'all .12s',
+    display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+    gap: 8, width: '100%',
+  };
+
+  return (
+    <div style={s.page} dir={dir}>
+      {showConfetti && <Confetti />}
+      <div style={{ ...s.card, textAlign: 'center', padding: '3rem 2rem' }}>
+        <button style={s.langBtn} onClick={onToggleLang} aria-label={t.otherName}>{t.other}</button>
+
+        {/* Heart-pulsing coffee glyph: pop-in once, then soft heartbeat loop. */}
+        <div
+          className="qahwa-heart-pulse"
+          style={{ fontSize: 76, marginBottom: 16, display: 'inline-block', animationDelay: '.5s' }}
+        >☕</div>
+
+        <h2 style={{ ...s.name, marginBottom: 8 }}>{t.successTitle}</h2>
+
+        {/* Quoted message (if any) + personalised subtitle. */}
+        {message && (
+          <p style={{ ...s.bio, fontStyle: 'italic', marginBottom: 8 }}>
+            “{message}”
+          </p>
+        )}
+        <p style={{ ...s.bio, marginTop: message ? 0 : undefined }}>{subtitle}</p>
+
+        {/* Share + copy buttons sit in a stacked column so each gets a
+            full-width tap target. WhatsApp = brand green; copy = white
+            (flips to accent green on success). Send-another keeps the
+            existing accent CTA so it reads as the primary next step. */}
+        <div style={{ display: 'grid', gap: 10, marginTop: 22 }}>
+          <a
+            href={shareUrl} target="_blank" rel="noreferrer"
+            style={{ ...baseBtn, background: '#25D366', color: '#fff', textDecoration: 'none' }}>
+            <span>💬</span><span>{t.shareBtn}</span>
+          </a>
+          <button
+            type="button" onClick={copyLink}
+            style={{ ...baseBtn, background: copied ? C.accent : C.card, color: C.ink }}>
+            {copied ? t.copiedBtn : `🔗 ${t.copyBtn}`}
+          </button>
+          <button
+            type="button" onClick={onSendAnother}
+            style={{ ...baseBtn, background: C.purple, color: '#fff' }}>
+            {t.sendAnother}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 // ─────────────────────────────────────────────────────────────
 // Social-proof toast — animates in at the top of the page on
@@ -249,26 +374,12 @@ export default function TippingClient({ creator, settings, recentTips, todayCoun
   };
 
   if (success) {
-    return (
-      <div style={s.page} dir={dir}>
-        <Confetti />
-        <div style={{ ...s.card, textAlign: 'center', padding: '3rem 2rem' }}>
-          <button style={s.langBtn} onClick={toggleLang} aria-label={t.otherName}>{t.other}</button>
-          <div style={{ fontSize: 76, marginBottom: 16, animation: 'qahwa-pop .5s ease-out' }}>☕</div>
-          <h2 style={{ ...s.name, marginBottom: 8 }}>{t.successTitle}</h2>
-          <p style={{ ...s.bio }}>
-            {message ? `"${message}"\n\n` : ''}
-            {t.successBody(creator.full_name)}
-          </p>
-          <button
-            style={{ ...s.payBtn, marginTop: 24, fontSize: 15 }}
-            onClick={() => { setSuccess(false); window.history.replaceState({}, '', `/${creator.handle}`); }}
-          >
-            {t.sendAnother}
-          </button>
-        </div>
-      </div>
-    );
+    return <SuccessScreen
+      C={C} s={s} t={t} dir={dir}
+      creator={creator} message={message}
+      onSendAnother={() => { setSuccess(false); window.history.replaceState({}, '', `/${creator.handle}`); }}
+      onToggleLang={toggleLang}
+    />;
   }
 
   return (
