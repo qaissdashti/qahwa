@@ -421,6 +421,46 @@ const errorBorder = (err) => (err ? { borderColor: ERR_RED } : undefined);
 // Live status pill under the handle field. Color + symbol mirror the
 // handleStatus state, not just availability — so users see "checking…"
 // the moment they pause typing.
+// Live cup-selector preview for Step 1. Mirrors components/tipper/
+// TippingClient.js pill geometry exactly (border, padding, radius,
+// shadow, font, sizes) so creators see what supporters will actually
+// see — purple-selected first pill, white unselected next two, lavender
+// brutalist card behind. Always shows 1/3/5 cups regardless of the
+// price chip — that's the live tipping page's behavior too.
+function CupPreview({ t, price }) {
+  const ink = '#0D0D0D', purple = '#7B2FBE', card = '#FFFFFF', soft = '#EDE4FB';
+  const pill = (sel) => ({
+    flex: 1, border: `2px solid ${ink}`, borderRadius: 999,
+    background: sel ? purple : card, color: sel ? '#fff' : ink,
+    boxShadow: sel ? `3px 3px 0 ${ink}` : 'none',
+    padding: '14px 6px', display: 'flex', flexDirection: 'column',
+    alignItems: 'center', gap: 2,
+  });
+  const amt = { fontFamily: "'Syne', sans-serif", fontSize: 14, fontWeight: 800 };
+  return (
+    <div className="mt-3">
+      <div className="text-xs font-bold text-black/50 mb-1.5">{t('onb.s1.previewTitle')}</div>
+      <div style={{
+        display: 'flex', gap: 9, padding: 12, borderRadius: 16,
+        background: soft, border: `2px solid ${ink}`, boxShadow: `3px 3px 0 ${ink}`,
+      }}>
+        {[1, 3, 5].map((cups, i) => (
+          <div key={cups} style={pill(i === 0)}>
+            <span style={{ fontSize: cups === 5 ? 22 : 20 }}>
+              {cups === 1 ? '☕' : cups === 3 ? '☕☕☕' : '🫖'}
+            </span>
+            <span style={{ fontSize: 10, opacity: 0.8 }} dir="auto">
+              {t(`onb.s1.cup.${cups}`)}
+            </span>
+            <span style={amt} dir="ltr">{(price * cups).toFixed(1)}</span>
+            <span style={{ fontSize: 9, opacity: 0.7 }}>KD</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 function HandleStatusPill({ status, t }) {
   if (status === 'idle' || status === 'short') return null;
   const map = {
@@ -555,7 +595,7 @@ function Step1({
         </>
       )}
 
-      {/* ── Coffee price chips ── */}
+      {/* ── Coffee price chips + live cup-selector preview ── */}
       <div>
         <label className="q-label">{t('sset.cupPricePick')}</label>
         <div className="flex flex-wrap gap-1.5" role="radiogroup" aria-label={t('sset.cupPricePick')}>
@@ -573,6 +613,11 @@ function Step1({
           })}
         </div>
         <FieldError>{errors.price}</FieldError>
+
+        {/* Live preview — pixel-mirrors the TippingClient cup pills so the
+            creator sees the exact 1/3/5-cup amounts their supporters will
+            see. Re-renders on every chip tap (coffeePrice changes). */}
+        <CupPreview t={t} price={Number(coffeePrice)} />
       </div>
 
       <div>
