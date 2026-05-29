@@ -50,6 +50,12 @@ const STR = {
     copyBtn:     'نسخ الرابط',
     copiedBtn:   '✓ تم النسخ',
     shareText:   (n, url) => `ادعم ${n} على قهوة: ${url} ☕`,
+    shareIgBtn:  '📸 شارك على ستوري انستجرام',
+    shareIgBusy: 'جاري إنشاء البطاقة...',
+    shareIgSaved:'احفظ الصورة وشاركها في ستوري انستجرام 📸',
+    shareIgErr:  'تعذّر إنشاء الصورة، حاول مرة ثانية',
+    shareCardLine1: '☕ اشتريت لـ',
+    shareCardLine2: 'قهوة!',
     sendAnother: '☕ أرسل قهوة أخرى',
   },
   en: {
@@ -80,6 +86,12 @@ const STR = {
     copyBtn:     'Copy link',
     copiedBtn:   '✓ Copied',
     shareText:   (n, url) => `Support ${n} on Qahwa: ${url} ☕`,
+    shareIgBtn:  '📸 Share to Instagram Story',
+    shareIgBusy: 'Building card…',
+    shareIgSaved:'Save this image and share it to your Instagram Story 📸',
+    shareIgErr:  'Couldn\'t build the image — try again',
+    shareCardLine1: '☕ I just bought',
+    shareCardLine2: 'a coffee!',
     sendAnother: '☕ Send another coffee',
   },
 };
@@ -127,6 +139,127 @@ function Confetti() {
 // canonical fmtKd from lib/i18n.js.
 const fmtKd1 = (v) => Number(v || 0).toFixed(1);
 
+// Build an Instagram-Story-sized (1080×1920) share card as a PNG blob.
+// Lavender Flewd background, purple accent stripes, Syne 900 headlines,
+// DM Sans for the handle. Waits for the page fonts to load before
+// drawing so the canvas doesn't fall back to a system serif.
+async function buildShareCard({ creatorName, handle, t }) {
+  const W = 1080, H = 1920;
+  const F = { bg: '#F5F0FF', ink: '#0D0D0D', purple: '#7B2FBE', violet: '#9B4DCA', accent: '#C8F55A', soft: '#EDE4FB', card: '#FFFFFF' };
+
+  const canvas = document.createElement('canvas');
+  canvas.width = W; canvas.height = H;
+  const ctx = canvas.getContext('2d');
+  ctx.textBaseline = 'middle';
+
+  // Make sure Syne/DM Sans are available before any fillText — otherwise
+  // browsers fall back silently to serif and the card looks broken.
+  try {
+    if (document.fonts?.load) {
+      await Promise.all([
+        document.fonts.load('900 110px "Syne"'),
+        document.fonts.load('900 180px "Syne"'),
+        document.fonts.load('700 56px "DM Sans"'),
+      ]);
+      await document.fonts.ready;
+    }
+  } catch { /* no-op — best effort, fallback fonts still render */ }
+
+  // Background
+  ctx.fillStyle = F.bg;
+  ctx.fillRect(0, 0, W, H);
+
+  // Decorative purple stripes top + bottom
+  ctx.fillStyle = F.purple;
+  ctx.fillRect(0, 0, W, 28);
+  ctx.fillRect(0, H - 28, W, 28);
+
+  // Soft purple blobs in the corners for warmth
+  ctx.fillStyle = F.soft;
+  ctx.beginPath(); ctx.arc(0, 0, 360, 0, Math.PI * 2); ctx.fill();
+  ctx.beginPath(); ctx.arc(W, H, 320, 0, Math.PI * 2); ctx.fill();
+
+  // Brand badge top-center (white pill with Syne 900 "قهوة ☕")
+  const badgeW = 360, badgeH = 110, badgeY = 130;
+  ctx.fillStyle = F.card;
+  ctx.strokeStyle = F.ink;
+  ctx.lineWidth = 6;
+  roundRect(ctx, (W - badgeW) / 2, badgeY, badgeW, badgeH, 999);
+  ctx.fill(); ctx.stroke();
+  // brutalist shadow
+  ctx.fillStyle = F.ink;
+  ctx.fillRect((W - badgeW) / 2 + 10, badgeY + badgeH + 4, badgeW, 8);
+  ctx.fillStyle = F.ink;
+  ctx.font = '900 64px "Syne", sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText('قهوة ☕', W / 2, badgeY + badgeH / 2 + 4);
+
+  // Hero row of coffee glyphs
+  ctx.font = '110px system-ui, -apple-system, sans-serif';
+  ctx.fillText('☕☕☕☕☕', W / 2, 460);
+
+  // Three lines of message: prefix → name → suffix
+  ctx.fillStyle = F.ink;
+  ctx.textAlign = 'center';
+
+  ctx.font = '900 90px "Syne", sans-serif';
+  ctx.fillText(t.shareCardLine1, W / 2, 760);
+
+  // Name auto-shrinks if too long for the canvas width.
+  let nameSize = 180;
+  ctx.font = `900 ${nameSize}px "Syne", sans-serif`;
+  while (ctx.measureText(creatorName).width > W - 160 && nameSize > 80) {
+    nameSize -= 8;
+    ctx.font = `900 ${nameSize}px "Syne", sans-serif`;
+  }
+  ctx.fillStyle = F.purple;
+  ctx.fillText(creatorName, W / 2, 940);
+
+  ctx.fillStyle = F.ink;
+  ctx.font = '900 90px "Syne", sans-serif';
+  ctx.fillText(t.shareCardLine2, W / 2, 1120);
+
+  // Accent CTA pill at the bottom with the handle URL
+  const pillW = 720, pillH = 130, pillY = 1450;
+  ctx.fillStyle = F.accent;
+  ctx.strokeStyle = F.ink;
+  ctx.lineWidth = 6;
+  roundRect(ctx, (W - pillW) / 2, pillY, pillW, pillH, 999);
+  ctx.fill(); ctx.stroke();
+  // brutalist shadow
+  ctx.fillStyle = F.ink;
+  ctx.fillRect((W - pillW) / 2 + 14, pillY + pillH + 6, pillW, 10);
+  ctx.fillStyle = F.ink;
+  ctx.font = '700 56px "DM Sans", sans-serif';
+  ctx.fillText(`qahwa.kw/${handle}`, W / 2, pillY + pillH / 2 + 2);
+
+  // Footer line
+  ctx.fillStyle = F.violet;
+  ctx.font = '700 36px "DM Sans", sans-serif';
+  ctx.fillText('Support a Kuwaiti creator · ادعم مبدعك المفضل', W / 2, 1740);
+
+  return await new Promise((resolve, reject) => {
+    canvas.toBlob((b) => (b ? resolve(b) : reject(new Error('canvas toBlob failed'))), 'image/png', 0.95);
+  });
+}
+
+// Small rounded-rectangle path helper for canvas (older Safaris lack
+// ctx.roundRect, so this stays portable).
+function roundRect(ctx, x, y, w, h, r) {
+  const radius = Math.min(r, h / 2, w / 2);
+  ctx.beginPath();
+  ctx.moveTo(x + radius, y);
+  ctx.lineTo(x + w - radius, y);
+  ctx.quadraticCurveTo(x + w, y, x + w, y + radius);
+  ctx.lineTo(x + w, y + h - radius);
+  ctx.quadraticCurveTo(x + w, y + h, x + w - radius, y + h);
+  ctx.lineTo(x + radius, y + h);
+  ctx.quadraticCurveTo(x, y + h, x, y + h - radius);
+  ctx.lineTo(x, y + radius);
+  ctx.quadraticCurveTo(x, y, x + radius, y);
+  ctx.closePath();
+}
+
 // ─────────────────────────────────────────────────────────────
 // Success screen — separated out because it now owns its own
 // state (confetti gate + copy-feedback) and a fair bit of JSX.
@@ -138,6 +271,12 @@ function SuccessScreen({ C, s, t, dir, creator, message, onSendAnother, onToggle
   // ~2.4s for every piece, so 3000ms is a safe cutoff with grace.
   const [showConfetti, setShowConfetti] = useState(true);
   const [copied, setCopied] = useState(false);
+  // Instagram share state: busy = building canvas; savedHint = shown
+  // after a desktop fallback download so the user knows what to do
+  // next; err on canvas failure.
+  const [igBusy, setIgBusy] = useState(false);
+  const [igSaved, setIgSaved] = useState(false);
+  const [igErr, setIgErr] = useState(false);
 
   useEffect(() => {
     const id = setTimeout(() => setShowConfetti(false), 3000);
@@ -148,6 +287,52 @@ function SuccessScreen({ C, s, t, dir, creator, message, onSendAnother, onToggle
     ? `${window.location.origin}/${creator.handle}`
     : `/${creator.handle}`;
   const shareUrl = `https://wa.me/?text=${encodeURIComponent(t.shareText(creator.full_name, pageUrl))}`;
+
+  // Build the share card, then route to Web Share API (mobile, opens the
+  // native sheet which includes Instagram Stories) or fall back to a
+  // PNG download (desktop / share-API not supported / file-sharing
+  // unsupported by the OS).
+  async function shareToInstagram() {
+    setIgErr(false); setIgSaved(false); setIgBusy(true);
+    try {
+      const blob = await buildShareCard({ creatorName: creator.full_name, handle: creator.handle, t });
+      const file = new File([blob], `qahwa-${creator.handle}.png`, { type: 'image/png' });
+
+      // navigator.canShare can be missing entirely; guard each step.
+      const canShareFile =
+        typeof navigator !== 'undefined' &&
+        typeof navigator.share === 'function' &&
+        typeof navigator.canShare === 'function' &&
+        navigator.canShare({ files: [file] });
+
+      if (canShareFile) {
+        try {
+          await navigator.share({ files: [file] });
+          return;
+        } catch (e) {
+          // AbortError = user closed the sheet; not an error to surface.
+          if (e?.name !== 'AbortError') throw e;
+          return;
+        }
+      }
+
+      // Desktop / unsupported → download + show the "save & share" hint.
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `qahwa-${creator.handle}.png`;
+      document.body.appendChild(a); a.click(); a.remove();
+      URL.revokeObjectURL(url);
+      setIgSaved(true);
+      setTimeout(() => setIgSaved(false), 6000);
+    } catch (err) {
+      console.error('[share/ig]', err);
+      setIgErr(true);
+      setTimeout(() => setIgErr(false), 4000);
+    } finally {
+      setIgBusy(false);
+    }
+  }
 
   async function copyLink() {
     try {
@@ -207,6 +392,35 @@ function SuccessScreen({ C, s, t, dir, creator, message, onSendAnother, onToggle
             style={{ ...baseBtn, background: '#25D366', color: '#fff', textDecoration: 'none' }}>
             <span>💬</span><span>{t.shareBtn}</span>
           </a>
+
+          {/* Instagram share — gradient brand bg, brutalist border so
+              it still belongs in the Flewd palette. Generates a
+              1080×1920 PNG card → native share sheet (mobile) or
+              download + hint (desktop). */}
+          <button
+            type="button" onClick={shareToInstagram} disabled={igBusy}
+            style={{
+              ...baseBtn,
+              background: 'linear-gradient(135deg, #F58529 0%, #DD2A7B 50%, #8134AF 100%)',
+              color: '#fff',
+              opacity: igBusy ? 0.75 : 1,
+              cursor: igBusy ? 'wait' : 'pointer',
+            }}>
+            {igBusy
+              ? <><Spinner size={16} color="#fff" /><span>{t.shareIgBusy}</span></>
+              : <span>{t.shareIgBtn}</span>}
+          </button>
+          {igSaved && (
+            <p style={{ fontSize: 12, fontWeight: 700, color: C.purple, margin: '-2px 0 0', lineHeight: 1.4 }}>
+              {t.shareIgSaved}
+            </p>
+          )}
+          {igErr && (
+            <p style={{ fontSize: 12, fontWeight: 700, color: '#C00', margin: '-2px 0 0' }}>
+              {t.shareIgErr}
+            </p>
+          )}
+
           <button
             type="button" onClick={copyLink}
             style={{ ...baseBtn, background: copied ? C.accent : C.card, color: C.ink }}>
