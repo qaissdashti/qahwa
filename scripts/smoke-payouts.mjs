@@ -44,7 +44,7 @@ async function sendCreatorRequested() {
     `within 2-3 business days. You'll hear from us once it's sent.\n\n— Qahwa ☕`;
   const html =
     `<div style="font-family:system-ui,-apple-system,sans-serif;max-width:520px;margin:0 auto;padding:24px;color:#0D0D0D">` +
-    `<h2 style="margin:0 0 16px;font-family:Syne,sans-serif">Payout request received</h2>` +
+    `<h2 style="margin:0 0 16px;font-family:Fraunces,sans-serif">Payout request received</h2>` +
     `<p style="margin:0 0 16px;line-height:1.6">We received your request for ` +
       `<strong style="font-family:monospace">${amt} KD</strong> and will transfer it within ` +
       `<strong>2-3 business days</strong>. You'll hear from us once it's sent.</p>` +
@@ -66,7 +66,7 @@ async function sendAdminRequested() {
     `Review the queue: ${payoutsLink}\n`;
   const html =
     `<div style="font-family:system-ui,-apple-system,sans-serif;max-width:520px;margin:0 auto;padding:24px;color:#0D0D0D">` +
-    `<h2 style="margin:0 0 16px;font-family:Syne,sans-serif">New payout request</h2>` +
+    `<h2 style="margin:0 0 16px;font-family:Fraunces,sans-serif">New payout request</h2>` +
     `<p style="margin:0 0 16px;line-height:1.5">A creator just requested a payout.</p>` +
     `<table style="border-collapse:collapse;margin:0 0 20px">` +
       `<tr><td style="padding:4px 12px 4px 0;color:#666">Name</td><td style="padding:4px 0;font-weight:700">${fullName}</td></tr>` +
@@ -88,7 +88,7 @@ async function sendCreatorPaid() {
     `It may take 1-2 business days to appear.\n\n— Qahwa ☕`;
   const html =
     `<div style="font-family:system-ui,-apple-system,sans-serif;max-width:520px;margin:0 auto;padding:24px;color:#0D0D0D">` +
-    `<h2 style="margin:0 0 16px;font-family:Syne,sans-serif">Your payout is on the way ✓</h2>` +
+    `<h2 style="margin:0 0 16px;font-family:Fraunces,sans-serif">Your payout is on the way ✓</h2>` +
     `<p style="margin:0 0 16px;line-height:1.6">Your ` +
       `<strong style="font-family:monospace">${amt} KD</strong> has been transferred to your bank account. ` +
       `It may take <strong>1-2 business days</strong> to appear.</p>` +

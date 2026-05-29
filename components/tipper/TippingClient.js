@@ -140,7 +140,7 @@ function Confetti() {
 const fmtKd1 = (v) => Number(v || 0).toFixed(1);
 
 // Build an Instagram-Story-sized (1080×1920) share card as a PNG blob.
-// Lavender Flewd background, purple accent stripes, Syne 900 headlines,
+// Lavender Flewd background, purple accent stripes, Fraunces 900 headlines,
 // DM Sans for the handle. Waits for the page fonts to load before
 // drawing so the canvas doesn't fall back to a system serif.
 async function buildShareCard({ creatorName, handle, t }) {
@@ -152,13 +152,13 @@ async function buildShareCard({ creatorName, handle, t }) {
   const ctx = canvas.getContext('2d');
   ctx.textBaseline = 'middle';
 
-  // Make sure Syne/DM Sans are available before any fillText — otherwise
+  // Make sure Fraunces/DM Sans are available before any fillText — otherwise
   // browsers fall back silently to serif and the card looks broken.
   try {
     if (document.fonts?.load) {
       await Promise.all([
-        document.fonts.load('900 110px "Syne"'),
-        document.fonts.load('900 180px "Syne"'),
+        document.fonts.load('900 110px "Fraunces"'),
+        document.fonts.load('900 180px "Fraunces"'),
         document.fonts.load('700 56px "DM Sans"'),
       ]);
       await document.fonts.ready;
@@ -179,7 +179,7 @@ async function buildShareCard({ creatorName, handle, t }) {
   ctx.beginPath(); ctx.arc(0, 0, 360, 0, Math.PI * 2); ctx.fill();
   ctx.beginPath(); ctx.arc(W, H, 320, 0, Math.PI * 2); ctx.fill();
 
-  // Brand badge top-center (white pill with Syne 900 "قهوة ☕")
+  // Brand badge top-center (white pill with Fraunces 900 "قهوة ☕")
   const badgeW = 360, badgeH = 110, badgeY = 130;
   ctx.fillStyle = F.card;
   ctx.strokeStyle = F.ink;
@@ -190,7 +190,7 @@ async function buildShareCard({ creatorName, handle, t }) {
   ctx.fillStyle = F.ink;
   ctx.fillRect((W - badgeW) / 2 + 10, badgeY + badgeH + 4, badgeW, 8);
   ctx.fillStyle = F.ink;
-  ctx.font = '900 64px "Syne", sans-serif';
+  ctx.font = '900 64px "Fraunces", sans-serif';
   ctx.textAlign = 'center';
   ctx.fillText('قهوة ☕', W / 2, badgeY + badgeH / 2 + 4);
 
@@ -202,21 +202,21 @@ async function buildShareCard({ creatorName, handle, t }) {
   ctx.fillStyle = F.ink;
   ctx.textAlign = 'center';
 
-  ctx.font = '900 90px "Syne", sans-serif';
+  ctx.font = '900 90px "Fraunces", sans-serif';
   ctx.fillText(t.shareCardLine1, W / 2, 760);
 
   // Name auto-shrinks if too long for the canvas width.
   let nameSize = 180;
-  ctx.font = `900 ${nameSize}px "Syne", sans-serif`;
+  ctx.font = `900 ${nameSize}px "Fraunces", sans-serif`;
   while (ctx.measureText(creatorName).width > W - 160 && nameSize > 80) {
     nameSize -= 8;
-    ctx.font = `900 ${nameSize}px "Syne", sans-serif`;
+    ctx.font = `900 ${nameSize}px "Fraunces", sans-serif`;
   }
   ctx.fillStyle = F.purple;
   ctx.fillText(creatorName, W / 2, 940);
 
   ctx.fillStyle = F.ink;
-  ctx.font = '900 90px "Syne", sans-serif';
+  ctx.font = '900 90px "Fraunces", sans-serif';
   ctx.fillText(t.shareCardLine2, W / 2, 1120);
 
   // Accent CTA pill at the bottom with the handle URL
@@ -353,7 +353,7 @@ function SuccessScreen({ C, s, t, dir, creator, message, onSendAnother, onToggle
   // Buttons all share the brutalist 2px black border + 3×3 shadow.
   const baseBtn = {
     border: `2px solid ${C.ink}`, borderRadius: 14,
-    padding: '12px 16px', fontFamily: "'Syne', sans-serif",
+    padding: '12px 16px', fontFamily: "'Fraunces', sans-serif",
     fontSize: 14, fontWeight: 800, cursor: 'pointer',
     boxShadow: `3px 3px 0 ${C.ink}`, transition: 'all .12s',
     display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
@@ -440,7 +440,7 @@ function SuccessScreen({ C, s, t, dir, creator, message, onSendAnother, onToggle
 // ─────────────────────────────────────────────────────────────
 // Social-proof toast — animates in at the top of the page on
 // load, auto-dismisses after 4s, has an X to close early.
-// Flewd palette: lavender bg, purple border, Syne bold headline.
+// Flewd palette: lavender bg, purple border, Fraunces bold headline.
 // Render gate (count >= 2) lives in the parent so this stays dumb.
 // ─────────────────────────────────────────────────────────────
 function SocialProofToast({ message, closeAria, dir }) {
@@ -471,7 +471,7 @@ function SocialProofToast({ message, closeAria, dir }) {
         padding: '10px 14px',
         display: 'flex', alignItems: 'center', gap: 10,
         maxWidth: 'min(92vw, 420px)',
-        fontFamily: "'Syne', sans-serif",
+        fontFamily: "'Fraunces', sans-serif",
         fontWeight: 800,
         fontSize: 13.5,
         letterSpacing: '-0.01em',
@@ -561,7 +561,7 @@ export default function TippingClient({ creator, settings, recentTips, todayCoun
   const s = {
     page: { minHeight: '100vh', background: C.bg, display: 'flex', alignItems: 'flex-start', justifyContent: 'center', padding: '2rem 1rem 3rem', fontFamily: "'Tajawal', sans-serif" },
     card: { position: 'relative', background: C.card, border: `2px solid ${C.ink}`, borderRadius: 28, padding: '2rem 1.75rem', width: '100%', maxWidth: 430, boxShadow: `5px 5px 0 ${C.ink}` },
-    name: { fontFamily: "'Syne', sans-serif", fontSize: 24, fontWeight: 800, color: C.ink, letterSpacing: '-0.04em', direction: dir, textAlign: 'center' },
+    name: { fontFamily: "'Fraunces', sans-serif", fontSize: 24, fontWeight: 800, color: C.ink, letterSpacing: '-0.04em', direction: dir, textAlign: 'center' },
     bio: { fontSize: 14, color: '#4A4458', direction: dir, textAlign: 'center', lineHeight: 1.6, background: C.soft, borderRadius: 14, padding: '10px 14px', border: `2px solid ${C.ink}`, margin: '12px 0' },
     cupPill: (sel) => ({
       flex: 1, border: `2px solid ${C.ink}`, borderRadius: 999,
@@ -570,10 +570,10 @@ export default function TippingClient({ creator, settings, recentTips, todayCoun
       padding: '14px 6px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2,
       cursor: 'pointer', transition: 'all .15s',
     }),
-    cupAmt: { fontFamily: "'Syne', sans-serif", fontSize: 14, fontWeight: 800 },
+    cupAmt: { fontFamily: "'Fraunces', sans-serif", fontSize: 14, fontWeight: 800 },
     payBtn: {
       width: '100%', background: C.accent, color: C.ink, border: `2px solid ${C.ink}`,
-      borderRadius: 999, padding: 17, fontFamily: "'Syne', sans-serif", fontSize: 18, fontWeight: 800,
+      borderRadius: 999, padding: 17, fontFamily: "'Fraunces', sans-serif", fontSize: 18, fontWeight: 800,
       cursor: loading ? 'not-allowed' : 'pointer', opacity: loading ? 0.6 : 1, direction: dir,
       boxShadow: `4px 4px 0 ${C.ink}`, transition: 'all .12s',
     },
@@ -583,7 +583,7 @@ export default function TippingClient({ creator, settings, recentTips, todayCoun
     errorBox: { background: '#FFF0F0', border: `2px solid #FF5A5A`, borderRadius: 12, padding: '8px 14px', fontSize: 13, color: '#C00', direction: dir, marginBottom: 10, fontWeight: 700 },
     pmRow: { display: 'flex', justifyContent: 'center', gap: 6, marginTop: 14, flexWrap: 'wrap' },
     pmBadge: { border: `1.5px solid ${C.ink}`, borderRadius: 8, padding: '3px 10px', fontSize: 11, fontWeight: 700, color: C.muted, fontFamily: "'DM Sans', sans-serif" },
-    langBtn: { position: 'absolute', top: 16, insetInlineEnd: 16, border: `2px solid ${C.ink}`, background: C.card, color: C.ink, borderRadius: 999, padding: '5px 13px', fontSize: 13, fontWeight: 800, fontFamily: "'Syne', sans-serif", cursor: 'pointer', zIndex: 2, boxShadow: `2px 2px 0 ${C.ink}` },
+    langBtn: { position: 'absolute', top: 16, insetInlineEnd: 16, border: `2px solid ${C.ink}`, background: C.card, color: C.ink, borderRadius: 999, padding: '5px 13px', fontSize: 13, fontWeight: 800, fontFamily: "'Fraunces', sans-serif", cursor: 'pointer', zIndex: 2, boxShadow: `2px 2px 0 ${C.ink}` },
     social: { background: C.purple, color: '#fff', border: `2px solid ${C.ink}`, borderRadius: 10, padding: '4px 10px', fontSize: 12, fontWeight: 700, textDecoration: 'none' },
   };
 
@@ -663,7 +663,7 @@ export default function TippingClient({ creator, settings, recentTips, todayCoun
         {/* Total counter */}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', border: `2px solid ${C.ink}`, borderRadius: 14, padding: '9px 14px', marginBottom: '1.1rem', background: C.soft, boxShadow: `3px 3px 0 ${C.ink}` }}>
           <span style={{ fontSize: 12, color: '#4A4458', fontWeight: 700 }}>{t.totalCoffees}</span>
-          <span style={{ fontFamily: "'Syne', sans-serif", fontSize: 18, fontWeight: 800, color: C.purple }}>☕ {creator.total_tips_count}</span>
+          <span style={{ fontFamily: "'Fraunces', sans-serif", fontSize: 18, fontWeight: 800, color: C.purple }}>☕ {creator.total_tips_count}</span>
         </div>
 
         <div style={s.divider} />
@@ -688,7 +688,7 @@ export default function TippingClient({ creator, settings, recentTips, todayCoun
         {showAmazing && (
           <div style={{ border: `2px solid ${C.ink}`, borderRadius: 18, padding: '12px 14px', marginBottom: '1.1rem', background: isAmazing ? C.soft : C.card, cursor: 'pointer', boxShadow: isAmazing ? `3px 3px 0 ${C.purple}` : 'none', transition: 'all .15s' }}
             onClick={() => setIsAmazing(!isAmazing)}>
-            <div style={{ fontFamily: "'Syne', sans-serif", fontSize: 14, fontWeight: 800, color: isAmazing ? C.purple : C.ink, marginBottom: 4, direction: dir }}>
+            <div style={{ fontFamily: "'Fraunces', sans-serif", fontSize: 14, fontWeight: 800, color: isAmazing ? C.purple : C.ink, marginBottom: 4, direction: dir }}>
               {isAmazing ? '✓ ' : ''}☀️ {creator.amazing_message || t.amazingDefault}
             </div>
             {isAmazing && (

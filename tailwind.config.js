@@ -7,7 +7,7 @@ module.exports = {
   theme: {
     extend: {
       fontFamily: {
-        syne:   ['Syne', 'sans-serif'],
+        fraunces:   ['Fraunces', 'sans-serif'],
         tajawal:['Tajawal', 'sans-serif'],
         dm:     ['DM Sans', 'sans-serif'],
       },

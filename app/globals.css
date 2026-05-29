@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=Tajawal:wght@400;500;700;800&family=DM+Sans:wght@400;500;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:wght@700;800&family=Tajawal:wght@400;500;700;800&family=DM+Sans:wght@400;500;700&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -95,8 +95,8 @@ input, textarea, select { font-size: 16px; }
 }
 .qahwa-heart-pulse { animation: qahwa-heart-pulse 1.6s ease-in-out infinite; }
 
-/* Syne for headings */
-h1, h2, h3 { font-family: 'Syne', sans-serif; font-weight: 800; letter-spacing: -0.04em; }
+/* Fraunces for headings */
+h1, h2, h3 { font-family: 'Fraunces', sans-serif; font-weight: 800; letter-spacing: -0.04em; }
 
 /* Numbers / Latin emphasis */
 .font-num { font-family: 'DM Sans', sans-serif; font-feature-settings: 'tnum'; }

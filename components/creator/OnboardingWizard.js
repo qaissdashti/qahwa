@@ -295,7 +295,7 @@ export default function OnboardingWizard({ startStep = 1, initial = {}, authed =
         <div className="absolute top-0 inset-inline-end-0 z-10" style={{ insetInlineEnd: 0 }}>
           <LangToggle />
         </div>
-        <h1 className="text-center text-2xl font-extrabold mb-1" style={{ fontFamily: 'Syne' }}>
+        <h1 className="text-center text-2xl font-extrabold mb-1" style={{ fontFamily: 'Fraunces' }}>
           قهوة <span className="text-qahwa-accent">☕</span>
         </h1>
         <p className="text-center text-black/55 font-medium mb-5">{t('onb.title')}</p>
@@ -436,7 +436,7 @@ function CupPreview({ t, price }) {
     padding: '14px 6px', display: 'flex', flexDirection: 'column',
     alignItems: 'center', gap: 2,
   });
-  const amt = { fontFamily: "'Syne', sans-serif", fontSize: 14, fontWeight: 800 };
+  const amt = { fontFamily: "'Fraunces', sans-serif", fontSize: 14, fontWeight: 800 };
   return (
     <div className="mt-3">
       <div className="text-xs font-bold text-black/50 mb-1.5">{t('onb.s1.previewTitle')}</div>
@@ -518,7 +518,7 @@ function Step1({
                    background: 'rgba(255,255,255,0.5)',
                  }}>
             <div className="text-5xl mb-2">📷</div>
-            <div className="text-base font-extrabold" style={{ fontFamily: 'Syne, sans-serif' }}>
+            <div className="text-base font-extrabold" style={{ fontFamily: 'Fraunces, sans-serif' }}>
               {t('onb.s1.uploadCta')}
             </div>
             <div className="text-xs font-medium text-black/50 mt-1">
@@ -670,7 +670,7 @@ function Step3({ t, phone, setPhone, otpSent, code, setCode, sendOtp, busy, what
         <div className="bg-qahwa-purple/10 border-2 border-qahwa-purple/40 rounded-xl p-4">
           <div className="flex items-center gap-2 mb-1.5">
             <span className="text-xl">📵</span>
-            <span className="font-extrabold text-qahwa-purple text-sm" style={{ fontFamily: "'Syne',sans-serif" }}>
+            <span className="font-extrabold text-qahwa-purple text-sm" style={{ fontFamily: "'Fraunces',sans-serif" }}>
               {t('onb.s3.notConfigured')}
             </span>
           </div>
@@ -728,7 +728,7 @@ function Step4({ t, civilId, setCivilId, selfie, setSelfie }) {
             <span className="text-sm font-bold">{selfie.name}</span>
           ) : (
             <>
-              <div className="text-base font-extrabold leading-snug" style={{ fontFamily: 'Syne, sans-serif' }}>
+              <div className="text-base font-extrabold leading-snug" style={{ fontFamily: 'Fraunces, sans-serif' }}>
                 {t('auth.verify.selfie.pick')}
               </div>
               <div className="text-xs font-medium text-black/55 mt-1.5 max-w-xs mx-auto leading-relaxed">
@@ -761,17 +761,17 @@ function Step5({ t, fullName, handle, avatarEmoji, avatarUrl, coffeePrice }) {
                   ? <img src={avatarUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                   : avatarEmoji}
               </div>
-              <div style={{ fontFamily: "'Syne',sans-serif", fontWeight: 800, fontSize: 14, color: F.ink, textAlign: 'center' }}>{fullName || t('sset.previewName')}</div>
+              <div style={{ fontFamily: "'Fraunces',sans-serif", fontWeight: 800, fontSize: 14, color: F.ink, textAlign: 'center' }}>{fullName || t('sset.previewName')}</div>
               <div style={{ fontSize: 10, color: F.purple, fontWeight: 700 }}>qahwa.kw/{handle}</div>
             </div>
             <div style={{ display: 'flex', gap: 5, marginTop: 10 }}>
               {[1, 3, 5].map((n, i) => (
-                <div key={n} style={{ flex: 1, border: `2px solid ${F.ink}`, borderRadius: 999, background: i === 0 ? F.purple : F.card, color: i === 0 ? '#fff' : F.ink, boxShadow: i === 0 ? `2px 2px 0 ${F.ink}` : 'none', padding: '7px 2px', textAlign: 'center', fontFamily: "'Syne',sans-serif", fontWeight: 800, fontSize: 11 }}>
+                <div key={n} style={{ flex: 1, border: `2px solid ${F.ink}`, borderRadius: 999, background: i === 0 ? F.purple : F.card, color: i === 0 ? '#fff' : F.ink, boxShadow: i === 0 ? `2px 2px 0 ${F.ink}` : 'none', padding: '7px 2px', textAlign: 'center', fontFamily: "'Fraunces',sans-serif", fontWeight: 800, fontSize: 11 }}>
                   {(coffeePrice * n).toFixed(3)}
                 </div>
               ))}
             </div>
-            <div style={{ marginTop: 10, background: F.accent, color: F.ink, border: `2px solid ${F.ink}`, borderRadius: 999, boxShadow: `3px 3px 0 ${F.ink}`, textAlign: 'center', padding: '9px 8px', fontFamily: "'Syne',sans-serif", fontWeight: 800, fontSize: 12 }}>
+            <div style={{ marginTop: 10, background: F.accent, color: F.ink, border: `2px solid ${F.ink}`, borderRadius: 999, boxShadow: `3px 3px 0 ${F.ink}`, textAlign: 'center', padding: '9px 8px', fontFamily: "'Fraunces',sans-serif", fontWeight: 800, fontSize: 12 }}>
               {t('sset.previewCta', { amt: Number(coffeePrice).toFixed(3) })}
             </div>
           </div>

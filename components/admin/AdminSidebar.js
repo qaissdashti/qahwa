@@ -11,7 +11,7 @@ export default function AdminSidebar({ admin }) {
       <div className="flex-1">
         <div className="flex items-start justify-between gap-2 px-2 mb-6">
           <div>
-            <span className="text-xl font-extrabold block" style={{ fontFamily: 'Syne' }}>{t('admin.brand')}</span>
+            <span className="text-xl font-extrabold block" style={{ fontFamily: 'Fraunces' }}>{t('admin.brand')}</span>
             <span className="block text-xs text-qahwa-accent font-bold">{t('admin.label')}</span>
           </div>
           <LangToggle variant="dark" />

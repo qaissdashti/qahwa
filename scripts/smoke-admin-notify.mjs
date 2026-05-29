@@ -37,7 +37,7 @@ const text    =
 
 const html =
   `<div style="font-family:system-ui,-apple-system,sans-serif;max-width:520px;margin:0 auto;padding:24px;color:#0D0D0D">` +
-  `<h2 style="margin:0 0 16px;font-family:Syne,sans-serif">New creator pending review</h2>` +
+  `<h2 style="margin:0 0 16px;font-family:Fraunces,sans-serif">New creator pending review</h2>` +
   `<p style="margin:0 0 16px;line-height:1.5">A new creator just finished onboarding and is awaiting your review.</p>` +
   `<table style="border-collapse:collapse;margin:0 0 20px">` +
     `<tr><td style="padding:4px 12px 4px 0;color:#666">Name</td><td style="padding:4px 0;font-weight:700">${fullName}</td></tr>` +

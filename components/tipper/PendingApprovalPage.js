@@ -29,7 +29,7 @@ export default function PendingApprovalPage({ creator }) {
         </div>
 
         <Link href="/" className="block text-center text-2xl font-extrabold mb-6 text-qahwa-black"
-              style={{ fontFamily: 'Syne' }}>
+              style={{ fontFamily: 'Fraunces' }}>
           قهوة <span className="text-qahwa-accent">☕</span>
         </Link>
 
@@ -52,7 +52,7 @@ export default function PendingApprovalPage({ creator }) {
           </div>
 
           {/* name */}
-          <div style={{ fontFamily: "'Syne',sans-serif", fontSize: 22, fontWeight: 800, color: C.ink, letterSpacing: '-0.04em' }}>
+          <div style={{ fontFamily: "'Fraunces',sans-serif", fontSize: 22, fontWeight: 800, color: C.ink, letterSpacing: '-0.04em' }}>
             {creator.full_name || creator.handle}
           </div>
 
@@ -60,7 +60,7 @@ export default function PendingApprovalPage({ creator }) {
           <div className="inline-flex items-center gap-2 mt-3 mb-4"
                style={{ background: C.soft, border: `2px solid ${C.purple}`, borderRadius: 999, padding: '6px 14px' }}>
             <span style={{ fontSize: 16 }}>🕵️</span>
-            <span style={{ color: C.purple, fontWeight: 800, fontSize: 13, fontFamily: "'Syne',sans-serif" }}>
+            <span style={{ color: C.purple, fontWeight: 800, fontSize: 13, fontFamily: "'Fraunces',sans-serif" }}>
               {t('pending.title')}
             </span>
           </div>

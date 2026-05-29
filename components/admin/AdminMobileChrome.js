@@ -27,7 +27,7 @@ export default function AdminMobileChrome({ admin }) {
           className="inline-flex items-center justify-center min-w-[44px] min-h-[44px] -ms-2 rounded-lg hover:bg-white/5 text-2xl">
           ☰
         </button>
-        <div className="text-sm font-extrabold text-center min-w-0 truncate" style={{ fontFamily: 'Syne' }}>
+        <div className="text-sm font-extrabold text-center min-w-0 truncate" style={{ fontFamily: 'Fraunces' }}>
           {t('admin.brand')} <span className="text-qahwa-accent">·</span>{' '}
           <span className="text-qahwa-accent text-xs">{t('admin.label')}</span>
         </div>
@@ -44,7 +44,7 @@ export default function AdminMobileChrome({ admin }) {
           <aside className="absolute top-0 inset-inline-start-0 h-full w-72 max-w-[85vw] dash-surface p-4 flex flex-col gap-2 shadow-2xl safe-pt safe-pb">
             <div className="flex items-center justify-between mb-4">
               <div>
-                <div className="text-xl font-extrabold" style={{ fontFamily: 'Syne' }}>{t('admin.brand')}</div>
+                <div className="text-xl font-extrabold" style={{ fontFamily: 'Fraunces' }}>{t('admin.brand')}</div>
                 <div className="text-xs text-qahwa-accent font-bold">{t('admin.label')}</div>
               </div>
               <button onClick={() => setOpen(false)} aria-label="Close menu"
