@@ -458,19 +458,21 @@ function Step1({
           </label>
         )}
 
-        {/* Emoji fallback — labelled and visually de-emphasised so the
-            dropzone reads as the primary action. */}
-        <div>
-          <div className="text-xs font-bold text-black/50 mb-1.5">{t('onb.s1.orPickEmoji')}</div>
-          <div className="flex flex-wrap gap-1.5">
-            {EMOJI_PRESETS.map((e) => (
-              <button key={e} type="button"
-                className={`w-9 h-9 rounded-lg border-2 border-qahwa-black text-xl transition-all
-                  ${avatarEmoji === e && !hasImage ? 'bg-qahwa-purple text-white' : 'bg-white'}`}
-                onClick={() => { setAvatarEmoji(e); setAvatarFile(null); }}>{e}</button>
-            ))}
+        {/* Emoji fallback — only shown when no photo is uploaded. Once
+            an image is in place it becomes redundant noise. */}
+        {!hasImage && (
+          <div>
+            <div className="text-xs font-bold text-black/50 mb-1.5">{t('onb.s1.orPickEmoji')}</div>
+            <div className="flex flex-wrap gap-1.5">
+              {EMOJI_PRESETS.map((e) => (
+                <button key={e} type="button"
+                  className={`w-9 h-9 rounded-lg border-2 border-qahwa-black text-xl transition-all
+                    ${avatarEmoji === e ? 'bg-qahwa-purple text-white' : 'bg-white'}`}
+                  onClick={() => { setAvatarEmoji(e); setAvatarFile(null); }}>{e}</button>
+              ))}
+            </div>
           </div>
-        </div>
+        )}
       </div>
 
       {/* ── Full name ── */}
@@ -641,11 +643,23 @@ function Step4({ t, civilId, setCivilId, selfie, setSelfie }) {
       </div>
       <div>
         <label className="q-label">{t('auth.verify.step.selfie')}</label>
-        <label className="block border-2 border-dashed border-qahwa-black rounded-xl p-6 text-center cursor-pointer hover:bg-black/5">
+        <label className="block border-2 border-dashed border-qahwa-black rounded-2xl px-5 py-7 text-center cursor-pointer transition-all hover:bg-black/5"
+               style={{ background: 'rgba(255,255,255,0.5)' }}>
           <input type="file" accept="image/jpeg,image/png,image/webp" className="hidden"
                  onChange={(e) => setSelfie(e.target.files?.[0] || null)} />
-          <div className="text-4xl mb-1">{selfie ? '✅' : '📸'}</div>
-          <span className="text-sm font-bold">{selfie ? selfie.name : t('auth.verify.selfie.pick')}</span>
+          <div className="text-5xl mb-2">{selfie ? '✅' : '🤳'}</div>
+          {selfie ? (
+            <span className="text-sm font-bold">{selfie.name}</span>
+          ) : (
+            <>
+              <div className="text-base font-extrabold leading-snug" style={{ fontFamily: 'Syne, sans-serif' }}>
+                {t('auth.verify.selfie.pick')}
+              </div>
+              <div className="text-xs font-medium text-black/55 mt-1.5 max-w-xs mx-auto leading-relaxed">
+                {t('auth.verify.selfie.hint')}
+              </div>
+            </>
+          )}
         </label>
       </div>
     </>
