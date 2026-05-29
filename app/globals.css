@@ -55,15 +55,26 @@ input, textarea, select { font-size: 16px; }
 .qahwa-pulse { animation: qahwa-pulse 0.9s ease-in-out infinite; }
 
 /* Landing-page phone-mockup notification cycle.
-   Two notifs stacked at the same anchor — each visible for ~2s of the
-   4s cycle, the second one offset by 2s so they alternate cleanly. */
+   Two notifs stacked at the same anchor on an 8s loop:
+     0.0-0.4s  gentle slide-in (eased)
+     0.4-3.0s  visible, holding
+     3.0-4.0s  fade out in place (eased)
+     4.0-8.0s  hidden (off-screen reset)
+   The second notif's animation-delay is 4s so they alternate
+   sequentially with no overlap. Per-keyframe animation-timing-function
+   keeps the entrance gentle and the exit smooth instead of linear. */
 @keyframes qahwa-notif {
-  0%        { transform: translateY(-130%); opacity: 0; }
-  8%, 48%   { transform: translateY(0);     opacity: 1; }
-  56%, 100% { transform: translateY(-130%); opacity: 0; }
+  0%    { opacity: 0; transform: translateY(-110%);
+          animation-timing-function: cubic-bezier(0.22, 0.61, 0.36, 1); }
+  5%    { opacity: 1; transform: translateY(0);
+          animation-timing-function: linear; }
+  37.5% { opacity: 1; transform: translateY(0);
+          animation-timing-function: ease-in; }
+  50%   { opacity: 0; transform: translateY(0); }
+  100%  { opacity: 0; transform: translateY(-110%); }
 }
-.qahwa-notif       { animation: qahwa-notif 4s ease-in-out infinite; }
-.qahwa-notif-late  { animation: qahwa-notif 4s ease-in-out infinite; animation-delay: 2s; }
+.qahwa-notif       { animation: qahwa-notif 8s infinite; }
+.qahwa-notif-late  { animation: qahwa-notif 8s infinite; animation-delay: 4s; }
 
 /* Gentle floating bob for the landing-page social-brand badges. */
 @keyframes qahwa-bob {

@@ -106,13 +106,19 @@ const STR = {
 // ── Brand badges floating around the hero. Real brand colors so they
 //    read at a glance without a logo file. Emoji glyphs for visual
 //    weight. Positioned absolutely on desktop, hidden on mobile to
-//    avoid crowding. ──
+//    avoid crowding. Coordinates target the hero perimeter — never
+//    overlap the phone mockup that lives in the right grid cell. ──
 const BRANDS = [
-  { name: 'YouTube',   bg: '#FF0000', glyph: '▶',  pos: 'top-6 left-4' },
-  { name: 'Instagram', bg: 'linear-gradient(135deg,#F58529,#DD2A7B,#8134AF)', glyph: '📷', pos: 'top-24 right-2' },
-  { name: 'TikTok',    bg: '#0D0D0D', glyph: '🎵', pos: 'bottom-20 left-2' },
-  { name: 'X',         bg: '#0D0D0D', glyph: '𝕏',  pos: 'top-2 right-24' },
-  { name: 'Snapchat',  bg: '#FFFC00', glyph: '👻', pos: 'bottom-6 right-10' },
+  // top-left corner, above headline
+  { name: 'YouTube',   bg: '#FF0000', glyph: '▶',  pos: { top: 8,   left: 12 } },
+  // mid-left, alongside headline
+  { name: 'Instagram', bg: 'linear-gradient(135deg,#F58529,#DD2A7B,#8134AF)', glyph: '📷', pos: { top: '46%', left: '-8px' } },
+  // bottom-left, under hero text
+  { name: 'TikTok',    bg: '#0D0D0D', glyph: '🎵', pos: { bottom: 24, left: '32%' } },
+  // top-right corner — outside phone (phone starts at ~55% width)
+  { name: 'X',         bg: '#0D0D0D', glyph: '𝕏',  pos: { top: 8,   right: 12 } },
+  // bottom-right corner — below the phone's bottom edge
+  { name: 'Snapchat',  bg: '#FFFC00', glyph: '👻', pos: { bottom: 0, right: 16, color: '#0D0D0D' } },
 ];
 
 export default function LandingClient() {
@@ -136,18 +142,21 @@ export default function LandingClient() {
 
       {/* ─── Hero ─── */}
       <section className="relative max-w-6xl mx-auto w-full px-5 sm:px-6 py-10 sm:py-16 grid lg:grid-cols-[1.1fr_1fr] gap-10 lg:gap-12 items-center">
-        {/* floating brand badges — desktop only */}
-        <div className="hidden lg:block absolute inset-0 pointer-events-none">
+        {/* floating brand badges — desktop only, sit above the phone (z-30
+            > phone's z-10), positioned around the hero perimeter so they
+            never overlap the phone frame. */}
+        <div className="hidden lg:block absolute inset-0 pointer-events-none" style={{ zIndex: 30 }}>
           {BRANDS.map((b, i) => (
             <span key={b.name}
-              className={`absolute ${b.pos} qahwa-bob`}
+              className="absolute qahwa-bob"
               style={{
-                width: 44, height: 44, borderRadius: '50%',
-                background: b.bg, color: '#fff',
+                ...b.pos,
+                width: 56, height: 56, borderRadius: '50%',
+                background: b.bg, color: b.pos.color || '#fff',
                 display: 'grid', placeItems: 'center',
-                fontSize: 18, fontWeight: 800,
-                border: `2px solid ${F.ink}`, boxShadow: `3px 3px 0 ${F.ink}`,
-                animationDelay: `${i * 0.45}s`,
+                fontSize: 22, fontWeight: 800,
+                border: `2px solid ${F.ink}`, boxShadow: `4px 4px 0 ${F.ink}`,
+                animationDelay: `${i * 0.55}s`,
               }}
               aria-hidden>
               <span>{b.glyph}</span>
@@ -161,7 +170,17 @@ export default function LandingClient() {
                style={{ background: F.soft, color: F.purple, border: `2px solid ${F.purple}` }}>
             Kuwait · KWD · KNET
           </div>
-          <h1 className="text-4xl sm:text-5xl lg:text-6xl leading-tight mb-5">
+          {/* Explicit Syne 800 — overrides the global h1 rule's tight -0.04em
+              tracking that was making the headline read as condensed/stretched.
+              Slightly looser letter-spacing + tighter line-height = bold and
+              punchy without the vertical-stretch feel. */}
+          <h1 className="text-4xl sm:text-5xl lg:text-6xl mb-5"
+              style={{
+                fontFamily: "'Syne', sans-serif",
+                fontWeight: 800,
+                letterSpacing: '-0.01em',
+                lineHeight: 1.05,
+              }}>
             {t.hero.title1}<br/>{t.hero.title2}
           </h1>
           <p className="text-base sm:text-lg max-w-xl mb-7 font-medium" style={{ color: 'rgba(13,13,13,0.65)' }}>
@@ -229,8 +248,9 @@ export default function LandingClient() {
 // ─────────────────────────────────────────────────────────────
 // iPhone-ish frame with a status bar and two notification cards
 // stacked at the same anchor. Each card animates via the global
-// .qahwa-notif / .qahwa-notif-late classes (4s cycle, second is
-// offset by 2s) so they alternate without JS.
+// .qahwa-notif / .qahwa-notif-late classes (8s cycle: gentle
+// 0.4s slide-in → 3s hold → 1s fade-out; second card offset 4s
+// so the two alternate sequentially without overlap).
 // ─────────────────────────────────────────────────────────────
 function PhoneMockup({ strings, dir }) {
   return (
