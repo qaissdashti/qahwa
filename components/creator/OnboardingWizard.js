@@ -4,7 +4,7 @@
 // ============================================================
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase-browser';
@@ -53,7 +53,21 @@ export default function OnboardingWizard({ startStep = 1, initial = {}, authed =
 
   const [step, setStep]     = useState(startStep);
   const [busy, setBusy]     = useState(false);
-  const [err, setErr]       = useState('');
+  // Per-field error map. Keys: fullName, handle, email, password, price.
+  // 'form' is reserved for non-field errors (network, signup failure with
+  // no obvious field). Cleared on each submit; specific keys cleared
+  // individually as users edit.
+  const [errors, setErrors] = useState({});
+  const setFieldError = (field, message) =>
+    setErrors((e) => ({ ...e, [field]: message }));
+  const clearFieldError = (field) =>
+    setErrors((e) => { if (!e[field]) return e; const n = { ...e }; delete n[field]; return n; });
+
+  // Live handle-availability indicator. Debounced 600ms after the user
+  // stops typing. Only meaningful when !authed (existing creators keep
+  // whatever handle they signed up with).
+  // States: 'idle' | 'short' | 'checking' | 'available' | 'taken'
+  const [handleStatus, setHandleStatus] = useState('idle');
 
   // Step 1 — basic info (also creates auth user when !authed)
   const c0 = initial.creator || {};
@@ -92,21 +106,55 @@ export default function OnboardingWizard({ startStep = 1, initial = {}, authed =
 
   const cleanHandle = handle.toLowerCase().replace(/[^a-z0-9_]/g, '');
 
+  // Debounced live availability check — fires 600ms after the user stops
+  // typing in the handle field. Skip for already-authed creators (handle
+  // is fixed) and for inputs shorter than 3 chars (server min length).
+  useEffect(() => {
+    if (authed) { setHandleStatus('idle'); return; }
+    if (cleanHandle.length < 3) { setHandleStatus('short'); return; }
+    setHandleStatus('checking');
+    const id = setTimeout(async () => {
+      try {
+        const r = await fetch(`/api/creator/handle-available?handle=${cleanHandle}`);
+        const j = await r.json().catch(() => ({}));
+        setHandleStatus(j.available ? 'available' : 'taken');
+        // Auto-clear stale per-field error if the new check passes
+        if (j.available) clearFieldError('handle');
+      } catch {
+        setHandleStatus('idle');
+      }
+    }, 600);
+    return () => clearTimeout(id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [cleanHandle, authed]);
+
   // ── step handlers ───────────────────────────────────────────
   async function submitStep1() {
-    setErr(''); setBusy(true);
+    setErrors({}); setBusy(true);
     try {
-      if (!fullName.trim())       throw new Error(t('auth.signup.errName'));
-      if (cleanHandle.length < 3) throw new Error(t('auth.signup.errHandle'));
+      // ── Field-level validation ────────────────────────────────
+      const next = {};
+      if (!fullName.trim())       next.fullName = t('auth.signup.errName');
+      if (cleanHandle.length < 3) next.handle   = t('auth.signup.errHandle');
       const price = Number(coffeePrice);
       if (!COFFEE_PRICE_OPTIONS.includes(Number(price.toFixed(1)))) {
-        throw new Error(t('sset.priceMustBeChip'));
+        next.price = t('sset.priceMustBeChip');
       }
+      if (!authed && password.length < 8) next.password = t('auth.signup.errPassword');
+      // Honour the latest live-check result — saves a round-trip if we
+      // already know the handle is taken.
+      if (!authed && handleStatus === 'taken') next.handle = t('auth.signup.handleTaken');
+      if (Object.keys(next).length) { setErrors(next); return; }
 
       if (!authed) {
-        if (password.length < 8)  throw new Error(t('auth.signup.errPassword'));
+        // Authoritative server check just before sign-up (defensive — the
+        // debounced live check may have raced or been bypassed).
         const avail = await fetch(`/api/creator/handle-available?handle=${cleanHandle}`).then((r) => r.json());
-        if (!avail.available) throw new Error(t('auth.signup.handleTaken'));
+        if (!avail.available) {
+          setHandleStatus('taken');
+          setFieldError('handle', t('auth.signup.handleTaken'));
+          return;
+        }
 
         const { data, error: signErr } = await supabase.auth.signUp({
           email, password,
@@ -119,12 +167,19 @@ export default function OnboardingWizard({ startStep = 1, initial = {}, authed =
             emailRedirectTo: `${window.location.origin}/auth/callback?next=/onboard`,
           },
         });
-        // Map raw Supabase errors (rate-limit, invalid email, etc.) to
-        // friendly translated text — never surface the raw API message.
-        if (signErr) throw new Error(friendlyAuthError(t, signErr));
+        if (signErr) {
+          // Map raw Supabase errors to friendly text + a target field.
+          const friendly = friendlyAuthError(t, signErr);
+          const raw = (signErr.message || '').toLowerCase();
+          if (/email|already|registered|invalid|exists/.test(raw))         setFieldError('email', friendly);
+          else if (/password|weak|short|characters/.test(raw))             setFieldError('password', friendly);
+          else                                                              setFieldError('form', friendly);
+          return;
+        }
         if (!data.session) {
-          // email confirmation is on → can't proceed past step 1 in-app
-          throw new Error(t('auth.signup.emailSentTitle') + ' (' + email + ')');
+          // Email confirmation is on → can't proceed past step 1 in-app.
+          setFieldError('email', t('auth.signup.emailSentTitle') + ' (' + email + ')');
+          return;
         }
         await waitForAuthCookie();
         await postJson('/api/creator/init', { full_name: fullName.trim(), handle: cleanHandle });
@@ -145,12 +200,12 @@ export default function OnboardingWizard({ startStep = 1, initial = {}, authed =
         setAvatarUrl(j.url);
       }
       setStep(2);
-    } catch (e) { setErr(e.message); }
+    } catch (e) { setFieldError('form', e.message); }
     finally { setBusy(false); setUploadPct(0); }
   }
 
   async function submitStep2() {
-    setErr(''); setBusy(true);
+    setErrors({}); setBusy(true);
     try {
       if (!accountHolder.trim()) throw new Error(t('sset.accountHolder'));
       // No format validation — accept any non-empty IBAN text for now.
@@ -161,34 +216,34 @@ export default function OnboardingWizard({ startStep = 1, initial = {}, authed =
       if (ibanToSave) body.iban = ibanToSave;
       await postJson('/api/creator/settings', body);
       setStep(3);
-    } catch (e) { setErr(e.message); }
+    } catch (e) { setFieldError('form', e.message); }
     finally { setBusy(false); }
   }
 
   async function sendOtp() {
-    setErr(''); setBusy(true);
+    setErrors({}); setBusy(true);
     try {
       const num = (phone.startsWith('+965') ? phone : '+965' + phone).replace(/\s+/g, '');
       if (!PHONE_KW.test(num)) throw new Error('Use a Kuwait number: +965XXXXXXXX');
       const r = await postJson('/api/otp/send', { phone: num });
       setOtpSent(true);
       if (r.devCode) setCode(r.devCode);
-    } catch (e) { setErr(e.message); }
+    } catch (e) { setFieldError('form', e.message); }
     finally { setBusy(false); }
   }
 
   async function verifyOtp() {
-    setErr(''); setBusy(true);
+    setErrors({}); setBusy(true);
     try {
       const num = (phone.startsWith('+965') ? phone : '+965' + phone).replace(/\s+/g, '');
       await postJson('/api/otp/verify', { phone: num, code });
       setStep(4);
-    } catch (e) { setErr(e.message); }
+    } catch (e) { setFieldError('form', e.message); }
     finally { setBusy(false); }
   }
 
   async function submitStep4() {
-    setErr(''); setBusy(true);
+    setErrors({}); setBusy(true);
     try {
       if (!/^\d{12}$/.test(civilId)) throw new Error(t('auth.verify.civil.label'));
       if (!selfie) throw new Error(t('auth.verify.selfie.noFile'));
@@ -197,7 +252,7 @@ export default function OnboardingWizard({ startStep = 1, initial = {}, authed =
       await xhrUpload('/api/verify/selfie', fd, (pct) => setUploadPct(pct))
         .catch((e) => { throw new Error(e.message || t('common.somethingWrong')); });
       setStep(5);
-    } catch (e) { setErr(e.message); }
+    } catch (e) { setFieldError('form', e.message); }
     finally { setBusy(false); setUploadPct(0); }
   }
 
@@ -245,6 +300,8 @@ export default function OnboardingWizard({ startStep = 1, initial = {}, authed =
               authed={authed} coffeePrice={coffeePrice} setCoffeePrice={setCoffeePrice}
               bio={bio} setBio={setBio} avatarEmoji={avatarEmoji} setAvatarEmoji={setAvatarEmoji}
               avatarUrl={avatarUrl} avatarFile={avatarFile} setAvatarFile={setAvatarFile}
+              errors={errors} clearFieldError={clearFieldError}
+              handleStatus={handleStatus}
             />
           )}
           {step === 2 && (
@@ -267,7 +324,9 @@ export default function OnboardingWizard({ startStep = 1, initial = {}, authed =
                    coffeePrice={Number(coffeePrice) || 1} />
           )}
 
-          {err && <p className="q-error">{err}</p>}
+          {/* General/non-field errors only — per-field errors render inline
+              under their own input (Step 1). */}
+          {errors.form && <p className="q-error">{errors.form}</p>}
 
           <div className="flex items-center gap-2 justify-between pt-2">
             <span className="text-xs text-black/40">{step < 5 ? t('onb.savedAuto') : ''}</span>
@@ -317,52 +376,127 @@ function WizardBtn({ busy, disabled, pct = 0, onClick, t, label }) {
 
 // ── steps ──────────────────────────────────────────────────────
 
-function Step1({ t, fullName, setFullName, handle, setHandle, cleanHandle, email, setEmail, password, setPassword, authed, coffeePrice, setCoffeePrice, bio, setBio, avatarEmoji, setAvatarEmoji, avatarUrl, avatarFile, setAvatarFile }) {
+// ── Step 1 helpers ─────────────────────────────────────────────
+const ERR_RED = '#FF5A5A';
+// Inline red error message under a field (also serves as the aria-describedby
+// target — we keep it dumb on purpose, parent decides whether to render it).
+function FieldError({ children }) {
+  if (!children) return null;
+  return <p className="text-sm font-bold mt-1.5" style={{ color: ERR_RED }}>{children}</p>;
+}
+// Red border for input/textarea when the matching error key is set.
+const errorBorder = (err) => (err ? { borderColor: ERR_RED } : undefined);
+
+// Live status pill under the handle field. Color + symbol mirror the
+// handleStatus state, not just availability — so users see "checking…"
+// the moment they pause typing.
+function HandleStatusPill({ status, t }) {
+  if (status === 'idle' || status === 'short') return null;
+  const map = {
+    checking:  { text: t('onb.s1.handleChecking'),  color: '#7B2FBE' },
+    available: { text: t('onb.s1.handleAvailable'), color: '#27a85a' },
+    taken:     { text: t('onb.s1.handleTakenIn'),   color: ERR_RED   },
+  };
+  const m = map[status];
+  return <span className="text-xs font-extrabold ms-2" style={{ color: m.color }}>{m.text}</span>;
+}
+
+function Step1({
+  t, fullName, setFullName, handle, setHandle, cleanHandle,
+  email, setEmail, password, setPassword,
+  authed, coffeePrice, setCoffeePrice, bio, setBio,
+  avatarEmoji, setAvatarEmoji, avatarUrl, avatarFile, setAvatarFile,
+  errors, clearFieldError, handleStatus,
+}) {
+  const hasImage = !!avatarUrl || !!avatarFile;
+
   return (
     <>
       <h2 className="text-xl">{t('onb.step.basic')}</h2>
       <p className="text-sm text-black/55 font-medium">{t('onb.s1.subtitle')}</p>
 
-      <div className="space-y-2">
+      {/* ── Avatar: big dashed dropzone OR compact preview-with-Change ── */}
+      <div className="space-y-3">
         <label className="q-label">{t('onb.s1.profileSec')}</label>
-        <div className="flex items-center gap-3">
-          <div className="w-16 h-16 rounded-full overflow-hidden border-2 border-qahwa-black grid place-items-center text-3xl" style={{ boxShadow: '3px 3px 0 #0D0D0D', background: '#EDE4FB' }}>
-            {avatarUrl
-              // eslint-disable-next-line @next/next/no-img-element
-              ? <img src={avatarUrl} alt="" className="w-full h-full object-cover" />
-              : avatarFile
+
+        {hasImage ? (
+          // After a file/url is present: small thumbnail + change link.
+          <div className="flex items-center gap-3 p-3 rounded-xl border-2 border-qahwa-black"
+               style={{ background: '#FAFAF7', boxShadow: '3px 3px 0 #0D0D0D' }}>
+            <div className="w-14 h-14 rounded-full overflow-hidden border-2 border-qahwa-black grid place-items-center shrink-0" style={{ background: '#EDE4FB' }}>
+              {avatarUrl
                 // eslint-disable-next-line @next/next/no-img-element
-                ? <img src={URL.createObjectURL(avatarFile)} alt="" className="w-full h-full object-cover" />
-                : <span>{avatarEmoji}</span>}
+                ? <img src={avatarUrl} alt="" className="w-full h-full object-cover" />
+                // eslint-disable-next-line @next/next/no-img-element
+                : <img src={URL.createObjectURL(avatarFile)} alt="" className="w-full h-full object-cover" />}
+            </div>
+            <div className="text-xs font-bold text-black/60 truncate flex-1">
+              {avatarFile?.name || 'avatar.png'}
+            </div>
+            <label className="q-btn-white text-xs cursor-pointer">
+              {t('onb.s1.uploadChange')}
+              <input type="file" accept="image/jpeg,image/png,image/webp" className="hidden"
+                     onChange={(e) => setAvatarFile(e.target.files?.[0] || null)} />
+            </label>
           </div>
-          <label className="q-btn-white text-xs cursor-pointer">
-            📷 Upload
+        ) : (
+          // Empty state: big dashed dropzone, clickable across the whole area.
+          <label className="block cursor-pointer text-center px-5 py-8 rounded-2xl transition-all hover:bg-white/60"
+                 style={{
+                   border: '2.5px dashed #0D0D0D',
+                   background: 'rgba(255,255,255,0.5)',
+                 }}>
+            <div className="text-5xl mb-2">📷</div>
+            <div className="text-base font-extrabold" style={{ fontFamily: 'Syne, sans-serif' }}>
+              {t('onb.s1.uploadCta')}
+            </div>
+            <div className="text-xs font-medium text-black/50 mt-1">
+              {t('onb.s1.uploadHint')}
+            </div>
             <input type="file" accept="image/jpeg,image/png,image/webp" className="hidden"
                    onChange={(e) => setAvatarFile(e.target.files?.[0] || null)} />
           </label>
-        </div>
-        <div className="flex flex-wrap gap-1.5">
-          {EMOJI_PRESETS.map((e) => (
-            <button key={e} type="button"
-              className={`w-9 h-9 rounded-lg border-2 border-qahwa-black text-xl transition-all
-                ${avatarEmoji === e && !avatarFile && !avatarUrl ? 'bg-qahwa-purple text-white' : 'bg-white'}`}
-              onClick={() => { setAvatarEmoji(e); setAvatarFile(null); }}>{e}</button>
-          ))}
+        )}
+
+        {/* Emoji fallback — labelled and visually de-emphasised so the
+            dropzone reads as the primary action. */}
+        <div>
+          <div className="text-xs font-bold text-black/50 mb-1.5">{t('onb.s1.orPickEmoji')}</div>
+          <div className="flex flex-wrap gap-1.5">
+            {EMOJI_PRESETS.map((e) => (
+              <button key={e} type="button"
+                className={`w-9 h-9 rounded-lg border-2 border-qahwa-black text-xl transition-all
+                  ${avatarEmoji === e && !hasImage ? 'bg-qahwa-purple text-white' : 'bg-white'}`}
+                onClick={() => { setAvatarEmoji(e); setAvatarFile(null); }}>{e}</button>
+            ))}
+          </div>
         </div>
       </div>
 
+      {/* ── Full name ── */}
       <div>
         <label className="q-label">{t('auth.signup.fullName')}</label>
-        <input className="q-input" value={fullName} onChange={(e) => setFullName(e.target.value)} placeholder={t('auth.signup.fullNamePh')} />
+        <input className="q-input" value={fullName} style={errorBorder(errors.fullName)}
+               onChange={(e) => { setFullName(e.target.value); clearFieldError('fullName'); }}
+               placeholder={t('auth.signup.fullNamePh')}
+               aria-invalid={!!errors.fullName} />
+        <FieldError>{errors.fullName}</FieldError>
       </div>
 
+      {/* ── Handle (with live availability pill) ── */}
       <div>
-        <label className="q-label">{t('auth.signup.handle')}</label>
-        <input className="q-input font-num" dir="ltr" value={cleanHandle}
-               onChange={(e) => setHandle(e.target.value)} placeholder={t('auth.signup.handlePh')} autoCapitalize="none" />
+        <label className="q-label flex items-center">
+          <span>{t('auth.signup.handle')}</span>
+          {!authed && <HandleStatusPill status={handleStatus} t={t} />}
+        </label>
+        <input className="q-input font-num" dir="ltr" value={cleanHandle} style={errorBorder(errors.handle)}
+               onChange={(e) => { setHandle(e.target.value); clearFieldError('handle'); }}
+               placeholder={t('auth.signup.handlePh')} autoCapitalize="none"
+               aria-invalid={!!errors.handle} />
         <div className="text-xs text-qahwa-purple font-bold font-num mt-1" dir="ltr">
           {t('onb.s1.handlePreview', { handle: cleanHandle || '...' })}
         </div>
+        <FieldError>{errors.handle}</FieldError>
       </div>
 
       {!authed && (
@@ -370,16 +504,25 @@ function Step1({ t, fullName, setFullName, handle, setHandle, cleanHandle, email
           <div>
             <label className="q-label">{t('auth.login.email')}</label>
             <input className="q-input font-num" type="email" dir="ltr" value={email}
-                   onChange={(e) => setEmail(e.target.value)} placeholder="you@email.com" autoComplete="email" />
+                   style={errorBorder(errors.email)}
+                   onChange={(e) => { setEmail(e.target.value); clearFieldError('email'); }}
+                   placeholder="you@email.com" autoComplete="email"
+                   aria-invalid={!!errors.email} />
+            <FieldError>{errors.email}</FieldError>
           </div>
           <div>
             <label className="q-label">{t('auth.login.password')}</label>
             <input className="q-input font-num" type="password" dir="ltr" value={password}
-                   onChange={(e) => setPassword(e.target.value)} placeholder={t('auth.signup.passwordPh')} autoComplete="new-password" />
+                   style={errorBorder(errors.password)}
+                   onChange={(e) => { setPassword(e.target.value); clearFieldError('password'); }}
+                   placeholder={t('auth.signup.passwordPh')} autoComplete="new-password"
+                   aria-invalid={!!errors.password} />
+            <FieldError>{errors.password}</FieldError>
           </div>
         </>
       )}
 
+      {/* ── Coffee price chips ── */}
       <div>
         <label className="q-label">{t('sset.cupPricePick')}</label>
         <div className="flex flex-wrap gap-1.5" role="radiogroup" aria-label={t('sset.cupPricePick')}>
@@ -387,7 +530,7 @@ function Step1({ t, fullName, setFullName, handle, setHandle, cleanHandle, email
             const selected = Number(coffeePrice) === p;
             return (
               <button key={p} type="button" role="radio" aria-checked={selected}
-                onClick={() => setCoffeePrice(p)}
+                onClick={() => { setCoffeePrice(p); clearFieldError('price'); }}
                 className={`px-3.5 py-2 rounded-xl border-2 border-qahwa-black font-bold font-num text-sm transition-all
                   ${selected ? 'bg-qahwa-purple text-white' : 'bg-white text-qahwa-black'}`}
                 style={{ boxShadow: selected ? '3px 3px 0 #0D0D0D' : 'none' }}>
@@ -396,6 +539,7 @@ function Step1({ t, fullName, setFullName, handle, setHandle, cleanHandle, email
             );
           })}
         </div>
+        <FieldError>{errors.price}</FieldError>
       </div>
 
       <div>
