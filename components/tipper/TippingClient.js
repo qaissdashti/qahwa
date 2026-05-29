@@ -292,13 +292,36 @@ export default function TippingClient({ creator, settings, recentTips, todayCoun
             elements (the <img> collapses to its intrinsic aspect ratio in
             Safari/iOS). Same pattern as PendingApprovalPage + SettingsForm. */}
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: '1.25rem' }}>
-          <div style={{ width: 84, height: 84, borderRadius: '50%', border: `2px solid ${C.ink}`, boxShadow: `3px 3px 0 ${C.ink}`, overflow: 'hidden', display: 'grid', placeItems: 'center', background: C.soft, fontSize: 38, marginBottom: 12 }}>
-            {creator.avatar_url
-              // eslint-disable-next-line @next/next/no-img-element
-              ? <img src={creator.avatar_url} alt={creator.full_name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-              : (creator.avatar_emoji || '🎙️')}
+          {/* Avatar + verified badge. The circle keeps overflow:hidden to
+              clip the image, so the badge sits on a sibling absolute layer
+              of a relatively-positioned wrapper — same trick Twitter/X uses. */}
+          <div style={{ position: 'relative', width: 84, height: 84, marginBottom: 12 }}>
+            <div style={{ width: 84, height: 84, borderRadius: '50%', border: `2px solid ${C.ink}`, boxShadow: `3px 3px 0 ${C.ink}`, overflow: 'hidden', display: 'grid', placeItems: 'center', background: C.soft, fontSize: 38 }}>
+              {creator.avatar_url
+                // eslint-disable-next-line @next/next/no-img-element
+                ? <img src={creator.avatar_url} alt={creator.full_name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                : (creator.avatar_emoji || '🎙️')}
+            </div>
+            {creator.is_verified && (
+              <span
+                aria-label="Verified"
+                title="Verified"
+                style={{
+                  position: 'absolute',
+                  bottom: -2, right: -2,
+                  width: 22, height: 22, borderRadius: '50%',
+                  background: '#1D9BF0',
+                  border: '2px solid #FFFFFF',
+                  display: 'grid', placeItems: 'center',
+                  color: '#FFFFFF', fontSize: 12, fontWeight: 900,
+                  lineHeight: 1, fontFamily: 'system-ui, -apple-system, sans-serif',
+                  boxShadow: '0 1px 3px rgba(0,0,0,0.25)',
+                }}>✓</span>
+            )}
           </div>
-          <div style={s.name}>{creator.full_name} {creator.is_verified && '✓'}</div>
+          {/* Name no longer carries the inline ✓ — the avatar badge is the
+              dedicated verified signal, and Twitter-blue reads unambiguously. */}
+          <div style={s.name}>{creator.full_name}</div>
           <div style={{ fontSize: 12, color: C.violet, fontFamily: "'DM Sans', sans-serif", fontWeight: 700, marginBottom: 6 }}>
             qahwa.kw/{creator.handle}
           </div>
