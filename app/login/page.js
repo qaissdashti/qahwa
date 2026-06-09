@@ -18,6 +18,22 @@ function LoginForm() {
   const [password, setPassword] = useState('');
   const [loading, setLoading]   = useState(false);
   const [error, setError]       = useState('');
+  const [resetMsg, setResetMsg] = useState('');
+
+  async function onForgot() {
+    setError('');
+    setResetMsg('');
+    if (!email) { setError(t('auth.login.resetNoEmail')); return; }
+    const { error: resetErr } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${window.location.origin}/reset-password`,
+    });
+    if (resetErr) {
+      const m = resetErr.message || '';
+      setError(/rate.*limit|too.*many.*request/i.test(m) ? t('onb.err.rateLimit') : (m || t('common.somethingWrong')));
+      return;
+    }
+    setResetMsg(t('auth.login.resetSent'));
+  }
 
   async function onSubmit(e) {
     e.preventDefault();
@@ -76,11 +92,16 @@ function LoginForm() {
                      autoComplete="current-password" />
             </div>
             {error && <p className="q-error">{error}</p>}
+            {resetMsg && <p className="text-sm font-bold text-center text-green-700">{resetMsg}</p>}
             <button className="q-btn-accent w-full text-lg py-4 inline-flex items-center justify-center gap-2" disabled={loading}>
               {loading && <Spinner size={18} />}
               {loading ? t('common.processing') : t('auth.login.submit')}
             </button>
           </form>
+          <button type="button" onClick={onForgot}
+                  className="block w-full text-center text-sm text-black/60 hover:text-black mt-4 font-medium underline">
+            {t('auth.login.forgot')}
+          </button>
           <p className="text-center text-sm text-black/60 mt-5 font-medium">
             {t('auth.login.noAccount')} <Link href="/signup" className="font-bold underline">{t('auth.login.createPage')}</Link>
           </p>
