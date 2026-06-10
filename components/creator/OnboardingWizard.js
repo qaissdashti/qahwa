@@ -73,7 +73,7 @@ async function waitForAuthCookie() {
   }
 }
 
-export default function OnboardingWizard({ startStep = 1, initial = {}, authed = false, whatsappOk = true }) {
+export default function OnboardingWizard({ startStep = 1, initial = {}, authed = false, whatsappOk = true, testMode = false }) {
   const router = useRouter();
   const supabase = createClient();
   const { t, dir, lang } = useLang();
@@ -358,6 +358,18 @@ export default function OnboardingWizard({ startStep = 1, initial = {}, authed =
           {/* General/non-field errors only — per-field errors render inline
               under their own input (Step 1). */}
           {errors.form && <p className="q-error">{errors.form}</p>}
+
+          {/* TEMPORARY (PAYMENT_TEST_MODE): bypass WhatsApp OTP on step 3 while
+              the Meta OTP template is pending approval. Deliberately loud +
+              dashed so it can't be mistaken for a production control. Remove
+              this block (and the testMode prop) once OTP is approved. */}
+          {testMode && step === 3 && (
+            <button type="button" onClick={() => setStep(4)}
+              className="w-full rounded-xl border-2 border-dashed border-qahwa-orange bg-qahwa-orange/10
+                         text-qahwa-black font-bold text-sm py-3 px-4 transition-colors hover:bg-qahwa-orange/20">
+              {t('onb.s3.testSkip')}
+            </button>
+          )}
 
           <div className="flex items-center gap-2 justify-between pt-2">
             <span className="text-xs text-black/40">{step < 5 ? t('onb.savedAuto') : ''}</span>

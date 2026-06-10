@@ -21,10 +21,14 @@ export default async function OnboardPage() {
   const auth = createServerSupabaseClient();
   const { data: { user } } = await auth.auth.getUser();
   const whatsappOk = isWhatsappReady();
+  // TEMPORARY: lets testers skip WhatsApp OTP on step 3 while the Meta OTP
+  // template is pending approval. Gated on PAYMENT_TEST_MODE (set in Vercel
+  // for the test deployment). Remove once OTP is live in production.
+  const testMode = process.env.PAYMENT_TEST_MODE === 'true';
 
   // Not signed in → wizard starts at step 1 (which creates the auth user).
   if (!user) {
-    return <OnboardingWizard startStep={1} authed={false} whatsappOk={whatsappOk} />;
+    return <OnboardingWizard startStep={1} authed={false} whatsappOk={whatsappOk} testMode={testMode} />;
   }
 
   // Signed in → look up where they are and resume the right step.
@@ -57,6 +61,7 @@ export default async function OnboardPage() {
       startStep={startStep}
       authed={true}
       whatsappOk={whatsappOk}
+      testMode={testMode}
       initial={{ creator, verification }}
     />
   );
