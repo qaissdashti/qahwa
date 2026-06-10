@@ -1,5 +1,6 @@
 import { getAdminUser } from '@/lib/admin';
 import { createAdminClient } from '@/lib/supabase';
+import { notifyCreatorApproved, notifyCreatorRejected } from '@/lib/adminNotify';
 import { revalidatePath } from 'next/cache';
 
 export async function POST(req) {
@@ -14,9 +15,11 @@ export async function POST(req) {
   const now = new Date().toISOString();
   const approved = action === 'approve';
 
-  // Grab the handle up-front so we know which public page to revalidate.
+  // Grab handle + email + full_name up-front so we know which public
+  // page to revalidate AND can fire the post-decision creator email
+  // without a second round-trip after the updates land.
   const { data: cInfo } = await admin.from('creators')
-    .select('handle').eq('id', creatorId).maybeSingle();
+    .select('handle, full_name, email').eq('id', creatorId).maybeSingle();
 
   // Update creators (is_verified + verification_status) AND the verifications
   // row together; surface an error if either fails so they can't drift.
@@ -45,6 +48,27 @@ export async function POST(req) {
   if (cInfo?.handle) {
     revalidatePath(`/${cInfo.handle}`);
     revalidatePath('/[username]', 'page');
+  }
+
+  // Fire-and-forget creator email — same pattern as notifyPayoutPaid
+  // in app/api/admin/payout/route.js. The helper swallows its own
+  // errors so a misconfigured email provider can never break the admin
+  // action. Language preference isn't stored anywhere, so the notifier
+  // falls back to an Arabic-script heuristic on the display name and
+  // ultimately to English.
+  if (cInfo?.email) {
+    const args = {
+      creatorEmail: cInfo.email,
+      fullName:     cInfo.full_name,
+      handle:       cInfo.handle,
+    };
+    if (approved) {
+      notifyCreatorApproved(args)
+        .catch((err) => console.error('[admin/verification] notifyApproved', err));
+    } else {
+      notifyCreatorRejected({ ...args, reasonNote: notes })
+        .catch((err) => console.error('[admin/verification] notifyRejected', err));
+    }
   }
 
   return Response.json({ success: true });
