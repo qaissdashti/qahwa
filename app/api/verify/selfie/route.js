@@ -1,7 +1,7 @@
 // Receives the selfie upload, stores it in the private `selfies` bucket,
 // and moves the creator into 'under_review' to finalise onboarding.
 import { createAdminClient, createServerSupabaseClient } from '@/lib/supabase';
-import { notifyAdminPendingReview } from '@/lib/adminNotify';
+import { notifyAdminPendingReview, notifyCreatorWelcome } from '@/lib/adminNotify';
 import { dbErr } from '@/lib/apiError';
 
 // Phone selfies are routinely 5-8MB; 10MB gives a comfortable margin
@@ -91,8 +91,14 @@ export async function POST(req) {
     .eq('id', user.id);
   if (crUpdErr) return dbErr('تعذّر تحديث حالة الحساب', crUpdErr, 500, '[verify/selfie] creators.update');
 
-  // Fire-and-forget admin notification. Never block the response on it —
-  // the notify helper swallows its own errors so onboarding always succeeds.
+  // Fire-and-forget notifications. Two emails go out in parallel:
+  //   · admin → "new creator pending review"  (unchanged behaviour)
+  //   · creator → "Welcome to Qahwa, page under review"  (new)
+  // Both helpers swallow their own errors so onboarding never fails
+  // because of an email hiccup. The supporter's UI language ships
+  // alongside the upload in FormData['lang']; defaults to 'en' if
+  // missing (older clients, retries, curl probes, etc.).
+  const lang = (form.get('lang') === 'ar') ? 'ar' : 'en';
   try {
     const { data: c } = await supabase
       .from('creators')
@@ -100,12 +106,14 @@ export async function POST(req) {
       .eq('id', user.id)
       .maybeSingle();
 
-    // Don't await — but do log if it rejects (it shouldn't, helper is safe).
-    notifyAdminPendingReview({
-      fullName: c?.full_name,
-      handle:   c?.handle,
-      email:    c?.email || user.email,
-    }).catch((err) => console.error('[verify/selfie] notifyAdmin', err));
+    const fullName = c?.full_name;
+    const handle   = c?.handle;
+    const email    = c?.email || user.email;
+
+    notifyAdminPendingReview({ fullName, handle, email })
+      .catch((err) => console.error('[verify/selfie] notifyAdmin', err));
+    notifyCreatorWelcome({ creatorEmail: email, fullName, handle, lang })
+      .catch((err) => console.error('[verify/selfie] notifyCreatorWelcome', err));
   } catch (err) {
     console.error('[verify/selfie] notify lookup failed', err);
   }

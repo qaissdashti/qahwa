@@ -336,7 +336,11 @@ export default function OnboardingWizard({ startStep = 1, initial = {}, authed =
 
       await postJson('/api/verify/civil-id', { civilId });
 
-      const fd = new FormData(); fd.append('selfie', selfie);
+      const fd = new FormData();
+      fd.append('selfie', selfie);
+      // Ride along the supporter's UI language so the post-onboarding
+      // welcome email lands in AR/EN matching how they used the wizard.
+      fd.append('lang', lang === 'ar' ? 'ar' : 'en');
       try {
         await xhrUpload('/api/verify/selfie', fd, (pct) => setUploadPct(pct));
       } catch (uploadErr) {
