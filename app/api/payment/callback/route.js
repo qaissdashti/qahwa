@@ -56,6 +56,10 @@ export async function GET(req) {
     redirect(`/${tip.creators.handle}?success=1&tip=${tip.id}`);
 
   } catch (err) {
+    // next/navigation's redirect() works by throwing a NEXT_REDIRECT error.
+    // Re-throw it so Next.js can perform the redirect instead of treating
+    // an intended redirect as an unexpected failure.
+    if (err?.digest?.startsWith('NEXT_REDIRECT')) throw err;
     console.error('[callback] Error:', err);
     redirect('/error?reason=unexpected');
   }
