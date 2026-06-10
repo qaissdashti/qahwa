@@ -34,16 +34,28 @@ function validateSelfieFile(file) {
   return null;
 }
 
-// Map an HTTP status from a failed selfie upload to the right i18n key.
-// 413 (Payload Too Large) and 415 (Unsupported Media Type) are what the
-// route now returns for size/type failures; auth / server-error / default
-// fall through the obvious buckets.
-function selfieErrorKeyFromStatus(status) {
+// Map an HTTP status + optional server-side details from a failed selfie
+// upload to a friendly i18n key. 413/415 cover client-side limits; 409
+// + details.reason distinguishes the "previous step missing" gates the
+// route now returns; auth and 5xx fall through. Anything else with raw
+// Supabase details gets those details appended so devs can see the cause.
+function selfieErrorKeyFromStatus(status, details) {
   if (status === 413) return 'onb.s4.err.tooLarge';
   if (status === 415) return 'onb.s4.err.unsupportedType';
   if (status === 401 || status === 403) return 'onb.s4.err.sessionExpired';
+  if (status === 409 && details?.reason === 'civil_id_missing')   return 'onb.s4.err.civilFirst';
+  if (status === 409 && details?.reason === 'phone_not_verified') return 'onb.s4.err.phoneFirst';
   if (typeof status === 'number' && status >= 500) return 'onb.s4.err.serverErr';
   return 'onb.s4.err.uploadFailed';
+}
+
+// When a server response carries raw Supabase error metadata, append the
+// pg message + code to the friendly text so the wizard surface stays
+// actionable on Vercel without needing function logs.
+function appendDetails(friendly, details) {
+  if (!details?.message) return friendly;
+  const code = details.code ? ` [${details.code}]` : '';
+  return `${friendly} — ${details.message}${code}`;
 }
 
 // IBAN format check intentionally relaxed — accept any non-empty text for
@@ -328,10 +340,12 @@ export default function OnboardingWizard({ startStep = 1, initial = {}, authed =
       try {
         await xhrUpload('/api/verify/selfie', fd, (pct) => setUploadPct(pct));
       } catch (uploadErr) {
-        // Server-side rejection — translate HTTP status to a friendly
-        // bilingual message and pin it under the selfie field.
+        // Server-side rejection — translate HTTP status + details.reason
+        // to a friendly bilingual message, then append raw Supabase details
+        // (when present) so devs see the actual cause inline.
         console.error('[onboard/selfie] upload failed', uploadErr);
-        setFieldError('selfie', t(selfieErrorKeyFromStatus(uploadErr.status)));
+        const friendly = t(selfieErrorKeyFromStatus(uploadErr.status, uploadErr.details));
+        setFieldError('selfie', appendDetails(friendly, uploadErr.details));
         return;
       }
       setStep(5);

@@ -2,6 +2,7 @@
 // and moves the creator into 'under_review' to finalise onboarding.
 import { createAdminClient, createServerSupabaseClient } from '@/lib/supabase';
 import { notifyAdminPendingReview } from '@/lib/adminNotify';
+import { dbErr } from '@/lib/apiError';
 
 // Phone selfies are routinely 5-8MB; 10MB gives a comfortable margin
 // without ballooning into territory that hurts upload UX. Mirror this
@@ -46,8 +47,23 @@ export async function POST(req) {
     (!!process.env.WHATSAPP_API_TOKEN && process.env.WHATSAPP_API_TOKEN.trim()) ||
     (process.env.DEV_OTP_BYPASS === 'true' && process.env.NODE_ENV !== 'production');
 
-  if (!v?.civil_id_encrypted || (whatsappOk && !v?.phone_verified)) {
-    return Response.json({ error: 'أكمل الخطوات السابقة أولاً' }, { status: 400 });
+  // Gate: which previous step is missing? Each branch surfaces a distinct
+  // reason so the client renders a specific message instead of a generic
+  // "Upload failed". 409 = state-not-ready (request is well-formed, but
+  // the resource state forbids it).
+  if (!v?.civil_id_encrypted) {
+    console.error('[verify/selfie] gate: civil_id_encrypted missing for', user.id);
+    return Response.json({
+      error: 'أكمل الخطوات السابقة أولاً',
+      details: { reason: 'civil_id_missing', whatsappOk, hasRow: !!v },
+    }, { status: 409 });
+  }
+  if (whatsappOk && !v?.phone_verified) {
+    console.error('[verify/selfie] gate: phone_verified false (whatsappOk true) for', user.id);
+    return Response.json({
+      error: 'يجب تأكيد رقم الواتساب أولاً',
+      details: { reason: 'phone_not_verified', whatsappOk: true },
+    }, { status: 409 });
   }
 
   const ext  = file.type === 'image/png' ? 'png' : file.type === 'image/webp' ? 'webp' : 'jpg';
@@ -57,19 +73,17 @@ export async function POST(req) {
   const { error: upErr } = await supabase.storage
     .from('selfies')
     .upload(path, bytes, { contentType: file.type, upsert: true });
+  if (upErr) return dbErr('تعذّر رفع الصورة', upErr, 500, '[verify/selfie] storage.upload');
 
-  if (upErr) {
-    console.error('[verify/selfie] upload', upErr);
-    return Response.json({ error: 'تعذّر رفع الصورة' }, { status: 500 });
-  }
-
-  await supabase.from('verifications')
+  const { error: verifUpdErr } = await supabase.from('verifications')
     .update({ selfie_url: path, status: 'under_review' })
     .eq('creator_id', user.id);
+  if (verifUpdErr) return dbErr('تعذّر تحديث حالة التحقق', verifUpdErr, 500, '[verify/selfie] verifications.update');
 
-  await supabase.from('creators')
+  const { error: crUpdErr } = await supabase.from('creators')
     .update({ verification_status: 'under_review' })
     .eq('id', user.id);
+  if (crUpdErr) return dbErr('تعذّر تحديث حالة الحساب', crUpdErr, 500, '[verify/selfie] creators.update');
 
   // Fire-and-forget admin notification. Never block the response on it —
   // the notify helper swallows its own errors so onboarding always succeeds.
