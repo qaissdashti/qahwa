@@ -1,0 +1,32 @@
+<svg width="32" height="32" viewBox="0 0 44 42" xmlns="http://www.w3.org/2000/svg">
+  <!-- Steam -->
+  <rect x="12" y="4" width="2" height="2" fill="#C9B8DC" opacity="0.2"/>
+  <rect x="18" y="2" width="2" height="2" fill="#C9B8DC" opacity="0.3"/>
+  <rect x="24" y="0" width="2" height="2" fill="#C9B8DC" opacity="0.25"/>
+  <rect x="20" y="6" width="2" height="2" fill="#C9B8DC" opacity="0.15"/>
+  <rect x="30" y="4" width="2" height="2" fill="#C9B8DC" opacity="0.2"/>
+  <!-- Cup rim -->
+  <rect x="4" y="12" width="36" height="3" fill="#6B4F8A"/>
+  <rect x="6" y="12" width="32" height="1" fill="#9B7FBA" opacity="0.4"/>
+  <!-- Coffee surface -->
+  <rect x="6" y="15" width="32" height="3" fill="#C8F55A" opacity="0.7"/>
+  <rect x="14" y="15" width="4" height="2" fill="#D4FF6A" opacity="0.4"/>
+  <rect x="26" y="16" width="4" height="2" fill="#D4FF6A" opacity="0.3"/>
+  <!-- Cup body -->
+  <rect x="6" y="18" width="32" height="3" fill="#6B4F8A"/>
+  <rect x="6" y="21" width="32" height="3" fill="#7B5F9A"/>
+  <rect x="6" y="24" width="32" height="3" fill="#8B6FAA"/>
+  <rect x="6" y="27" width="32" height="3" fill="#9B7FBA"/>
+  <rect x="6" y="30" width="32" height="3" fill="#AB8FCA"/>
+  <rect x="10" y="33" width="24" height="3" fill="#5A3F7A"/>
+  <!-- Handle -->
+  <rect x="38" y="18" width="3" height="3" fill="#6B4F8A"/>
+  <rect x="41" y="18" width="3" height="3" fill="#5A3F7A"/>
+  <rect x="41" y="21" width="3" height="3" fill="#7B5F9A"/>
+  <rect x="41" y="24" width="3" height="3" fill="#7B5F9A"/>
+  <rect x="41" y="27" width="3" height="3" fill="#5A3F7A"/>
+  <rect x="38" y="27" width="3" height="3" fill="#6B4F8A"/>
+  <!-- Saucer -->
+  <rect x="0" y="36" width="44" height="3" fill="#C8F55A" opacity="0.8"/>
+  <rect x="4" y="39" width="36" height="2" fill="#B8E54A" opacity="0.5"/>
+</svg>

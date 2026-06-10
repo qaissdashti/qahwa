@@ -24,6 +24,25 @@ const plexArabic = IBM_Plex_Sans_Arabic({
 export const metadata = {
   title: 'قهوة — Qahwa',
   description: 'ادعم منشئك المفضل بقهوة ☕',
+  // Pixel-art coffee-cup brand mark. SVG favicon works in every modern
+  // browser (Chrome, Edge, Firefox, Safari 14+); the .ico fallback would
+  // need a converted asset — skip for now, browsers ignore the missing
+  // shortcut icon gracefully.
+  icons: {
+    icon: [
+      { url: '/favicon.svg', type: 'image/svg+xml' },
+    ],
+    apple: '/qahwa-logo-large.svg',
+  },
+  // OG share card. The detailed cup SVG with قهوة on it stands in
+  // until we generate a fixed-size 1200×630 PNG. Most modern crawlers
+  // (Twitter / X, Discord, Slack) render SVG; legacy Facebook may not.
+  openGraph: {
+    title: 'قهوة — Qahwa',
+    description: 'ادعم منشئك المفضل بقهوة ☕ · Kuwaiti creator tipping in KWD via KNET.',
+    images: [{ url: '/qahwa-logo-large.svg', alt: 'Qahwa' }],
+    type: 'website',
+  },
 };
 
 // Tiny synchronous script that runs in <head> before React hydrates,

@@ -15,6 +15,7 @@
 import Link from 'next/link';
 import { useLang } from '@/components/LangProvider';
 import LangToggle from '@/components/LangToggle';
+import Logo from '@/components/Logo';
 
 const F = { bg: '#F5F0FF', card: '#FFFFFF', ink: '#0D0D0D', accent: '#C8F55A', purple: '#7B2FBE', violet: '#9B4DCA', soft: '#EDE4FB' };
 
@@ -130,8 +131,9 @@ export default function LandingClient() {
     <main className="min-h-screen flex flex-col" dir={t.dir} style={{ background: F.bg, color: F.ink }}>
       {/* ─── Top nav ─── */}
       <header className="flex items-center justify-between px-5 sm:px-6 py-4 max-w-6xl mx-auto w-full">
-        <Link href="/" className="text-2xl font-extrabold" style={{ fontFamily: 'var(--font-sans)' }}>
-          {lang === 'ar' ? 'قهوة' : 'Qahwa'} <span style={{ color: F.accent }}>☕</span>
+        <Link href="/" className="text-2xl font-extrabold inline-flex items-center gap-2" style={{ fontFamily: 'var(--font-sans)' }}>
+          <Logo size={32} />
+          <span>{lang === 'ar' ? 'قهوة' : 'Qahwa'}</span>
         </Link>
         <nav className="flex items-center gap-2.5 sm:gap-3">
           <LangToggle />
@@ -166,6 +168,12 @@ export default function LandingClient() {
 
         {/* hero text */}
         <div className="text-start relative z-10">
+          {/* Pixel-art brand mark above the headline — replaces the
+              previous emoji ☕ above the heading. Uses the detailed
+              "large" variant with قهوة Arabic text on the cup. */}
+          <div className="mb-5">
+            <Logo variant="large" size={140} alt="Qahwa logo" style={{ height: 140, width: 'auto' }} />
+          </div>
           <div className="inline-block text-xs font-extrabold tracking-wider uppercase mb-4 px-3 py-1.5 rounded-full"
                style={{ background: F.soft, color: F.purple, border: `2px solid ${F.purple}` }}>
             Kuwait · KWD · KNET

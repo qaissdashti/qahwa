@@ -6,6 +6,7 @@
 import Link from 'next/link';
 import { useLang } from '@/components/LangProvider';
 import LangToggle from '@/components/LangToggle';
+import Logo from '@/components/Logo';
 
 const C = {
   bg:     '#F5F0FF',
@@ -28,9 +29,10 @@ export default function PendingApprovalPage({ creator }) {
           <LangToggle />
         </div>
 
-        <Link href="/" className="block text-center text-2xl font-extrabold mb-6 text-qahwa-black"
+        <Link href="/" className="flex items-center justify-center gap-2 text-2xl font-extrabold mb-6 text-qahwa-black"
               style={{ fontFamily: 'var(--font-sans)' }}>
-          قهوة <span className="text-qahwa-accent">☕</span>
+          <Logo size={36} />
+          <span>قهوة</span>
         </Link>
 
         <div style={{

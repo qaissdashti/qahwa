@@ -14,6 +14,7 @@ import Spinner from '@/components/Spinner';
 import { xhrUpload } from '@/lib/xhrUpload';
 import { KUWAIT_BANKS, bankLabel } from '@/lib/kuwaitBanks';
 import { COFFEE_PRICE_OPTIONS } from '@/lib/coffeePrices';
+import Logo from '@/components/Logo';
 
 const STEP_KEYS = ['onb.step.basic', 'onb.step.bank', 'onb.step.phone', 'onb.step.identity', 'onb.step.review'];
 const EMOJI_PRESETS = ['☕', '🎨', '🎙️', '📚', '🎮', '🎵', '✨', '🌟'];
@@ -365,8 +366,9 @@ export default function OnboardingWizard({ startStep = 1, initial = {}, authed =
         <div className="absolute top-0 inset-inline-end-0 z-10" style={{ insetInlineEnd: 0 }}>
           <LangToggle />
         </div>
-        <h1 className="text-center text-2xl font-extrabold mb-1" style={{ fontFamily: 'var(--font-sans)' }}>
-          قهوة <span className="text-qahwa-accent">☕</span>
+        <h1 className="flex items-center justify-center gap-2 text-2xl font-extrabold mb-1" style={{ fontFamily: 'var(--font-sans)' }}>
+          <Logo size={36} />
+          <span>قهوة</span>
         </h1>
         <p className="text-center text-black/55 font-medium mb-5">{t('onb.title')}</p>
 

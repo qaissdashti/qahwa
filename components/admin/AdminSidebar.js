@@ -3,6 +3,7 @@
 import AdminNav from '@/components/admin/AdminNav';
 import LangToggle from '@/components/LangToggle';
 import { useLang } from '@/components/LangProvider';
+import Logo from '@/components/Logo';
 
 export default function AdminSidebar({ admin }) {
   const { t } = useLang();
@@ -10,9 +11,12 @@ export default function AdminSidebar({ admin }) {
     <aside className="hidden md:flex dash-surface rounded-2xl border border-white/10 p-4 md:w-60 md:min-h-[calc(100vh-2rem)] flex-col justify-between gap-4">
       <div className="flex-1">
         <div className="flex items-start justify-between gap-2 px-2 mb-6">
-          <div>
-            <span className="text-xl font-extrabold block" style={{ fontFamily: 'var(--font-sans)' }}>{t('admin.brand')}</span>
-            <span className="block text-xs text-qahwa-accent font-bold">{t('admin.label')}</span>
+          <div className="flex items-start gap-2">
+            <Logo size={28} />
+            <div>
+              <span className="text-xl font-extrabold block leading-none" style={{ fontFamily: 'var(--font-sans)' }}>{t('admin.brand')}</span>
+              <span className="block text-xs text-qahwa-accent font-bold mt-1">{t('admin.label')}</span>
+            </div>
           </div>
           <LangToggle variant="dark" />
         </div>

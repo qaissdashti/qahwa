@@ -7,6 +7,7 @@ import { createClient } from '@/lib/supabase-browser';
 import { useLang } from '@/components/LangProvider';
 import LangToggle from '@/components/LangToggle';
 import Spinner from '@/components/Spinner';
+import Logo from '@/components/Logo';
 
 function LoginForm() {
   const params = useSearchParams();
@@ -72,9 +73,10 @@ function LoginForm() {
         <div className="absolute top-0 inset-inline-end-0" style={{ insetInlineEnd: 0 }}>
           <LangToggle />
         </div>
-        <Link href="/" className="block text-center text-2xl font-extrabold mb-6"
+        <Link href="/" className="flex items-center justify-center gap-2 text-2xl font-extrabold mb-6"
               style={{ fontFamily: 'var(--font-sans)' }}>
-          قهوة <span className="text-qahwa-accent">☕</span>
+          <Logo size={36} />
+          <span>قهوة</span>
         </Link>
         <div className="q-card p-7">
           <h1 className="text-3xl mb-6 text-center">{t('auth.login.title')}</h1>

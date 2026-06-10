@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import LangToggle from '@/components/LangToggle';
 import { useLang } from '@/components/LangProvider';
+import Logo from '@/components/Logo';
 
 const LINKS = [
   ['/admin',               'admin.nav.overview',     '📊'],
@@ -29,8 +30,10 @@ export default function AdminMobileChrome({ admin }) {
           className="inline-flex items-center justify-center min-w-[44px] min-h-[44px] -ms-2 rounded-lg hover:bg-white/5 text-2xl">
           ☰
         </button>
-        <div className="text-sm font-extrabold text-center min-w-0 truncate" style={{ fontFamily: 'var(--font-sans)' }}>
-          {t('admin.brand')} <span className="text-qahwa-accent">·</span>{' '}
+        <div className="inline-flex items-center gap-2 text-sm font-extrabold text-center min-w-0 truncate" style={{ fontFamily: 'var(--font-sans)' }}>
+          <Logo size={24} />
+          <span className="truncate">{t('admin.brand')}</span>
+          <span className="text-qahwa-accent">·</span>
           <span className="text-qahwa-accent text-xs">{t('admin.label')}</span>
         </div>
         <LangToggle variant="dark" />
@@ -45,9 +48,12 @@ export default function AdminMobileChrome({ admin }) {
           {/* drawer */}
           <aside className="absolute top-0 inset-inline-start-0 h-full w-72 max-w-[85vw] dash-surface p-4 flex flex-col gap-2 shadow-2xl safe-pt safe-pb">
             <div className="flex items-center justify-between mb-4">
-              <div>
-                <div className="text-xl font-extrabold" style={{ fontFamily: 'var(--font-sans)' }}>{t('admin.brand')}</div>
-                <div className="text-xs text-qahwa-accent font-bold">{t('admin.label')}</div>
+              <div className="flex items-start gap-2">
+                <Logo size={28} />
+                <div>
+                  <div className="text-xl font-extrabold leading-none" style={{ fontFamily: 'var(--font-sans)' }}>{t('admin.brand')}</div>
+                  <div className="text-xs text-qahwa-accent font-bold mt-1">{t('admin.label')}</div>
+                </div>
               </div>
               <button onClick={() => setOpen(false)} aria-label="Close menu"
                 className="inline-flex items-center justify-center min-w-[44px] min-h-[44px] rounded-lg hover:bg-white/5 text-xl">

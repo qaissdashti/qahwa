@@ -635,7 +635,11 @@ export default function TippingClient({ creator, settings, recentTips, todayCoun
               {creator.avatar_url
                 // eslint-disable-next-line @next/next/no-img-element
                 ? <img src={creator.avatar_url} alt={creator.full_name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                : (creator.avatar_emoji || '🎙️')}
+                // Per spec: no avatar → fall back to the brand mark
+                // (NOT the picked emoji). Keeps every creator-page
+                // first impression on-brand.
+                // eslint-disable-next-line @next/next/no-img-element
+                : <img src="/qahwa-logo-navbar.svg" alt={creator.full_name || 'Qahwa'} style={{ width: '72%', height: '72%', objectFit: 'contain', imageRendering: 'pixelated' }} />}
             </div>
             {creator.is_verified && (
               <span
