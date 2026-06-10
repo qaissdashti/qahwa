@@ -137,6 +137,11 @@ export default function OnboardingWizard({ startStep = 1, initial = {}, authed =
   // States: 'idle' | 'short' | 'checking' | 'available' | 'taken'
   const [handleStatus, setHandleStatus] = useState('idle');
 
+  // Step 5 mandatory ToS checkbox. Gates the final "View your page" CTA
+  // and triggers a POST to /api/creator/accept-terms (which stamps
+  // creators.terms_accepted_at) on click.
+  const [termsAccepted, setTermsAccepted] = useState(false);
+
   // Step 1 — basic info (also creates auth user when !authed)
   const c0 = initial.creator || {};
   const [fullName, setFullName] = useState(c0.full_name || '');
@@ -358,6 +363,26 @@ export default function OnboardingWizard({ startStep = 1, initial = {}, authed =
     finally { setBusy(false); setUploadPct(0); }
   }
 
+  // Step 5: ToS gate + navigate. POSTs the acceptance timestamp
+  // (idempotent server-side) and only then redirects to the creator's
+  // public page. Window navigation instead of router.push so the page
+  // does a fresh fetch — the creator's row was just updated and we
+  // want any cached server render of /[handle] to be re-rendered.
+  async function finishOnboarding() {
+    if (!termsAccepted) {
+      setFieldError('form', t('onb.s5.termsRequired'));
+      return;
+    }
+    setErrors({}); setBusy(true);
+    try {
+      await postJson('/api/creator/accept-terms', {});
+      window.location.href = `/${cleanHandle || c0.handle || ''}`;
+    } catch (e) {
+      setFieldError('form', errorWithDetails(e));
+      setBusy(false);
+    }
+  }
+
   // ── render ──────────────────────────────────────────────────
   return (
     <main className="min-h-screen flex flex-col items-center px-4 py-8" dir={dir}
@@ -423,9 +448,34 @@ export default function OnboardingWizard({ startStep = 1, initial = {}, authed =
                    errors={errors} setFieldError={setFieldError} clearFieldError={clearFieldError} />
           )}
           {step === 5 && (
-            <Step5 t={t} fullName={fullName} handle={cleanHandle}
-                   avatarEmoji={avatarEmoji} avatarUrl={avatarUrl}
-                   coffeePrice={Number(coffeePrice) || 1} />
+            <>
+              <Step5 t={t} fullName={fullName} handle={cleanHandle}
+                     avatarEmoji={avatarEmoji} avatarUrl={avatarUrl}
+                     coffeePrice={Number(coffeePrice) || 1} />
+              {/* Mandatory ToS checkbox — gates the final CTA. The
+                  link opens /terms in a new tab so the wizard state
+                  is preserved. */}
+              <div className="border-2 border-qahwa-black rounded-xl p-3 bg-white"
+                   style={{ boxShadow: '3px 3px 0 #0D0D0D' }}>
+                <label className="flex items-start gap-2.5 cursor-pointer text-sm font-bold leading-relaxed">
+                  <input
+                    type="checkbox"
+                    checked={termsAccepted}
+                    onChange={(e) => { setTermsAccepted(e.target.checked); clearFieldError('form'); }}
+                    className="mt-0.5 w-5 h-5 accent-qahwa-purple shrink-0 cursor-pointer"
+                    aria-required="true"
+                  />
+                  <span>
+                    {t('onb.s5.termsBefore')}
+                    <Link href="/terms" target="_blank" rel="noreferrer"
+                          className="underline text-qahwa-purple font-extrabold mx-1">
+                      {t('onb.s5.termsLink')}
+                    </Link>
+                    {t('onb.s5.termsAfter')}
+                  </span>
+                </label>
+              </div>
+            </>
           )}
 
           {/* General/non-field errors only — per-field errors render inline
@@ -459,7 +509,9 @@ export default function OnboardingWizard({ startStep = 1, initial = {}, authed =
             )}
             {step === 4 && <WizardBtn busy={busy} pct={uploadPct} onClick={submitStep4} t={t} label={t('onb.next')} />}
             {step === 5 && (
-              <Link href={`/${cleanHandle || c0.handle || ''}`} className="q-btn-accent">{t('onb.s5.viewPage')}</Link>
+              <WizardBtn busy={busy} disabled={!termsAccepted}
+                         onClick={finishOnboarding} t={t}
+                         label={t('onb.s5.viewPage')} />
             )}
           </div>
         </div>

@@ -247,7 +247,13 @@ export default function LandingClient() {
 
       {/* ─── Footer ─── */}
       <footer className="border-t-2 py-6 text-center text-sm font-medium" style={{ borderColor: 'rgba(13,13,13,0.1)', color: 'rgba(13,13,13,0.45)' }}>
-        {t.footer}
+        <div className="max-w-5xl mx-auto px-5 sm:px-6 flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-5">
+          <span>{t.footer}</span>
+          <span className="hidden sm:inline" style={{ opacity: 0.5 }}>·</span>
+          <Link href="/terms" className="underline font-bold hover:text-qahwa-purple transition-colors">
+            {lang === 'ar' ? 'الشروط والأحكام' : 'Terms and Conditions'}
+          </Link>
+        </div>
       </footer>
     </main>
   );
