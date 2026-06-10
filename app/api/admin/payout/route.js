@@ -32,19 +32,30 @@ export async function POST(req) {
     return Response.json({ error: 'DB error' }, { status: 500 });
   }
 
-  // When a payout flips to 'paid', email the creator confirming the
-  // transfer. Look up amount + creator email from the row + creators join.
+  // When a payout flips to 'paid', email the creator with the full
+  // transfer breakdown (amount + bank + masked-IBAN tail + 24h SLA).
+  // The payouts row already snapshots bank_name and the plain `iban`
+  // at request time (see /api/creator/payout) so we don't need to
+  // re-decrypt the encrypted column on creators.
   if (status === 'paid') {
     try {
       const { data: po } = await admin
         .from('payouts')
-        .select('amount_kd, creators(email)')
+        .select('amount_kd, bank_name, iban, creators(email, full_name)')
         .eq('id', payoutId)
         .maybeSingle();
       const creatorEmail = po?.creators?.email;
       if (creatorEmail) {
-        notifyPayoutPaid({ creatorEmail, amount: po.amount_kd })
-          .catch((err) => console.error('[admin/payout] notify paid', err));
+        notifyPayoutPaid({
+          creatorEmail,
+          fullName:   po.creators.full_name,
+          amount:     po.amount_kd,
+          bankName:   po.bank_name,
+          // notifier handles the last-4 masking itself; we just pass
+          // whatever IBAN snapshot the payout row has (plain or already
+          // masked — both end up rendered as "ending in XXXX").
+          ibanMasked: po.iban,
+        }).catch((err) => console.error('[admin/payout] notify paid', err));
       }
     } catch (err) {
       console.error('[admin/payout] notify lookup failed', err);
