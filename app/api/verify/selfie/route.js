@@ -3,7 +3,12 @@
 import { createAdminClient, createServerSupabaseClient } from '@/lib/supabase';
 import { notifyAdminPendingReview } from '@/lib/adminNotify';
 
-const MAX_BYTES = 6 * 1024 * 1024; // 6 MB
+// Phone selfies are routinely 5-8MB; 10MB gives a comfortable margin
+// without ballooning into territory that hurts upload UX. Mirror this
+// value in components/creator/OnboardingWizard.js (MAX_SELFIE_BYTES)
+// so client-side pre-validation rejects oversized files immediately
+// instead of round-tripping a multi-MB body.
+const MAX_BYTES = 10 * 1024 * 1024;
 const ALLOWED = ['image/jpeg', 'image/png', 'image/webp'];
 
 export async function POST(req) {
@@ -16,11 +21,13 @@ export async function POST(req) {
   if (!file || typeof file === 'string') {
     return Response.json({ error: 'لا توجد صورة' }, { status: 400 });
   }
+  // 415 / 413 (not 400) so the client status-code mapper in
+  // OnboardingWizard.js routes them to the right friendly message.
   if (!ALLOWED.includes(file.type)) {
-    return Response.json({ error: 'صيغة الصورة غير مدعومة' }, { status: 400 });
+    return Response.json({ error: 'صيغة الصورة غير مدعومة' }, { status: 415 });
   }
   if (file.size > MAX_BYTES) {
-    return Response.json({ error: 'حجم الصورة كبير (الحد 6MB)' }, { status: 400 });
+    return Response.json({ error: 'حجم الصورة كبير (الحد 10MB)' }, { status: 413 });
   }
 
   // require phone + civil id already done before finalising

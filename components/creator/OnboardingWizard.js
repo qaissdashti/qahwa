@@ -18,6 +18,34 @@ import { COFFEE_PRICE_OPTIONS } from '@/lib/coffeePrices';
 const STEP_KEYS = ['onb.step.basic', 'onb.step.bank', 'onb.step.phone', 'onb.step.identity', 'onb.step.review'];
 const EMOJI_PRESETS = ['☕', '🎨', '🎙️', '📚', '🎮', '🎵', '✨', '🌟'];
 
+// Selfie upload constraints — kept in sync with /api/verify/selfie/route.js
+// (mirror MAX_BYTES + ALLOWED there). Client-side pre-validation against
+// these stops oversized / wrong-type files from ever being POSTed.
+const MAX_SELFIE_BYTES = 10 * 1024 * 1024; // 10 MB
+const ALLOWED_SELFIE_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
+
+// Pre-upload check — runs before any network. Returns an i18n key for the
+// first problem found, or null if the file is fine. Type first because
+// a wrong-type file is a clearer error than "too large" for, say, a HEIC.
+function validateSelfieFile(file) {
+  if (!file) return null;
+  if (!ALLOWED_SELFIE_TYPES.includes(file.type)) return 'onb.s4.err.unsupportedType';
+  if (file.size > MAX_SELFIE_BYTES) return 'onb.s4.err.tooLarge';
+  return null;
+}
+
+// Map an HTTP status from a failed selfie upload to the right i18n key.
+// 413 (Payload Too Large) and 415 (Unsupported Media Type) are what the
+// route now returns for size/type failures; auth / server-error / default
+// fall through the obvious buckets.
+function selfieErrorKeyFromStatus(status) {
+  if (status === 413) return 'onb.s4.err.tooLarge';
+  if (status === 415) return 'onb.s4.err.unsupportedType';
+  if (status === 401 || status === 403) return 'onb.s4.err.sessionExpired';
+  if (typeof status === 'number' && status >= 500) return 'onb.s4.err.serverErr';
+  return 'onb.s4.err.uploadFailed';
+}
+
 // IBAN format check intentionally relaxed — accept any non-empty text for
 // now. Add proper Kuwait IBAN validation before production.
 const PHONE_KW = /^\+?965\d{8}$/;
@@ -276,12 +304,36 @@ export default function OnboardingWizard({ startStep = 1, initial = {}, authed =
   async function submitStep4() {
     setErrors({}); setBusy(true);
     try {
-      if (!/^\d{12}$/.test(civilId)) throw new Error(t('auth.verify.civil.label'));
-      if (!selfie) throw new Error(t('auth.verify.selfie.noFile'));
+      if (!/^\d{12}$/.test(civilId)) {
+        setFieldError('civilId', t('auth.verify.civil.label'));
+        return;
+      }
+      if (!selfie) {
+        setFieldError('selfie', t('auth.verify.selfie.noFile'));
+        return;
+      }
+
+      // Client-side pre-validation — skip the round-trip entirely if the
+      // file fails the same checks the server would run. Saves the user
+      // a multi-MB upload just to get told "too large".
+      const preKey = validateSelfieFile(selfie);
+      if (preKey) {
+        setFieldError('selfie', t(preKey));
+        return;
+      }
+
       await postJson('/api/verify/civil-id', { civilId });
+
       const fd = new FormData(); fd.append('selfie', selfie);
-      // Let xhrUpload errors propagate with .details intact for visibility.
-      await xhrUpload('/api/verify/selfie', fd, (pct) => setUploadPct(pct));
+      try {
+        await xhrUpload('/api/verify/selfie', fd, (pct) => setUploadPct(pct));
+      } catch (uploadErr) {
+        // Server-side rejection — translate HTTP status to a friendly
+        // bilingual message and pin it under the selfie field.
+        console.error('[onboard/selfie] upload failed', uploadErr);
+        setFieldError('selfie', t(selfieErrorKeyFromStatus(uploadErr.status)));
+        return;
+      }
       setStep(5);
     } catch (e) { setFieldError('form', errorWithDetails(e)); }
     finally { setBusy(false); setUploadPct(0); }
@@ -347,7 +399,8 @@ export default function OnboardingWizard({ startStep = 1, initial = {}, authed =
           )}
           {step === 4 && (
             <Step4 t={t} civilId={civilId} setCivilId={setCivilId}
-                   selfie={selfie} setSelfie={setSelfie} />
+                   selfie={selfie} setSelfie={setSelfie}
+                   errors={errors} setFieldError={setFieldError} clearFieldError={clearFieldError} />
           )}
           {step === 5 && (
             <Step5 t={t} fullName={fullName} handle={cleanHandle}
@@ -717,7 +770,19 @@ function Step3({ t, phone, setPhone, otpSent, code, setCode, sendOtp, busy, what
   );
 }
 
-function Step4({ t, civilId, setCivilId, selfie, setSelfie }) {
+function Step4({ t, civilId, setCivilId, selfie, setSelfie, errors = {}, setFieldError = () => {}, clearFieldError = () => {} }) {
+  // Pick-time validation: the moment a file lands in state, run the same
+  // pre-flight check submitStep4 would, so the user gets instant inline
+  // feedback rather than only seeing the error when they hit Next.
+  function onPick(file) {
+    setSelfie(file);
+    if (!file) { clearFieldError('selfie'); return; }
+    const key = validateSelfieFile(file);
+    if (key) setFieldError('selfie', t(key));
+    else clearFieldError('selfie');
+  }
+
+  const selfieErr = errors.selfie;
   return (
     <>
       <h2 className="text-xl">{t('onb.step.identity')}</h2>
@@ -725,18 +790,24 @@ function Step4({ t, civilId, setCivilId, selfie, setSelfie }) {
       <div>
         <label className="q-label">{t('auth.verify.civil.label')}</label>
         <input className="q-input font-num tracking-widest" dir="ltr" value={civilId}
-               onChange={(e) => setCivilId(e.target.value.replace(/\D/g, '').slice(0, 12))}
-               placeholder="290000000000" inputMode="numeric" />
+               style={errorBorder(errors.civilId)}
+               onChange={(e) => { setCivilId(e.target.value.replace(/\D/g, '').slice(0, 12)); clearFieldError('civilId'); }}
+               placeholder="290000000000" inputMode="numeric"
+               aria-invalid={!!errors.civilId} />
         <p className="text-xs text-black/40 mt-1">{t('auth.verify.civil.hint')}</p>
+        <FieldError>{errors.civilId}</FieldError>
       </div>
       <div>
         <label className="q-label">{t('auth.verify.step.selfie')}</label>
-        <label className="block border-2 border-dashed border-qahwa-black rounded-2xl px-5 py-7 text-center cursor-pointer transition-all hover:bg-black/5"
-               style={{ background: 'rgba(255,255,255,0.5)' }}>
+        <label className="block border-2 border-dashed rounded-2xl px-5 py-7 text-center cursor-pointer transition-all hover:bg-black/5"
+               style={{
+                 background: 'rgba(255,255,255,0.5)',
+                 borderColor: selfieErr ? ERR_RED : '#0D0D0D',
+               }}>
           <input type="file" accept="image/jpeg,image/png,image/webp" className="hidden"
-                 onChange={(e) => setSelfie(e.target.files?.[0] || null)} />
-          <div className="text-5xl mb-2">{selfie ? '✅' : '🤳'}</div>
-          {selfie ? (
+                 onChange={(e) => onPick(e.target.files?.[0] || null)} />
+          <div className="text-5xl mb-2">{selfie && !selfieErr ? '✅' : '🤳'}</div>
+          {selfie && !selfieErr ? (
             <span className="text-sm font-bold">{selfie.name}</span>
           ) : (
             <>
@@ -749,6 +820,7 @@ function Step4({ t, civilId, setCivilId, selfie, setSelfie }) {
             </>
           )}
         </label>
+        <FieldError>{selfieErr}</FieldError>
       </div>
     </>
   );
