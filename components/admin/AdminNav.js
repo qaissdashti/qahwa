@@ -7,6 +7,8 @@ import { useLang } from '@/components/LangProvider';
 const LINKS = [
   ['/admin',               'admin.nav.overview',     '📊'],
   ['/admin/creators',      'admin.nav.creators',     '👥'],
+  ['/admin/tips',          'admin.nav.tips',         '☕'],
+  ['/admin/fees',          'admin.nav.fees',         '🧾'],
   ['/admin/verifications', 'admin.nav.verification', '🪪'],
   ['/admin/payouts',       'admin.nav.payouts',      '💸'],
   ['/admin/settings',      'admin.nav.settings',     '⚙️'],
