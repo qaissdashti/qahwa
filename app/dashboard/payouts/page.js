@@ -1,20 +1,21 @@
-import { createServerSupabaseClient, createAdminClient } from '@/lib/supabase';
+import { createServerSupabaseClient } from '@/lib/supabase';
 import PayoutsPageClient from '@/components/creator/PayoutsPageClient';
 
 export const metadata = { title: 'السحوبات — قهوة' };
 export const dynamic = 'force-dynamic';
 
 export default async function PayoutsPage() {
+  // Authenticated client — RLS scopes creators/payouts to this creator;
+  // platform_settings is world-readable (settings_read_all).
   const auth = createServerSupabaseClient();
   const { data: { user } } = await auth.auth.getUser();
 
-  const admin = createAdminClient();
   const [{ data: creator }, { data: settings }, { data: payouts }] = await Promise.all([
-    admin.from('creators')
+    auth.from('creators')
       .select('balance_kd, bank_name, account_holder, iban_masked')
       .eq('id', user.id).maybeSingle(),
-    admin.from('platform_settings').select('min_payout_kd, payouts_enabled').eq('id', 1).maybeSingle(),
-    admin.from('payouts').select('created_at, amount_kd, method, status, paid_at')
+    auth.from('platform_settings').select('min_payout_kd, payouts_enabled').eq('id', 1).maybeSingle(),
+    auth.from('payouts').select('id, created_at, amount_kd, bank_name, iban, method, status, paid_at')
       .eq('creator_id', user.id).order('created_at', { ascending: false }).limit(50),
   ]);
 
