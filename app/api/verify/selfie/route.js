@@ -47,6 +47,12 @@ export async function POST(req) {
     (!!process.env.WHATSAPP_API_TOKEN && process.env.WHATSAPP_API_TOKEN.trim()) ||
     (process.env.DEV_OTP_BYPASS === 'true' && process.env.NODE_ENV !== 'production');
 
+  // TEMPORARY: testers can complete onboarding without OTP while the
+  // Meta WhatsApp template is pending approval. Mirrors the wizard's
+  // `testMode` flag in app/onboard/page.js (same env var, same check).
+  // Remove this branch once the OTP template ships in production.
+  const testMode = process.env.PAYMENT_TEST_MODE === 'true';
+
   // Gate: which previous step is missing? Each branch surfaces a distinct
   // reason so the client renders a specific message instead of a generic
   // "Upload failed". 409 = state-not-ready (request is well-formed, but
@@ -58,11 +64,11 @@ export async function POST(req) {
       details: { reason: 'civil_id_missing', whatsappOk, hasRow: !!v },
     }, { status: 409 });
   }
-  if (whatsappOk && !v?.phone_verified) {
-    console.error('[verify/selfie] gate: phone_verified false (whatsappOk true) for', user.id);
+  if (whatsappOk && !testMode && !v?.phone_verified) {
+    console.error('[verify/selfie] gate: phone_verified false (whatsappOk true, testMode false) for', user.id);
     return Response.json({
       error: 'يجب تأكيد رقم الواتساب أولاً',
-      details: { reason: 'phone_not_verified', whatsappOk: true },
+      details: { reason: 'phone_not_verified', whatsappOk: true, testMode: false },
     }, { status: 409 });
   }
 
