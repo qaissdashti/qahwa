@@ -75,7 +75,7 @@ export default function VerifyClient({ fullName, initialStep, phoneVerified, civ
     <main className="min-h-screen flex items-center justify-center px-5 py-10" dir={dir}>
       <div className="w-full max-w-md relative">
         <div className="absolute top-0 right-0 z-10"><LangToggle /></div>
-        <h1 className="text-center text-2xl font-extrabold mb-1" style={{ fontFamily: 'Fraunces' }}>
+        <h1 className="text-center text-2xl font-extrabold mb-1" style={{ fontFamily: 'var(--font-sans)' }}>
           قهوة <span className="text-qahwa-accent">☕</span>
         </h1>
         <p className="text-center text-black/50 font-medium mb-6">

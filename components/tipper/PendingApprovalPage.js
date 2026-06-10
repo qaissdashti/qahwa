@@ -21,7 +21,7 @@ export default function PendingApprovalPage({ creator }) {
   const { t, dir } = useLang();
   return (
     <main className="min-h-screen flex items-center justify-center px-5 py-10"
-          style={{ background: C.bg, fontFamily: "'Tajawal', sans-serif" }}
+          style={{ background: C.bg, fontFamily: 'var(--font-sans)' }}
           dir={dir}>
       <div className="w-full max-w-md relative">
         <div className="absolute top-0 inset-inline-end-0 z-10" style={{ insetInlineEnd: 0 }}>
@@ -29,7 +29,7 @@ export default function PendingApprovalPage({ creator }) {
         </div>
 
         <Link href="/" className="block text-center text-2xl font-extrabold mb-6 text-qahwa-black"
-              style={{ fontFamily: 'Fraunces' }}>
+              style={{ fontFamily: 'var(--font-sans)' }}>
           قهوة <span className="text-qahwa-accent">☕</span>
         </Link>
 
@@ -52,7 +52,7 @@ export default function PendingApprovalPage({ creator }) {
           </div>
 
           {/* name */}
-          <div style={{ fontFamily: "'Fraunces',sans-serif", fontSize: 22, fontWeight: 800, color: C.ink, letterSpacing: '-0.04em' }}>
+          <div style={{ fontFamily: 'var(--font-sans)', fontSize: 22, fontWeight: 800, color: C.ink, letterSpacing: '-0.04em' }}>
             {creator.full_name || creator.handle}
           </div>
 
@@ -60,7 +60,7 @@ export default function PendingApprovalPage({ creator }) {
           <div className="inline-flex items-center gap-2 mt-3 mb-4"
                style={{ background: C.soft, border: `2px solid ${C.purple}`, borderRadius: 999, padding: '6px 14px' }}>
             <span style={{ fontSize: 16 }}>🕵️</span>
-            <span style={{ color: C.purple, fontWeight: 800, fontSize: 13, fontFamily: "'Fraunces',sans-serif" }}>
+            <span style={{ color: C.purple, fontWeight: 800, fontSize: 13, fontFamily: 'var(--font-sans)' }}>
               {t('pending.title')}
             </span>
           </div>
@@ -80,7 +80,7 @@ export default function PendingApprovalPage({ creator }) {
             </p>
             <div style={{
               background: C.soft, border: `2px solid ${C.ink}`, borderRadius: 12,
-              padding: '10px 14px', fontFamily: "'DM Sans',sans-serif", fontWeight: 700,
+              padding: '10px 14px', fontFamily: 'var(--font-sans)', fontWeight: 700,
               color: C.ink, direction: 'ltr',
             }}>
               qahwa.kw/{creator.handle}

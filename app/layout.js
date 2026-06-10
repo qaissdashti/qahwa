@@ -1,7 +1,25 @@
 import { Suspense } from 'react';
+import { Plus_Jakarta_Sans, IBM_Plex_Sans_Arabic } from 'next/font/google';
 import './globals.css';
 import LangProvider from '@/components/LangProvider';
 import NavigationProgress from '@/components/NavigationProgress';
+
+// Plus Jakarta Sans is the app-wide font (Latin). It has no Arabic glyphs,
+// so IBM Plex Sans Arabic is loaded alongside it as the Arabic fallback.
+// Both are exposed as CSS variables and combined into --font-sans in
+// globals.css → 'Plus Jakarta Sans', 'IBM Plex Sans Arabic', sans-serif.
+const jakarta = Plus_Jakarta_Sans({
+  subsets: ['latin'],
+  weight: ['400', '500', '600', '700', '800'],
+  variable: '--font-jakarta',
+  display: 'swap',
+});
+const plexArabic = IBM_Plex_Sans_Arabic({
+  subsets: ['arabic'],
+  weight: ['400', '500', '600', '700'],
+  variable: '--font-plex-arabic',
+  display: 'swap',
+});
 
 export const metadata = {
   title: 'قهوة — Qahwa',
@@ -33,7 +51,7 @@ const SET_DIR_SCRIPT = `
 
 export default function RootLayout({ children }) {
   return (
-    <html lang="ar" dir="rtl">
+    <html lang="ar" dir="rtl" className={`${jakarta.variable} ${plexArabic.variable}`}>
       <head>
         <script dangerouslySetInnerHTML={{ __html: SET_DIR_SCRIPT }} />
       </head>

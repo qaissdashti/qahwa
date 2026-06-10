@@ -12,7 +12,7 @@ export default function LangToggle({ variant = 'light', className = '' }) {
     : 'border-qahwa-black bg-white text-qahwa-black hover:bg-qahwa-lavender';
   return (
     <button onClick={toggleLang} className={`${base} ${skin} ${className}`}
-            style={{ fontFamily: "'Fraunces', sans-serif" }}
+            style={{ fontFamily: 'var(--font-sans)' }}
             aria-label={lang === 'ar' ? 'Switch to English' : 'التبديل إلى العربية'}>
       {lang === 'ar' ? 'EN' : 'ع'}
     </button>

@@ -7,9 +7,14 @@ module.exports = {
   theme: {
     extend: {
       fontFamily: {
-        fraunces:   ['Fraunces', 'sans-serif'],
-        tajawal:['Tajawal', 'sans-serif'],
-        dm:     ['DM Sans', 'sans-serif'],
+        // Default sans across the app → Plus Jakarta Sans (+ IBM Plex Sans
+        // Arabic fallback), driven by the --font-sans CSS variable.
+        sans:     ['var(--font-sans)'],
+        // Legacy aliases kept so any stray font-* utility still renders the
+        // new stack instead of breaking.
+        fraunces: ['var(--font-sans)'],
+        tajawal:  ['var(--font-sans)'],
+        dm:       ['var(--font-sans)'],
       },
       colors: {
         qahwa: {

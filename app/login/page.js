@@ -73,7 +73,7 @@ function LoginForm() {
           <LangToggle />
         </div>
         <Link href="/" className="block text-center text-2xl font-extrabold mb-6"
-              style={{ fontFamily: 'Fraunces' }}>
+              style={{ fontFamily: 'var(--font-sans)' }}>
           قهوة <span className="text-qahwa-accent">☕</span>
         </Link>
         <div className="q-card p-7">

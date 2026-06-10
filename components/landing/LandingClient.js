@@ -130,7 +130,7 @@ export default function LandingClient() {
     <main className="min-h-screen flex flex-col" dir={t.dir} style={{ background: F.bg, color: F.ink }}>
       {/* ─── Top nav ─── */}
       <header className="flex items-center justify-between px-5 sm:px-6 py-4 max-w-6xl mx-auto w-full">
-        <Link href="/" className="text-2xl font-extrabold" style={{ fontFamily: 'Fraunces' }}>
+        <Link href="/" className="text-2xl font-extrabold" style={{ fontFamily: 'var(--font-sans)' }}>
           {lang === 'ar' ? 'قهوة' : 'Qahwa'} <span style={{ color: F.accent }}>☕</span>
         </Link>
         <nav className="flex items-center gap-2.5 sm:gap-3">
@@ -170,13 +170,13 @@ export default function LandingClient() {
                style={{ background: F.soft, color: F.purple, border: `2px solid ${F.purple}` }}>
             Kuwait · KWD · KNET
           </div>
-          {/* Explicit Fraunces 800 — overrides the global h1 rule's tight -0.04em
+          {/* Explicit weight 800 — overrides the global h1 rule's tight -0.04em
               tracking that was making the headline read as condensed/stretched.
               Slightly looser letter-spacing + tighter line-height = bold and
               punchy without the vertical-stretch feel. */}
           <h1 className="text-4xl sm:text-5xl lg:text-6xl mb-5"
               style={{
-                fontFamily: "'Fraunces', sans-serif",
+                fontFamily: 'var(--font-sans)',
                 fontWeight: 800,
                 letterSpacing: '-0.01em',
                 lineHeight: 1.05,
@@ -213,7 +213,7 @@ export default function LandingClient() {
           {t.how.steps.map((s, i) => (
             <div key={i} className="q-card p-5 sm:p-6 text-start relative" style={{ background: F.card }}>
               <div className="absolute -top-3 -start-3 w-10 h-10 rounded-full grid place-items-center font-extrabold text-lg"
-                   style={{ background: F.accent, color: F.ink, border: `2px solid ${F.ink}`, boxShadow: `2px 2px 0 ${F.ink}`, fontFamily: 'Fraunces' }}>
+                   style={{ background: F.accent, color: F.ink, border: `2px solid ${F.ink}`, boxShadow: `2px 2px 0 ${F.ink}`, fontFamily: 'var(--font-sans)' }}>
                 {s.n}
               </div>
               <h3 className="text-lg sm:text-xl mb-1.5 mt-1">{s.t}</h3>
@@ -271,7 +271,7 @@ function PhoneMockup({ strings, dir }) {
         width: '100%', height: '100%',
         background: 'linear-gradient(160deg, #C0AAEC 0%, #EDE4FB 55%, #F5F0FF 100%)',
         borderRadius: 34, overflow: 'hidden', position: 'relative',
-        fontFamily: "'DM Sans', system-ui, sans-serif",
+        fontFamily: 'var(--font-sans)',
       }}>
         {/* status bar */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '14px 22px 0', color: F.ink, fontWeight: 800, fontSize: 13 }}>
@@ -348,7 +348,7 @@ function SocialProof({ strings, dir }) {
             style={{
               background: F.card, color: F.ink,
               border: `2px solid ${F.ink}`, boxShadow: `2px 2px 0 ${F.ink}`,
-              padding: '7px 14px 7px 8px', fontFamily: "'DM Sans', sans-serif",
+              padding: '7px 14px 7px 8px', fontFamily: 'var(--font-sans)',
             }}>
             <span style={{
               width: 26, height: 26, borderRadius: '50%',

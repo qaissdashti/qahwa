@@ -1,5 +1,3 @@
-@import url('https://fonts.googleapis.com/css2?family=Fraunces:wght@700;800&family=Tajawal:wght@400;500;700;800&family=DM+Sans:wght@400;500;700&display=swap');
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -8,6 +6,11 @@
   --black:  #0D0D0D;
   --cream:  #FAFAF7;
   --accent: #C8F55A;
+
+  /* App-wide font stack. --font-jakarta / --font-plex-arabic are injected
+     onto <html> by next/font (see app/layout.js). Plus Jakarta Sans covers
+     Latin; IBM Plex Sans Arabic covers Arabic glyphs Jakarta lacks. */
+  --font-sans: var(--font-jakarta), var(--font-plex-arabic), sans-serif;
 }
 
 * { box-sizing: border-box; }
@@ -20,7 +23,7 @@ html, body {
 body {
   background: var(--cream);
   color: var(--black);
-  font-family: 'Tajawal', 'DM Sans', sans-serif;
+  font-family: var(--font-sans);
   /* Direction is driven by <html dir="..."> (set by LangProvider).
      Hardcoding direction here forced everything RTL even when the html
      attribute was ltr — leave it unset so the dir attribute cascades. */
@@ -95,11 +98,11 @@ input, textarea, select { font-size: 16px; }
 }
 .qahwa-heart-pulse { animation: qahwa-heart-pulse 1.6s ease-in-out infinite; }
 
-/* Fraunces for headings */
-h1, h2, h3 { font-family: 'Fraunces', sans-serif; font-weight: 800; letter-spacing: -0.04em; }
+/* Headings — Plus Jakarta Sans, kept bold + tight for the brutalist look */
+h1, h2, h3 { font-family: var(--font-sans); font-weight: 800; letter-spacing: -0.04em; }
 
 /* Numbers / Latin emphasis */
-.font-num { font-family: 'DM Sans', sans-serif; font-feature-settings: 'tnum'; }
+.font-num { font-family: var(--font-sans); font-feature-settings: 'tnum'; }
 
 /* ─── Neo-brutalist building blocks (Qahwa design language) ───
    chunky black borders + 3px offset box-shadow. Used across the

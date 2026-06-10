@@ -225,7 +225,7 @@ export default function SettingsForm({ creator, maxPrice, amazingGlobal }) {
                   ? <img src={avatarUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                   : (f.avatar_emoji || '☕')}
               </div>
-              <div style={{ fontFamily: "'Fraunces',sans-serif", fontWeight: 800, fontSize: 16, color: F.ink, textAlign: 'center' }}>{f.full_name || t('sset.previewName')}</div>
+              <div style={{ fontFamily: 'var(--font-sans)', fontWeight: 800, fontSize: 16, color: F.ink, textAlign: 'center' }}>{f.full_name || t('sset.previewName')}</div>
               <div style={{ fontSize: 10, color: F.violet, fontWeight: 700 }}>qahwa.kw/{creator?.handle}</div>
             </div>
 
@@ -236,14 +236,14 @@ export default function SettingsForm({ creator, maxPrice, amazingGlobal }) {
                 return (
                   <div key={n} style={{ flex: 1, border: `2px solid ${F.ink}`, borderRadius: 999, background: sel ? F.purple : F.card, color: sel ? '#fff' : F.ink, boxShadow: sel ? `2px 2px 0 ${F.ink}` : 'none', padding: '8px 2px', textAlign: 'center' }}>
                     <div style={{ fontSize: 13 }}>☕</div>
-                    <div style={{ fontFamily: "'Fraunces',sans-serif", fontWeight: 800, fontSize: 11 }}>{(price * n).toFixed(3)}</div>
+                    <div style={{ fontFamily: 'var(--font-sans)', fontWeight: 800, fontSize: 11 }}>{(price * n).toFixed(3)}</div>
                   </div>
                 );
               })}
             </div>
 
             {/* CTA pill */}
-            <div style={{ marginTop: 12, background: F.accent, color: F.ink, border: `2px solid ${F.ink}`, borderRadius: 999, boxShadow: `3px 3px 0 ${F.ink}`, textAlign: 'center', padding: '11px 8px', fontFamily: "'Fraunces',sans-serif", fontWeight: 800, fontSize: 13 }}>
+            <div style={{ marginTop: 12, background: F.accent, color: F.ink, border: `2px solid ${F.ink}`, borderRadius: 999, boxShadow: `3px 3px 0 ${F.ink}`, textAlign: 'center', padding: '11px 8px', fontFamily: 'var(--font-sans)', fontWeight: 800, fontSize: 13 }}>
               {t('sset.previewCta', { amt: price.toFixed(3) })}
             </div>
           </div>

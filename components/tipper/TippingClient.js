@@ -140,9 +140,9 @@ function Confetti() {
 const fmtKd1 = (v) => Number(v || 0).toFixed(1);
 
 // Build an Instagram-Story-sized (1080×1920) share card as a PNG blob.
-// Lavender Flewd background, purple accent stripes, Fraunces 900 headlines,
-// DM Sans for the handle. Waits for the page fonts to load before
-// drawing so the canvas doesn't fall back to a system serif.
+// Lavender Flewd background, purple accent stripes, Plus Jakarta Sans
+// headlines + handle. Waits for the page fonts to load before drawing
+// so the canvas doesn't fall back to a system serif.
 async function buildShareCard({ creatorName, handle, t }) {
   const W = 1080, H = 1920;
   const F = { bg: '#F5F0FF', ink: '#0D0D0D', purple: '#7B2FBE', violet: '#9B4DCA', accent: '#C8F55A', soft: '#EDE4FB', card: '#FFFFFF' };
@@ -152,14 +152,24 @@ async function buildShareCard({ creatorName, handle, t }) {
   const ctx = canvas.getContext('2d');
   ctx.textBaseline = 'middle';
 
-  // Make sure Fraunces/DM Sans are available before any fillText — otherwise
-  // browsers fall back silently to serif and the card looks broken.
+  // Resolve the actual family names next/font registered (hashed at build
+  // time) from the CSS variables on <html>, so the card uses the same
+  // Plus Jakarta Sans (Latin) / IBM Plex Sans Arabic (Arabic) as the app.
+  const rootStyle = getComputedStyle(document.documentElement);
+  const JK   = rootStyle.getPropertyValue('--font-jakarta').trim()     || 'sans-serif';
+  const AR   = rootStyle.getPropertyValue('--font-plex-arabic').trim() || 'sans-serif';
+  const SANS = `${JK}, ${AR}, sans-serif`;
+
+  // Make sure the fonts are loaded before any fillText — otherwise browsers
+  // fall back silently to serif and the card looks broken. (Plus Jakarta Sans
+  // tops out at weight 800, so the card uses 800 instead of the old 900.)
   try {
     if (document.fonts?.load) {
       await Promise.all([
-        document.fonts.load('900 110px "Fraunces"'),
-        document.fonts.load('900 180px "Fraunces"'),
-        document.fonts.load('700 56px "DM Sans"'),
+        document.fonts.load(`800 110px ${JK}`),
+        document.fonts.load(`800 180px ${JK}`),
+        document.fonts.load(`800 110px ${AR}`),
+        document.fonts.load(`700 56px ${JK}`),
       ]);
       await document.fonts.ready;
     }
@@ -179,7 +189,7 @@ async function buildShareCard({ creatorName, handle, t }) {
   ctx.beginPath(); ctx.arc(0, 0, 360, 0, Math.PI * 2); ctx.fill();
   ctx.beginPath(); ctx.arc(W, H, 320, 0, Math.PI * 2); ctx.fill();
 
-  // Brand badge top-center (white pill with Fraunces 900 "قهوة ☕")
+  // Brand badge top-center (white pill with bold "قهوة ☕")
   const badgeW = 360, badgeH = 110, badgeY = 130;
   ctx.fillStyle = F.card;
   ctx.strokeStyle = F.ink;
@@ -190,7 +200,7 @@ async function buildShareCard({ creatorName, handle, t }) {
   ctx.fillStyle = F.ink;
   ctx.fillRect((W - badgeW) / 2 + 10, badgeY + badgeH + 4, badgeW, 8);
   ctx.fillStyle = F.ink;
-  ctx.font = '900 64px "Fraunces", sans-serif';
+  ctx.font = `800 64px ${SANS}`;
   ctx.textAlign = 'center';
   ctx.fillText('قهوة ☕', W / 2, badgeY + badgeH / 2 + 4);
 
@@ -202,21 +212,21 @@ async function buildShareCard({ creatorName, handle, t }) {
   ctx.fillStyle = F.ink;
   ctx.textAlign = 'center';
 
-  ctx.font = '900 90px "Fraunces", sans-serif';
+  ctx.font = `800 90px ${SANS}`;
   ctx.fillText(t.shareCardLine1, W / 2, 760);
 
   // Name auto-shrinks if too long for the canvas width.
   let nameSize = 180;
-  ctx.font = `900 ${nameSize}px "Fraunces", sans-serif`;
+  ctx.font = `800 ${nameSize}px ${SANS}`;
   while (ctx.measureText(creatorName).width > W - 160 && nameSize > 80) {
     nameSize -= 8;
-    ctx.font = `900 ${nameSize}px "Fraunces", sans-serif`;
+    ctx.font = `800 ${nameSize}px ${SANS}`;
   }
   ctx.fillStyle = F.purple;
   ctx.fillText(creatorName, W / 2, 940);
 
   ctx.fillStyle = F.ink;
-  ctx.font = '900 90px "Fraunces", sans-serif';
+  ctx.font = `800 90px ${SANS}`;
   ctx.fillText(t.shareCardLine2, W / 2, 1120);
 
   // Accent CTA pill at the bottom with the handle URL
@@ -230,12 +240,12 @@ async function buildShareCard({ creatorName, handle, t }) {
   ctx.fillStyle = F.ink;
   ctx.fillRect((W - pillW) / 2 + 14, pillY + pillH + 6, pillW, 10);
   ctx.fillStyle = F.ink;
-  ctx.font = '700 56px "DM Sans", sans-serif';
+  ctx.font = `700 56px ${SANS}`;
   ctx.fillText(`qahwa.kw/${handle}`, W / 2, pillY + pillH / 2 + 2);
 
   // Footer line
   ctx.fillStyle = F.violet;
-  ctx.font = '700 36px "DM Sans", sans-serif';
+  ctx.font = `700 36px ${SANS}`;
   ctx.fillText('Support a Kuwaiti creator · ادعم مبدعك المفضل', W / 2, 1740);
 
   return await new Promise((resolve, reject) => {
@@ -353,7 +363,7 @@ function SuccessScreen({ C, s, t, dir, creator, message, onSendAnother, onToggle
   // Buttons all share the brutalist 2px black border + 3×3 shadow.
   const baseBtn = {
     border: `2px solid ${C.ink}`, borderRadius: 14,
-    padding: '12px 16px', fontFamily: "'Fraunces', sans-serif",
+    padding: '12px 16px', fontFamily: 'var(--font-sans)',
     fontSize: 14, fontWeight: 800, cursor: 'pointer',
     boxShadow: `3px 3px 0 ${C.ink}`, transition: 'all .12s',
     display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
@@ -440,7 +450,7 @@ function SuccessScreen({ C, s, t, dir, creator, message, onSendAnother, onToggle
 // ─────────────────────────────────────────────────────────────
 // Social-proof toast — animates in at the top of the page on
 // load, auto-dismisses after 4s, has an X to close early.
-// Flewd palette: lavender bg, purple border, Fraunces bold headline.
+// Flewd palette: lavender bg, purple border, bold headline.
 // Render gate (count >= 2) lives in the parent so this stays dumb.
 // ─────────────────────────────────────────────────────────────
 function SocialProofToast({ message, closeAria, dir }) {
@@ -471,7 +481,7 @@ function SocialProofToast({ message, closeAria, dir }) {
         padding: '10px 14px',
         display: 'flex', alignItems: 'center', gap: 10,
         maxWidth: 'min(92vw, 420px)',
-        fontFamily: "'Fraunces', sans-serif",
+        fontFamily: 'var(--font-sans)',
         fontWeight: 800,
         fontSize: 13.5,
         letterSpacing: '-0.01em',
@@ -559,9 +569,9 @@ export default function TippingClient({ creator, settings, recentTips, todayCoun
 
   // ── STYLES (Flewd) ──────────────────────────────────────────
   const s = {
-    page: { minHeight: '100vh', background: C.bg, display: 'flex', alignItems: 'flex-start', justifyContent: 'center', padding: '2rem 1rem 3rem', fontFamily: "'Tajawal', sans-serif" },
+    page: { minHeight: '100vh', background: C.bg, display: 'flex', alignItems: 'flex-start', justifyContent: 'center', padding: '2rem 1rem 3rem', fontFamily: 'var(--font-sans)' },
     card: { position: 'relative', background: C.card, border: `2px solid ${C.ink}`, borderRadius: 28, padding: '2rem 1.75rem', width: '100%', maxWidth: 430, boxShadow: `5px 5px 0 ${C.ink}` },
-    name: { fontFamily: "'Fraunces', sans-serif", fontSize: 24, fontWeight: 800, color: C.ink, letterSpacing: '-0.04em', direction: dir, textAlign: 'center' },
+    name: { fontFamily: 'var(--font-sans)', fontSize: 24, fontWeight: 800, color: C.ink, letterSpacing: '-0.04em', direction: dir, textAlign: 'center' },
     bio: { fontSize: 14, color: '#4A4458', direction: dir, textAlign: 'center', lineHeight: 1.6, background: C.soft, borderRadius: 14, padding: '10px 14px', border: `2px solid ${C.ink}`, margin: '12px 0' },
     cupPill: (sel) => ({
       flex: 1, border: `2px solid ${C.ink}`, borderRadius: 999,
@@ -570,20 +580,20 @@ export default function TippingClient({ creator, settings, recentTips, todayCoun
       padding: '14px 6px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2,
       cursor: 'pointer', transition: 'all .15s',
     }),
-    cupAmt: { fontFamily: "'Fraunces', sans-serif", fontSize: 14, fontWeight: 800 },
+    cupAmt: { fontFamily: 'var(--font-sans)', fontSize: 14, fontWeight: 800 },
     payBtn: {
       width: '100%', background: C.accent, color: C.ink, border: `2px solid ${C.ink}`,
-      borderRadius: 999, padding: 17, fontFamily: "'Fraunces', sans-serif", fontSize: 18, fontWeight: 800,
+      borderRadius: 999, padding: 17, fontFamily: 'var(--font-sans)', fontSize: 18, fontWeight: 800,
       cursor: loading ? 'not-allowed' : 'pointer', opacity: loading ? 0.6 : 1, direction: dir,
       boxShadow: `4px 4px 0 ${C.ink}`, transition: 'all .12s',
     },
-    input: { width: '100%', border: `2px solid ${C.ink}`, borderRadius: 14, padding: '11px 14px', fontSize: 14, fontFamily: "'Tajawal', sans-serif", direction: dir, background: C.card, color: C.ink, outline: 'none', marginBottom: 10 },
+    input: { width: '100%', border: `2px solid ${C.ink}`, borderRadius: 14, padding: '11px 14px', fontSize: 14, fontFamily: 'var(--font-sans)', direction: dir, background: C.card, color: C.ink, outline: 'none', marginBottom: 10 },
     divider: { height: 2, background: C.soft, margin: '1.1rem 0', borderRadius: 2 },
     sectionLabel: { fontSize: 12, fontWeight: 800, color: C.purple, textAlign: 'center', direction: dir, marginBottom: 10, letterSpacing: '0.02em' },
     errorBox: { background: '#FFF0F0', border: `2px solid #FF5A5A`, borderRadius: 12, padding: '8px 14px', fontSize: 13, color: '#C00', direction: dir, marginBottom: 10, fontWeight: 700 },
     pmRow: { display: 'flex', justifyContent: 'center', gap: 6, marginTop: 14, flexWrap: 'wrap' },
-    pmBadge: { border: `1.5px solid ${C.ink}`, borderRadius: 8, padding: '3px 10px', fontSize: 11, fontWeight: 700, color: C.muted, fontFamily: "'DM Sans', sans-serif" },
-    langBtn: { position: 'absolute', top: 16, insetInlineEnd: 16, border: `2px solid ${C.ink}`, background: C.card, color: C.ink, borderRadius: 999, padding: '5px 13px', fontSize: 13, fontWeight: 800, fontFamily: "'Fraunces', sans-serif", cursor: 'pointer', zIndex: 2, boxShadow: `2px 2px 0 ${C.ink}` },
+    pmBadge: { border: `1.5px solid ${C.ink}`, borderRadius: 8, padding: '3px 10px', fontSize: 11, fontWeight: 700, color: C.muted, fontFamily: 'var(--font-sans)' },
+    langBtn: { position: 'absolute', top: 16, insetInlineEnd: 16, border: `2px solid ${C.ink}`, background: C.card, color: C.ink, borderRadius: 999, padding: '5px 13px', fontSize: 13, fontWeight: 800, fontFamily: 'var(--font-sans)', cursor: 'pointer', zIndex: 2, boxShadow: `2px 2px 0 ${C.ink}` },
     social: { background: C.purple, color: '#fff', border: `2px solid ${C.ink}`, borderRadius: 10, padding: '4px 10px', fontSize: 12, fontWeight: 700, textDecoration: 'none' },
   };
 
@@ -647,7 +657,7 @@ export default function TippingClient({ creator, settings, recentTips, todayCoun
           {/* Name no longer carries the inline ✓ — the avatar badge is the
               dedicated verified signal, and Twitter-blue reads unambiguously. */}
           <div style={s.name}>{creator.full_name}</div>
-          <div style={{ fontSize: 12, color: C.violet, fontFamily: "'DM Sans', sans-serif", fontWeight: 700, marginBottom: 6 }}>
+          <div style={{ fontSize: 12, color: C.violet, fontFamily: 'var(--font-sans)', fontWeight: 700, marginBottom: 6 }}>
             qahwa.kw/{creator.handle}
           </div>
           {creator.bio && <div style={s.bio}>{creator.bio}</div>}
@@ -663,7 +673,7 @@ export default function TippingClient({ creator, settings, recentTips, todayCoun
         {/* Total counter */}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', border: `2px solid ${C.ink}`, borderRadius: 14, padding: '9px 14px', marginBottom: '1.1rem', background: C.soft, boxShadow: `3px 3px 0 ${C.ink}` }}>
           <span style={{ fontSize: 12, color: '#4A4458', fontWeight: 700 }}>{t.totalCoffees}</span>
-          <span style={{ fontFamily: "'Fraunces', sans-serif", fontSize: 18, fontWeight: 800, color: C.purple }}>☕ {creator.total_tips_count}</span>
+          <span style={{ fontFamily: 'var(--font-sans)', fontSize: 18, fontWeight: 800, color: C.purple }}>☕ {creator.total_tips_count}</span>
         </div>
 
         <div style={s.divider} />
@@ -688,7 +698,7 @@ export default function TippingClient({ creator, settings, recentTips, todayCoun
         {showAmazing && (
           <div style={{ border: `2px solid ${C.ink}`, borderRadius: 18, padding: '12px 14px', marginBottom: '1.1rem', background: isAmazing ? C.soft : C.card, cursor: 'pointer', boxShadow: isAmazing ? `3px 3px 0 ${C.purple}` : 'none', transition: 'all .15s' }}
             onClick={() => setIsAmazing(!isAmazing)}>
-            <div style={{ fontFamily: "'Fraunces', sans-serif", fontSize: 14, fontWeight: 800, color: isAmazing ? C.purple : C.ink, marginBottom: 4, direction: dir }}>
+            <div style={{ fontFamily: 'var(--font-sans)', fontSize: 14, fontWeight: 800, color: isAmazing ? C.purple : C.ink, marginBottom: 4, direction: dir }}>
               {isAmazing ? '✓ ' : ''}☀️ {creator.amazing_message || t.amazingDefault}
             </div>
             {isAmazing && (

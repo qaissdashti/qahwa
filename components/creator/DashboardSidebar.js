@@ -11,7 +11,7 @@ export default function DashboardSidebar({ creator }) {
     <aside className="hidden md:flex dash-surface rounded-2xl border border-white/10 p-4 md:w-60 md:min-h-[calc(100vh-2rem)] flex-col justify-between gap-4">
       <div className="flex-1">
         <div className="flex items-center justify-between gap-2 px-2 mb-6">
-          <span className="text-xl font-extrabold" style={{ fontFamily: 'Fraunces' }}>قهوة ☕</span>
+          <span className="text-xl font-extrabold" style={{ fontFamily: 'var(--font-sans)' }}>قهوة ☕</span>
           <LangToggle variant="dark" />
         </div>
         <DashboardNav />

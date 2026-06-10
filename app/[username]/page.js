@@ -80,7 +80,7 @@ export default async function TippingPage({ params, searchParams }) {
       <div style={{ minHeight:'100vh', display:'flex', alignItems:'center', justifyContent:'center', background:'#0D0D0D' }}>
         <div style={{ textAlign:'center', color:'#FAFAF7' }}>
           <div style={{ fontSize:64 }}>☕</div>
-          <h1 style={{ fontFamily:'Fraunces', fontSize:24, margin:'16px 0 8px' }}>نعمل على تحسين قهوة</h1>
+          <h1 style={{ fontFamily: 'var(--font-sans)', fontSize:24, margin:'16px 0 8px' }}>نعمل على تحسين قهوة</h1>
           <p style={{ color:'#666' }}>{settings.maintenance_message || 'نعود قريباً'}</p>
         </div>
       </div>
