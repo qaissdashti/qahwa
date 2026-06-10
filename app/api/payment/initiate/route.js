@@ -161,6 +161,7 @@ export async function POST(req) {
       creatorName: creator.full_name,
       handle:      creator.handle,
       cups:        isAmazing ? 0 : cups,
+      supporterName,
     }));
   } catch (err) {
     console.error('[initiate] MyFatoorah error:', err);
