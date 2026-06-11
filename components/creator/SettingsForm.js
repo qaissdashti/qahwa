@@ -7,6 +7,7 @@ import Spinner from '@/components/Spinner';
 import { xhrUpload } from '@/lib/xhrUpload';
 import { KUWAIT_BANKS, bankLabel } from '@/lib/kuwaitBanks';
 import { COFFEE_PRICE_OPTIONS } from '@/lib/coffeePrices';
+import { trackEvent } from '@/lib/mixpanel';
 
 // Flewd palette (mirrors the live tipping page) for the preview panel
 const F = { bg: '#F5F0FF', card: '#FFFFFF', ink: '#0D0D0D', accent: '#C8F55A', purple: '#7B2FBE', violet: '#9B4DCA', soft: '#EDE4FB' };
@@ -69,6 +70,7 @@ export default function SettingsForm({ creator, maxPrice, amazingGlobal }) {
       });
       const json = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(json.error || t('common.somethingWrong'));
+      trackEvent('Settings Updated');
       setMsg({ type: 'ok', text: t('common.saved') });
       setIbanNew('');
       router.refresh();

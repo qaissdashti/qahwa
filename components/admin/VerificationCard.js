@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useLang } from '@/components/LangProvider';
 import Spinner from '@/components/Spinner';
+import { trackEvent } from '@/lib/mixpanel';
 
 export default function VerificationCard({
   creatorId, fullName, handle, email, phone, phoneVerified, civilMasked, hasSelfie,
@@ -36,6 +37,7 @@ export default function VerificationCard({
         body: JSON.stringify({ creatorId, action: a }),
       });
       if (!res.ok) throw new Error('failed');
+      trackEvent(a === 'approve' ? 'Creator Approved' : 'Creator Rejected', { creatorHandle: handle });
       router.refresh();
     } catch (e) { setError(t('common.somethingWrong')); setBusy(false); setAction(null); }
   }

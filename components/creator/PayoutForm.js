@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useLang } from '@/components/LangProvider';
 import Spinner from '@/components/Spinner';
+import { trackEvent } from '@/lib/mixpanel';
 
 export default function PayoutForm({
   balance, minPayout, payoutsEnabled, hasPending,
@@ -31,6 +32,7 @@ export default function PayoutForm({
       });
       const json = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(json.error || t('common.somethingWrong'));
+      trackEvent('Payout Requested', { amount: Number(amount) });
       setDone(true);
       router.refresh();
     } catch (err) { setError(err.message); }

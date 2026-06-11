@@ -1,4 +1,5 @@
 'use client';
+import { resetUser } from '@/lib/mixpanel';
 
 import { useState } from 'react';
 import Link from 'next/link';
@@ -75,7 +76,7 @@ export default function AdminMobileChrome({ admin }) {
             </nav>
             <div className="mt-auto border-t border-white/10 pt-3">
               <div className="text-xs text-white/40 font-num truncate mb-2">{admin.email}</div>
-              <form action="/auth/signout" method="post">
+              <form action="/auth/signout" method="post" onSubmit={() => resetUser()}>
                 <button className="w-full text-sm font-bold rounded-lg bg-white/5 hover:bg-white/10 py-3 min-h-[44px]">
                   {t('common.signout')}
                 </button>

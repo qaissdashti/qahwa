@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useLang } from '@/components/LangProvider';
 import { fmtKd } from '@/lib/i18n';
 import Spinner from '@/components/Spinner';
+import { trackEvent } from '@/lib/mixpanel';
 
 const STATUS_COLOR = {
   pending:  'text-qahwa-orange',
@@ -28,7 +29,12 @@ export default function AdminPayoutRow({ payout: p }) {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ payoutId: p.id, action }),
       });
-      if (res.ok) router.refresh();
+      if (res.ok) {
+        if (action === 'pay') {
+          trackEvent('Payout Marked Paid', { amount: Number(p.amount_kd), creatorHandle: p.creators?.handle });
+        }
+        router.refresh();
+      }
     } finally { setBusy(false); setPendingAction(null); }
   }
 

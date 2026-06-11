@@ -15,6 +15,7 @@ import { useMemo, useState } from 'react';
 import { useLang } from '@/components/LangProvider';
 import { fmtKd } from '@/lib/i18n';
 import { downloadCsv, downloadPdf } from '@/lib/adminReport';
+import { trackEvent } from '@/lib/mixpanel';
 import Spinner from '@/components/Spinner';
 
 const rowDate = (r) => r.paid_at || r.created_at || '';
@@ -128,6 +129,7 @@ export default function AdminReportClient({ rows, variant = 'fees', metric = 'fe
   }
 
   function onCsv() {
+    trackEvent('Admin Export CSV', { reportType: variant });
     downloadCsv({
       filename: `qahwa-${variant}-${stamp()}.csv`,
       columns,
@@ -137,6 +139,7 @@ export default function AdminReportClient({ rows, variant = 'fees', metric = 'fe
 
   async function onPdf() {
     if (busy) return;
+    trackEvent('Admin Export PDF', { reportType: variant });
     setBusy(true);
     try {
       await downloadPdf({

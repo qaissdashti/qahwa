@@ -1,6 +1,6 @@
 'use client';
 
-import { Suspense, useState } from 'react';
+import { Suspense, useState, useEffect } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase-browser';
@@ -8,6 +8,7 @@ import { useLang } from '@/components/LangProvider';
 import LangToggle from '@/components/LangToggle';
 import Spinner from '@/components/Spinner';
 import Logo from '@/components/Logo';
+import { trackEvent, identifyUser } from '@/lib/mixpanel';
 
 function LoginForm() {
   const params = useSearchParams();
@@ -21,9 +22,12 @@ function LoginForm() {
   const [error, setError]       = useState('');
   const [resetMsg, setResetMsg] = useState('');
 
+  useEffect(() => { trackEvent('Login Page Viewed'); }, []);
+
   async function onForgot() {
     setError('');
     setResetMsg('');
+    trackEvent('Forgot Password Clicked');
     if (!email) { setError(t('auth.login.resetNoEmail')); return; }
     const { error: resetErr } = await supabase.auth.resetPasswordForEmail(email, {
       redirectTo: `${window.location.origin}/reset-password`,
@@ -43,6 +47,7 @@ function LoginForm() {
 
     const { data, error: signErr } = await supabase.auth.signInWithPassword({ email, password });
     if (signErr) {
+      trackEvent('Login Submitted', { success: false });
       const m = signErr.message || '';
       setError(
         /invalid login credentials/i.test(m) ? t('auth.login.wrongCreds') :
@@ -53,10 +58,23 @@ function LoginForm() {
       return;
     }
     if (!data?.session) {
+      trackEvent('Login Submitted', { success: false });
       setError(t('auth.login.noSession'));
       setLoading(false);
       return;
     }
+
+    trackEvent('Login Submitted', { success: true });
+    // Identify the creator for all subsequent events. Pull name/handle from
+    // their own row (RLS-scoped). No PII beyond name/email is sent.
+    try {
+      const { data: row } = await supabase
+        .from('creators').select('full_name, handle').eq('id', data.user.id).maybeSingle();
+      const traits = { email: data.user.email, is_creator: true };
+      if (row?.full_name) traits.name = row.full_name;
+      if (row?.handle) traits.handle = row.handle;
+      identifyUser(data.user.id, traits);
+    } catch { /* analytics must never block login */ }
 
     // Wait for the session cookie to be written, then hard-navigate so the
     // server sees it (avoids the cookie-write race that bounces back to login).

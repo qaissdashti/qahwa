@@ -1,4 +1,5 @@
 'use client';
+import { resetUser } from '@/lib/mixpanel';
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
@@ -35,7 +36,7 @@ export default function DashboardMobileChrome({ creator }) {
           <Link href={`/${creator.handle}`} target="_blank" prefetch={false}
                 aria-label={t('nav.myPage')}
                 className="inline-flex items-center justify-center min-w-[44px] min-h-[44px] rounded-lg bg-white/5 hover:bg-white/10 text-sm font-bold">↗</Link>
-          <form action="/auth/signout" method="post">
+          <form action="/auth/signout" method="post" onSubmit={() => resetUser()}>
             <button aria-label={t('common.signout')}
                     className="inline-flex items-center justify-center min-w-[44px] min-h-[44px] rounded-lg bg-white/5 hover:bg-white/10 text-sm font-bold">⎋</button>
           </form>

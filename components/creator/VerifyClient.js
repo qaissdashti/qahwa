@@ -1,4 +1,5 @@
 'use client';
+import { resetUser } from '@/lib/mixpanel';
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
@@ -175,7 +176,7 @@ export default function VerifyClient({ fullName, initialStep, phoneVerified, civ
           )}
         </div>
 
-        <form action="/auth/signout" method="post" className="text-center mt-5">
+        <form action="/auth/signout" method="post" onSubmit={() => resetUser()} className="text-center mt-5">
           <button className="text-sm font-bold text-black/40 underline">{t('common.signout')}</button>
         </form>
       </div>

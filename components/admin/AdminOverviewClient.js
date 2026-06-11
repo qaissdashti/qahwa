@@ -1,13 +1,16 @@
 'use client';
 
+import { useEffect } from 'react';
 import Link from 'next/link';
 import { useLang } from '@/components/LangProvider';
 import { fmtKd } from '@/lib/i18n';
+import { trackEvent } from '@/lib/mixpanel';
 
 export default function AdminOverviewClient({
   creators, verified, pendingVer, pendingPayouts, paidTips, volume, revenue, owed,
 }) {
   const { t } = useLang();
+  useEffect(() => { trackEvent('Admin Panel Viewed'); }, []);
   // [label, value, unit, className, href]. href makes the card a drill-down link.
   const cards = [
     [t('admin.ov.platformFees'),    fmtKd(revenue),    'KD', 'bg-qahwa-accent text-qahwa-black', '/admin/fees'],

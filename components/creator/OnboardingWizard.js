@@ -15,8 +15,11 @@ import { xhrUpload } from '@/lib/xhrUpload';
 import { KUWAIT_BANKS, bankLabel } from '@/lib/kuwaitBanks';
 import { COFFEE_PRICE_OPTIONS } from '@/lib/coffeePrices';
 import Logo from '@/components/Logo';
+import { trackEvent } from '@/lib/mixpanel';
 
 const STEP_KEYS = ['onb.step.basic', 'onb.step.bank', 'onb.step.phone', 'onb.step.identity', 'onb.step.review'];
+// Analytics step names (1-indexed → name) for Onboarding Step events.
+const STEP_NAMES = { 1: 'basic_info', 2: 'bank_details', 3: 'whatsapp', 4: 'identity', 5: 'review' };
 const EMOJI_PRESETS = ['☕', '🎨', '🎙️', '📚', '🎮', '🎵', '✨', '🌟'];
 
 // Selfie upload constraints — kept in sync with /api/verify/selfie/route.js
@@ -179,6 +182,13 @@ export default function OnboardingWizard({ startStep = 1, initial = {}, authed =
 
   const cleanHandle = handle.toLowerCase().replace(/[^a-z0-9_]/g, '');
 
+  // Fire "Onboarding Step Viewed" on mount and whenever the step changes.
+  useEffect(() => {
+    trackEvent('Onboarding Step Viewed', { step, stepName: STEP_NAMES[step] });
+  }, [step]);
+  // Fire "Onboarding Step Completed" when a step is finished (call before setStep).
+  const completeStep = (n) => trackEvent('Onboarding Step Completed', { step: n, stepName: STEP_NAMES[n] });
+
   // Debounced live availability check — fires 600ms after the user stops
   // typing in the handle field. Skip for already-authed creators (handle
   // is fixed) and for inputs shorter than 3 chars (server min length).
@@ -241,6 +251,7 @@ export default function OnboardingWizard({ startStep = 1, initial = {}, authed =
           },
         });
         if (signErr) {
+          trackEvent('Signup Submitted', { success: false });
           // Full object in devtools so devs can see status/code/origin —
           // particularly useful when the server returns a generic
           // "Database error saving new user" from the handle_new_user trigger.
@@ -252,6 +263,7 @@ export default function OnboardingWizard({ startStep = 1, initial = {}, authed =
           else                                                              setFieldError('form', friendly);
           return;
         }
+        trackEvent('Signup Submitted', { success: true });
         if (!data.session) {
           // Email confirmation is on → can't proceed past step 1 in-app.
           setFieldError('email', t('auth.signup.emailSentTitle') + ' (' + email + ')');
@@ -276,6 +288,7 @@ export default function OnboardingWizard({ startStep = 1, initial = {}, authed =
         const j = await xhrUpload('/api/creator/avatar', fd, (pct) => setUploadPct(pct));
         setAvatarUrl(j.url);
       }
+      completeStep(1);
       setStep(2);
     } catch (e) { setFieldError('form', errorWithDetails(e)); }
     finally { setBusy(false); setUploadPct(0); }
@@ -292,6 +305,7 @@ export default function OnboardingWizard({ startStep = 1, initial = {}, authed =
       const body = { bank_name: bankName, account_holder: accountHolder };
       if (ibanToSave) body.iban = ibanToSave;
       await postJson('/api/creator/settings', body);
+      completeStep(2);
       setStep(3);
     } catch (e) { setFieldError('form', errorWithDetails(e)); }
     finally { setBusy(false); }
@@ -314,6 +328,7 @@ export default function OnboardingWizard({ startStep = 1, initial = {}, authed =
     try {
       const num = (phone.startsWith('+965') ? phone : '+965' + phone).replace(/\s+/g, '');
       await postJson('/api/otp/verify', { phone: num, code });
+      completeStep(3);
       setStep(4);
     } catch (e) { setFieldError('form', errorWithDetails(e)); }
     finally { setBusy(false); }
@@ -358,6 +373,7 @@ export default function OnboardingWizard({ startStep = 1, initial = {}, authed =
         setFieldError('selfie', appendDetails(friendly, uploadErr.details));
         return;
       }
+      completeStep(4);
       setStep(5);
     } catch (e) { setFieldError('form', errorWithDetails(e)); }
     finally { setBusy(false); setUploadPct(0); }
@@ -376,6 +392,8 @@ export default function OnboardingWizard({ startStep = 1, initial = {}, authed =
     setErrors({}); setBusy(true);
     try {
       await postJson('/api/creator/accept-terms', {});
+      trackEvent('Terms Accepted');
+      trackEvent('Onboarding Completed');
       window.location.href = `/${cleanHandle || c0.handle || ''}`;
     } catch (e) {
       setFieldError('form', errorWithDetails(e));
@@ -487,7 +505,8 @@ export default function OnboardingWizard({ startStep = 1, initial = {}, authed =
               dashed so it can't be mistaken for a production control. Remove
               this block (and the testMode prop) once OTP is approved. */}
           {testMode && step === 3 && (
-            <button type="button" onClick={() => setStep(4)}
+            <button type="button"
+              onClick={() => { trackEvent('WhatsApp Skipped', { reason: 'test_mode' }); completeStep(3); setStep(4); }}
               className="w-full rounded-xl border-2 border-dashed border-qahwa-orange bg-qahwa-orange/10
                          text-qahwa-black font-bold text-sm py-3 px-4 transition-colors hover:bg-qahwa-orange/20">
               {t('onb.s3.testSkip')}
@@ -499,7 +518,7 @@ export default function OnboardingWizard({ startStep = 1, initial = {}, authed =
             {step === 1 && <WizardBtn busy={busy} pct={uploadPct} onClick={submitStep1} t={t} label={t('onb.next')} />}
             {step === 2 && <WizardBtn busy={busy} onClick={submitStep2} t={t} label={t('onb.next')} />}
             {step === 3 && !whatsappOk && (
-              <WizardBtn busy={busy} onClick={() => setStep(4)} t={t} label={t('onb.s3.skip')} />
+              <WizardBtn busy={busy} onClick={() => { trackEvent('WhatsApp Skipped', { reason: 'not_configured' }); completeStep(3); setStep(4); }} t={t} label={t('onb.s3.skip')} />
             )}
             {step === 3 && whatsappOk && !otpSent && (
               <WizardBtn busy={busy} disabled={!phone} onClick={sendOtp} t={t} label={t('auth.verify.phone.send')} />

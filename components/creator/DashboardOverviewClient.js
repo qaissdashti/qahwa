@@ -1,10 +1,13 @@
 'use client';
 
+import { useEffect } from 'react';
 import { useLang } from '@/components/LangProvider';
 import { fmtKd } from '@/lib/i18n';
+import { trackEvent } from '@/lib/mixpanel';
 
 export default function DashboardOverviewClient({ creator, recentTips }) {
   const { t, lang } = useLang();
+  useEffect(() => { trackEvent('Dashboard Viewed'); }, []);
   const stats = [
     [t('dash.balance'),     fmtKd(creator?.balance_kd),       'KD', 'bg-qahwa-accent text-qahwa-black'],
     [t('dash.totalEarned'), fmtKd(creator?.total_earned_kd),  'KD', 'dash-surface border border-white/10'],

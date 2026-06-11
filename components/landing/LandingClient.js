@@ -12,10 +12,12 @@
 // ============================================================
 'use client';
 
+import { useEffect } from 'react';
 import Link from 'next/link';
 import { useLang } from '@/components/LangProvider';
 import LangToggle from '@/components/LangToggle';
 import Logo from '@/components/Logo';
+import { trackEvent } from '@/lib/mixpanel';
 
 const F = { bg: '#F5F0FF', card: '#FFFFFF', ink: '#0D0D0D', accent: '#C8F55A', purple: '#7B2FBE', violet: '#9B4DCA', soft: '#EDE4FB' };
 
@@ -127,6 +129,8 @@ export default function LandingClient() {
   const { lang } = useLang();
   const t = STR[lang === 'en' ? 'en' : 'ar'];
 
+  useEffect(() => { trackEvent('Landing Page Viewed'); }, []);
+
   return (
     <main className="min-h-screen flex flex-col" dir={t.dir} style={{ background: F.bg, color: F.ink }}>
       {/* ─── Top nav ─── */}
@@ -137,8 +141,8 @@ export default function LandingClient() {
         </Link>
         <nav className="flex items-center gap-2.5 sm:gap-3">
           <LangToggle />
-          <Link href="/login" className="font-bold text-sm hidden sm:inline">{t.nav.login}</Link>
-          <Link href="/onboard" className="q-btn-accent text-xs sm:text-sm py-2 px-3 sm:px-4">{t.nav.cta}</Link>
+          <Link href="/login" onClick={() => trackEvent('Sign In Clicked')} className="font-bold text-sm hidden sm:inline">{t.nav.login}</Link>
+          <Link href="/onboard" onClick={() => trackEvent('Create Page Clicked')} className="q-btn-accent text-xs sm:text-sm py-2 px-3 sm:px-4">{t.nav.cta}</Link>
         </nav>
       </header>
 
@@ -195,10 +199,10 @@ export default function LandingClient() {
             {t.hero.sub}
           </p>
           <div className="flex flex-wrap items-center gap-3">
-            <Link href="/onboard" className="q-btn-accent text-base sm:text-lg px-6 sm:px-7 py-3.5 sm:py-4">
+            <Link href="/onboard" onClick={() => trackEvent('Create Page Clicked')} className="q-btn-accent text-base sm:text-lg px-6 sm:px-7 py-3.5 sm:py-4">
               {t.hero.ctaPrimary}
             </Link>
-            <Link href="/login" className="q-btn-white text-base sm:text-lg px-6 sm:px-7 py-3.5 sm:py-4">
+            <Link href="/login" onClick={() => trackEvent('Sign In Clicked')} className="q-btn-white text-base sm:text-lg px-6 sm:px-7 py-3.5 sm:py-4">
               {t.hero.ctaSecondary}
             </Link>
           </div>

@@ -3,6 +3,7 @@ import { Plus_Jakarta_Sans, IBM_Plex_Sans_Arabic } from 'next/font/google';
 import './globals.css';
 import LangProvider from '@/components/LangProvider';
 import NavigationProgress from '@/components/NavigationProgress';
+import MixpanelProvider from '@/components/MixpanelProvider';
 
 // Plus Jakarta Sans is the app-wide font (Latin). It has no Arabic glyphs,
 // so IBM Plex Sans Arabic is loaded alongside it as the Arabic fallback.
@@ -76,7 +77,7 @@ export default function RootLayout({ children }) {
       </head>
       <body>
         <Suspense fallback={null}><NavigationProgress /></Suspense>
-        <LangProvider><>{children}</></LangProvider>
+        <LangProvider><MixpanelProvider /><>{children}</></LangProvider>
       </body>
     </html>
   );

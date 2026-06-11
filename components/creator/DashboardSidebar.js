@@ -1,4 +1,5 @@
 'use client';
+import { resetUser } from '@/lib/mixpanel';
 
 import Link from 'next/link';
 import DashboardNav from '@/components/creator/DashboardNav';
@@ -34,7 +35,7 @@ export default function DashboardSidebar({ creator }) {
                 className="flex-1 text-center text-xs font-bold rounded-lg bg-white/5 hover:bg-white/10 py-2">
             {t('nav.myPage')}
           </Link>
-          <form action="/auth/signout" method="post" className="flex-1">
+          <form action="/auth/signout" method="post" onSubmit={() => resetUser()} className="flex-1">
             <button className="w-full text-xs font-bold rounded-lg bg-white/5 hover:bg-white/10 py-2">
               {t('common.signout')}
             </button>

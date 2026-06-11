@@ -1,4 +1,5 @@
 'use client';
+import { resetUser } from '@/lib/mixpanel';
 
 import AdminNav from '@/components/admin/AdminNav';
 import LangToggle from '@/components/LangToggle';
@@ -24,7 +25,7 @@ export default function AdminSidebar({ admin }) {
       </div>
       <div className="border-t border-white/10 pt-3">
         <div className="text-xs text-white/40 font-num truncate px-2 mb-2">{admin.email}</div>
-        <form action="/auth/signout" method="post">
+        <form action="/auth/signout" method="post" onSubmit={() => resetUser()}>
           <button className="w-full text-xs font-bold rounded-lg bg-white/5 hover:bg-white/10 py-2">
             {t('common.signout')}
           </button>

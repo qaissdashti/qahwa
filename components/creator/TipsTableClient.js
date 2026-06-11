@@ -9,6 +9,7 @@ import { useMemo, useState } from 'react';
 import { useLang } from '@/components/LangProvider';
 import { fmtKd } from '@/lib/i18n';
 import { downloadCsv, downloadPdf } from '@/lib/adminReport';
+import { trackEvent } from '@/lib/mixpanel';
 import Spinner from '@/components/Spinner';
 
 const STATUS_COLOR = {
@@ -87,11 +88,13 @@ export default function TipsTableClient({ tips, creatorName, handle }) {
   }
 
   function onCsv() {
+    trackEvent('Tips Export CSV');
     downloadCsv({ filename: `${fileBase}.csv`, columns, rows: filtered });
   }
 
   async function onPdf() {
     if (busy) return;
+    trackEvent('Tips Export PDF');
     setBusy(true);
     try {
       await downloadPdf({

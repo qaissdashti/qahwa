@@ -7,6 +7,7 @@
 
 import { useState, useEffect } from 'react';
 import Spinner from '@/components/Spinner';
+import { trackEvent } from '@/lib/mixpanel';
 
 // ── Flewd palette (fixed, light-only) ───────────────────────
 const C = {
@@ -303,6 +304,7 @@ function SuccessScreen({ C, s, t, dir, creator, message, onSendAnother, onToggle
   // PNG download (desktop / share-API not supported / file-sharing
   // unsupported by the OS).
   async function shareToInstagram() {
+    trackEvent('Share Instagram Clicked', { creatorHandle: creator.handle });
     setIgErr(false); setIgSaved(false); setIgBusy(true);
     try {
       const blob = await buildShareCard({ creatorName: creator.full_name, handle: creator.handle, t });
@@ -345,6 +347,7 @@ function SuccessScreen({ C, s, t, dir, creator, message, onSendAnother, onToggle
   }
 
   async function copyLink() {
+    trackEvent('Copy Link Clicked', { creatorHandle: creator.handle });
     try {
       await navigator.clipboard.writeText(pageUrl);
       setCopied(true);
@@ -399,6 +402,7 @@ function SuccessScreen({ C, s, t, dir, creator, message, onSendAnother, onToggle
         <div style={{ display: 'grid', gap: 10, marginTop: 22 }}>
           <a
             href={shareUrl} target="_blank" rel="noreferrer"
+            onClick={() => trackEvent('Share WhatsApp Clicked', { creatorHandle: creator.handle })}
             style={{ ...baseBtn, background: '#25D366', color: '#fff', textDecoration: 'none' }}>
             <span>💬</span><span>{t.shareBtn}</span>
           </a>
@@ -437,7 +441,7 @@ function SuccessScreen({ C, s, t, dir, creator, message, onSendAnother, onToggle
             {copied ? t.copiedBtn : `🔗 ${t.copyBtn}`}
           </button>
           <button
-            type="button" onClick={onSendAnother}
+            type="button" onClick={() => { trackEvent('Send Another Coffee Clicked', { creatorHandle: creator.handle }); onSendAnother(); }}
             style={{ ...baseBtn, background: C.purple, color: '#fff' }}>
             {t.sendAnother}
           </button>
@@ -530,6 +534,26 @@ export default function TippingClient({ creator, settings, recentTips, todayCoun
 
   const showAmazing = creator.amazing_enabled && settings?.amazing_enabled_global !== false;
 
+  // Analytics — supporters stay anonymous (no identify on this page).
+  useEffect(() => {
+    trackEvent('Tipping Page Viewed', { creatorHandle: creator.handle });
+  }, [creator.handle]);
+
+  // Payment Success fires on the post-redirect success screen. cups/amount
+  // are carried across the KNET redirect via sessionStorage (set at initiate),
+  // since success is a fresh page load where the form state is reset.
+  useEffect(() => {
+    if (!success) return;
+    let info = {};
+    try { info = JSON.parse(sessionStorage.getItem('qahwa_last_tip') || '{}'); } catch {}
+    trackEvent('Payment Success', {
+      creatorHandle: creator.handle,
+      cups: info.cups,
+      amount: info.amount,
+    });
+    try { sessionStorage.removeItem('qahwa_last_tip'); } catch {}
+  }, [success, creator.handle]);
+
   async function handlePay() {
     if (loading) return;
     if (isAmazing && (!amazingAmt || grossAmount < (settings?.amazing_min_kd || 0.5))) {
@@ -554,6 +578,15 @@ export default function TippingClient({ creator, settings, recentTips, todayCoun
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || t.genericErr);
+      const cupsPaid = isAmazing ? 0 : selectedCups;
+      trackEvent('Payment Initiated', {
+        cups: cupsPaid,
+        amount: grossAmount,
+        creatorHandle: creator.handle,
+        supporterName: !!supporterName,
+      });
+      // Carry the amount across the KNET redirect for the Payment Success event.
+      try { sessionStorage.setItem('qahwa_last_tip', JSON.stringify({ cups: cupsPaid, amount: grossAmount })); } catch {}
       window.location.href = data.paymentUrl;
     } catch (err) {
       setError(err.message);
@@ -688,7 +721,10 @@ export default function TippingClient({ creator, settings, recentTips, todayCoun
           {[1, 3, 5].map(cups => {
             const sel = !isAmazing && selectedCups === cups;
             return (
-              <button key={cups} style={s.cupPill(sel)} onClick={() => { setSelectedCups(cups); setIsAmazing(false); }}>
+              <button key={cups} style={s.cupPill(sel)} onClick={() => {
+                  setSelectedCups(cups); setIsAmazing(false);
+                  trackEvent('Coffee Amount Selected', { cups, amount: Number((price * cups).toFixed(3)), creatorHandle: creator.handle });
+                }}>
                 <span style={{ fontSize: cups === 5 ? 22 : 20 }}>{cups === 1 ? '☕' : cups === 3 ? '☕☕☕' : '🫖'}</span>
                 <span style={{ fontSize: 10, opacity: 0.8 }}>{t.cupLabel[cups]}</span>
                 <span style={s.cupAmt}>{fmtKd1(price * cups)}</span>
@@ -708,6 +744,7 @@ export default function TippingClient({ creator, settings, recentTips, todayCoun
             {isAmazing && (
               <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 8 }} onClick={e => e.stopPropagation()}>
                 <input type="number" value={amazingAmt} onChange={e => setAmazingAmt(e.target.value)}
+                  onBlur={() => { const a = Number(parseFloat(amazingAmt || 0).toFixed(3)); if (a > 0) trackEvent('Amazing Amount Selected', { amount: a, creatorHandle: creator.handle }); }}
                   placeholder={`${settings?.amazing_min_kd || 0.5}`} min={settings?.amazing_min_kd || 0.5} max={settings?.amazing_max_kd || 50} step="0.5"
                   style={{ ...s.input, flex: 1, marginBottom: 0, direction: 'ltr', textAlign: 'center', fontSize: 18, fontWeight: 700 }} />
                 <span style={{ fontSize: 13, fontWeight: 800, color: C.purple }}>KD</span>
