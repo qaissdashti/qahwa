@@ -642,6 +642,22 @@ function Step1({
       <h2 className="text-xl">{t('onb.step.basic')}</h2>
       <p className="text-sm text-black/55 font-medium">{t('onb.s1.subtitle')}</p>
 
+      {/* Friendly heads-up checklist — only for brand-new signups so they
+          have their IBAN / Civil ID / selfie ready before starting. */}
+      {!authed && (
+        <div className="rounded-xl border-2 border-qahwa-purple/30 bg-qahwa-purple/5 p-4">
+          <p className="text-sm font-bold mb-2">{t('onb.checklist.title')}</p>
+          <ul className="space-y-1.5 text-sm text-black/70 font-medium">
+            {['onb.checklist.iban', 'onb.checklist.civilId', 'onb.checklist.selfie'].map((k) => (
+              <li key={k} className="flex items-start gap-2">
+                <span className="text-qahwa-purple font-bold leading-5">✓</span>
+                <span>{t(k)}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
       {/* ── Avatar: big dashed dropzone OR compact preview-with-Change ── */}
       <div className="space-y-3">
         <label className="q-label">{t('onb.s1.profileSec')}</label>
@@ -811,6 +827,7 @@ function Step2({ t, bankName, setBankName, accountHolder, setAccountHolder, iban
         <input className="q-input font-num" dir="ltr" value={iban}
                onChange={(e) => setIban(e.target.value.toUpperCase())}
                placeholder={ibanMasked ? t('sset.ibanPlaceholderSaved') : t('sset.ibanPlaceholderEmpty')} />
+        <p className="text-xs text-black/50 mt-1.5 leading-relaxed">{t('onb.s2.ibanHelp')}</p>
       </div>
     </>
   );
