@@ -3,6 +3,16 @@
 import { useLang } from '@/components/LangProvider';
 import { fmtKd } from '@/lib/i18n';
 
+// ── TEMPORARILY HIDDEN: WhatsApp reply UI ───────────────────────────
+// The WhatsApp reply loop was removed (creators no longer reply to
+// supporters via WhatsApp — see lib/whatsapp.js / the disabled inbound
+// webhook). So the green "Reply on WhatsApp" button — along with the
+// old replied-status line and the no-phone placeholder, which all belong
+// to that same removed feature — is hidden behind this flag. The code is
+// kept intact: flip this to `true` to restore the whole reply UI if the
+// WhatsApp reply feature is ever brought back.
+const SHOW_WHATSAPP_REPLY = false;
+
 export default function MessagesListClient({ tips }) {
   const { t, lang } = useLang();
   const dateLoc = lang === 'ar' ? 'ar-KW' : 'en-GB';
@@ -35,18 +45,22 @@ export default function MessagesListClient({ tips }) {
 
                 <p className="text-white/85 bg-white/5 rounded-xl p-3 mb-3">&quot;{tp.message}&quot;</p>
 
-                {tp.reply_sent_at ? (
-                  <div className="text-sm text-qahwa-accent font-bold">
-                    {t('msg.replied')} {tp.reply_type === 'voice_note' ? t('msg.voiceNote') : ''}
-                    {tp.reply_content && <span className="text-white/50 font-medium"> — &quot;{tp.reply_content}&quot;</span>}
-                  </div>
-                ) : wa ? (
-                  <a href={`https://wa.me/${wa}`} target="_blank" rel="noopener noreferrer"
-                     className="inline-flex items-center gap-2 text-sm font-bold rounded-xl bg-qahwa-wa text-white px-4 py-2">
-                    {t('msg.replyOnWA')}
-                  </a>
-                ) : (
-                  <span className="text-sm text-white/30 font-medium">{t('msg.noPhone')}</span>
+                {/* WhatsApp reply UI — hidden via SHOW_WHATSAPP_REPLY (see top
+                    of file). Kept intact for easy re-enable. */}
+                {SHOW_WHATSAPP_REPLY && (
+                  tp.reply_sent_at ? (
+                    <div className="text-sm text-qahwa-accent font-bold">
+                      {t('msg.replied')} {tp.reply_type === 'voice_note' ? t('msg.voiceNote') : ''}
+                      {tp.reply_content && <span className="text-white/50 font-medium"> — &quot;{tp.reply_content}&quot;</span>}
+                    </div>
+                  ) : wa ? (
+                    <a href={`https://wa.me/${wa}`} target="_blank" rel="noopener noreferrer"
+                       className="inline-flex items-center gap-2 text-sm font-bold rounded-xl bg-qahwa-wa text-white px-4 py-2">
+                      {t('msg.replyOnWA')}
+                    </a>
+                  ) : (
+                    <span className="text-sm text-white/30 font-medium">{t('msg.noPhone')}</span>
+                  )
                 )}
               </div>
             );
