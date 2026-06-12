@@ -7,6 +7,7 @@ import Spinner from '@/components/Spinner';
 
 const NUM_FIELDS = [
   ['platform_fee_pct',    'admin.ps.platformFee'],
+  ['payout_fee_kd',       'admin.ps.payoutFee'],
   ['min_payout_kd',       'admin.ps.minPayout'],
   ['max_coffee_price_kd', 'admin.ps.maxCoffee'],
   ['amazing_min_kd',      'admin.ps.minAmazing'],
@@ -25,6 +26,7 @@ export default function PlatformSettingsForm({ settings }) {
   const { t } = useLang();
   const [f, setF] = useState({
     platform_fee_pct:    settings.platform_fee_pct ?? 7,
+    payout_fee_kd:       settings.payout_fee_kd ?? 2,
     min_payout_kd:       settings.min_payout_kd ?? 5,
     max_coffee_price_kd: settings.max_coffee_price_kd ?? 10,
     amazing_min_kd:      settings.amazing_min_kd ?? 0.5,

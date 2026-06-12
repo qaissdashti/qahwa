@@ -170,6 +170,7 @@ create table if not exists public.payouts (
   created_at      timestamptz not null default now(),
   creator_id      uuid not null references public.creators(id) on delete cascade,
   amount_kd       numeric(12,3) not null,
+  fee_kd          numeric(6,3) not null default 0,
   bank_name       text,
   account_holder  text,
   iban            text,
@@ -193,6 +194,7 @@ create unique index if not exists payouts_one_pending_per_creator
 create table if not exists public.platform_settings (
   id                       integer primary key default 1,
   platform_fee_pct         numeric(5,2) not null default 7.00,
+  payout_fee_kd            numeric(6,3) not null default 2.000,
   min_payout_kd            numeric(12,3) not null default 5.000,
   max_coffee_price_kd      numeric(6,3) not null default 10.000,
   amazing_enabled_global   boolean not null default true,

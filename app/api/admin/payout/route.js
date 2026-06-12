@@ -41,7 +41,7 @@ export async function POST(req) {
     try {
       const { data: po } = await admin
         .from('payouts')
-        .select('amount_kd, bank_name, iban, creators(email, full_name)')
+        .select('amount_kd, fee_kd, bank_name, iban, creators(email, full_name)')
         .eq('id', payoutId)
         .maybeSingle();
       const creatorEmail = po?.creators?.email;
@@ -50,6 +50,7 @@ export async function POST(req) {
           creatorEmail,
           fullName:   po.creators.full_name,
           amount:     po.amount_kd,
+          fee:        po.fee_kd,
           bankName:   po.bank_name,
           // notifier handles the last-4 masking itself; we just pass
           // whatever IBAN snapshot the payout row has (plain or already

@@ -4,11 +4,12 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useLang } from '@/components/LangProvider';
+import { fmtKd } from '@/lib/i18n';
 import Spinner from '@/components/Spinner';
 import { trackEvent } from '@/lib/mixpanel';
 
 export default function PayoutForm({
-  balance, minPayout, payoutsEnabled, hasPending,
+  balance, minPayout, payoutFee = 0, payoutsEnabled, hasPending,
   hasBank, bankName, accountHolder, ibanMasked,
 }) {
   const router = useRouter();
@@ -20,8 +21,18 @@ export default function PayoutForm({
 
   const disabled = !payoutsEnabled || hasPending || balance < minPayout || !hasBank;
 
+  // Live breakdown: gross requested → minus fee → net to bank. Only shown
+  // once a positive number is entered. amtNum is NaN/0 until then.
+  const amtNum = Number(amount);
+  const fee    = Number(payoutFee) || 0;
+  const showBreakdown = Number.isFinite(amtNum) && amtNum > 0;
+  const net    = amtNum - fee;
+  // Mirror the server guard: you can't withdraw an amount at or below the fee.
+  const feeTooHigh = showBreakdown && amtNum <= fee;
+
   async function submit(e) {
     e.preventDefault();
+    if (feeTooHigh) { setError(t('pof.feeErr', { fee: fmtKd(fee) })); return; }
     setError(''); setLoading(true);
     try {
       const res = await fetch('/api/creator/payout', {
@@ -87,11 +98,30 @@ export default function PayoutForm({
                onChange={(e) => setAmount(e.target.value)} placeholder={`${minPayout}.000`} disabled={disabled} />
       </div>
 
+      {/* Fee breakdown — gross requested, fee deducted, net to bank. */}
+      {fee > 0 && showBreakdown && (
+        <div className="bg-black/5 border-2 border-qahwa-black/20 rounded-xl p-3 text-sm space-y-1.5">
+          <div className="flex items-center justify-between">
+            <span className="text-black/60">{t('pof.amountRequested')}</span>
+            <span className="font-num font-bold" dir="ltr">{fmtKd(amtNum)} KD</span>
+          </div>
+          <div className="flex items-center justify-between text-qahwa-red">
+            <span>{t('pof.feeLabel')}</span>
+            <span className="font-num font-bold" dir="ltr">-{fmtKd(fee)} KD</span>
+          </div>
+          <div className="flex items-center justify-between border-t-2 border-qahwa-black/15 pt-1.5">
+            <span className="font-bold text-black/80">{t('pof.youReceive')}</span>
+            <span className="font-num font-bold text-base" dir="ltr">{fmtKd(Math.max(0, net))} KD</span>
+          </div>
+        </div>
+      )}
+
       {payoutsEnabled && !hasPending && balance < minPayout &&
         <p className="q-error">{t('pof.minErr', { min: minPayout })}</p>}
+      {feeTooHigh && <p className="q-error">{t('pof.feeErr', { fee: fmtKd(fee) })}</p>}
       {error && <p className="q-error">{error}</p>}
 
-      <button className="q-btn-black w-full inline-flex items-center justify-center gap-2" disabled={disabled || loading}>
+      <button className="q-btn-black w-full inline-flex items-center justify-center gap-2" disabled={disabled || loading || feeTooHigh}>
         {loading && <Spinner size={16} color="#FAFAF7" />}
         {loading ? t('common.processing') : t('pof.submit')}
       </button>

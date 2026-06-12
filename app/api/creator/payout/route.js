@@ -16,7 +16,7 @@ export async function POST(req) {
     admin.from('creators')
       .select('balance_kd, bank_name, account_holder, iban_encrypted, full_name, handle, email')
       .eq('id', user.id).maybeSingle(),
-    admin.from('platform_settings').select('min_payout_kd, payouts_enabled').eq('id', 1).maybeSingle(),
+    admin.from('platform_settings').select('min_payout_kd, payout_fee_kd, payouts_enabled').eq('id', 1).maybeSingle(),
   ]);
 
   if (!settings?.payouts_enabled) {
@@ -31,9 +31,14 @@ export async function POST(req) {
   const amt = Number(amount);
   const minPayout = Number(settings?.min_payout_kd ?? 5);
   const balance   = Number(creator?.balance_kd ?? 0);
+  // Snapshot the current payout fee — stored on the row so reporting stays
+  // accurate even if the admin changes the setting later.
+  const fee       = Number(settings?.payout_fee_kd ?? 0);
 
   if (!(amt > 0))      return Response.json({ error: 'مبلغ غير صحيح' }, { status: 400 });
   if (amt < minPayout) return Response.json({ error: `الحد الأدنى للسحب ${minPayout} د.ك` }, { status: 400 });
+  // Can't withdraw an amount at or below the fee — net would be zero/negative.
+  if (amt <= fee)      return Response.json({ error: `المبلغ يجب أن يكون أكبر من رسوم السحب (${fee.toFixed(3)} د.ك)` }, { status: 400 });
   if (amt > balance)   return Response.json({ error: 'المبلغ أكبر من رصيدك' }, { status: 400 });
 
   // Block a second pending request (race-safe via partial unique index).
@@ -55,6 +60,7 @@ export async function POST(req) {
   const { error } = await admin.from('payouts').insert({
     creator_id: user.id,
     amount_kd: Number(amt.toFixed(3)),
+    fee_kd: Number(fee.toFixed(3)),
     bank_name: creator.bank_name || null,
     account_holder: creator.account_holder,
     iban: ibanPlain,

@@ -53,8 +53,22 @@ export default function AdminPayoutRow({ payout: p }) {
 
       <div className="flex items-center gap-3 shrink-0">
         <div className="text-start">
-          <div className="font-num text-xl font-bold">{fmtKd(p.amount_kd)} <span className="text-sm">KD</span></div>
-          <div className="text-[10px] text-white/35">{t('admin.po.netNote')}</div>
+          {Number(p.fee_kd) > 0 ? (
+            <>
+              <div className="font-num text-xl font-bold">
+                {fmtKd(Number(p.amount_kd) - Number(p.fee_kd))} <span className="text-sm">KD</span>
+              </div>
+              <div className="text-[10px] text-white/45 font-num">
+                {t('admin.po.gross')} {fmtKd(p.amount_kd)} · {t('admin.po.fee')} -{fmtKd(p.fee_kd)} · {t('admin.po.net')} {fmtKd(Number(p.amount_kd) - Number(p.fee_kd))}
+              </div>
+              <div className="text-[10px] text-white/35">{t('admin.po.payNetNote')}</div>
+            </>
+          ) : (
+            <>
+              <div className="font-num text-xl font-bold">{fmtKd(p.amount_kd)} <span className="text-sm">KD</span></div>
+              <div className="text-[10px] text-white/35">{t('admin.po.netNote')}</div>
+            </>
+          )}
           <div className={`text-xs font-bold ${cls}`}>{t(`admin.po.status.${status}`)}</div>
         </div>
 

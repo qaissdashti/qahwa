@@ -19,7 +19,7 @@ function maskIban(iban) {
 }
 
 export default function PayoutsPageClient({
-  balance, minPayout, payoutsEnabled, hasPending,
+  balance, minPayout, payoutFee, payoutsEnabled, hasPending,
   hasBank, bankName, accountHolder, ibanMasked, payouts,
 }) {
   const { t, lang } = useLang();
@@ -35,7 +35,7 @@ export default function PayoutsPageClient({
         </div>
 
         <PayoutForm
-          balance={balance} minPayout={minPayout}
+          balance={balance} minPayout={minPayout} payoutFee={payoutFee}
           payoutsEnabled={payoutsEnabled} hasPending={hasPending}
           hasBank={hasBank} bankName={bankName}
           accountHolder={accountHolder} ibanMasked={ibanMasked}
@@ -43,7 +43,7 @@ export default function PayoutsPageClient({
       </div>
 
       <p className="text-sm text-white/55 font-medium bg-qahwa-purple/15 border border-qahwa-purple/40 rounded-xl px-4 py-3">
-        {t('po.netNote')}
+        {t('po.netNote', { fee: fmtKd(payoutFee) })}
       </p>
 
       <section className="dash-surface rounded-2xl border border-white/10 p-5">
@@ -60,6 +60,12 @@ export default function PayoutsPageClient({
                   <li key={p.id || i} className="py-3 flex items-center justify-between gap-3">
                     <div className="min-w-0">
                       <div className="font-num font-bold">{fmtKd(p.amount_kd)} KD</div>
+                      {Number(p.fee_kd) > 0 && (
+                        <div className="text-[10px] text-white/40 font-num">
+                          {t('po.netReceived')}: {fmtKd(Number(p.amount_kd) - Number(p.fee_kd))} KD
+                          <span className="text-white/25"> · {t('po.col.fee')} {fmtKd(p.fee_kd)}</span>
+                        </div>
+                      )}
                       <div className="text-xs text-white/40 truncate">
                         {p.bank_name || (p.method === 'knet_send' ? t('po.method.knet') : t('po.method.bank'))}
                         {p.iban && <span className="font-num"> · {maskIban(p.iban)}</span>}
@@ -81,11 +87,13 @@ export default function PayoutsPageClient({
 
             {/* Desktop: table */}
             <div className="hidden md:block overflow-x-auto -mx-1">
-              <table className="w-full text-sm min-w-[640px]">
+              <table className="w-full text-sm min-w-[760px]">
                 <thead className="text-white/40">
                   <tr className="border-b border-white/10">
                     <th className="font-bold px-3 py-2.5 text-start">{t('po.col.date')}</th>
                     <th className="font-bold px-3 py-2.5 text-end">{t('po.col.amount')}</th>
+                    <th className="font-bold px-3 py-2.5 text-end">{t('po.col.fee')}</th>
+                    <th className="font-bold px-3 py-2.5 text-end">{t('po.col.net')}</th>
                     <th className="font-bold px-3 py-2.5 text-start">{t('po.col.bank')}</th>
                     <th className="font-bold px-3 py-2.5 text-start">{t('po.col.iban')}</th>
                     <th className="font-bold px-3 py-2.5 text-start">{t('po.col.status')}</th>
@@ -99,6 +107,8 @@ export default function PayoutsPageClient({
                       <tr key={p.id || i} className="border-b border-white/5 hover:bg-white/5">
                         <td className="px-3 py-2.5 font-num text-white/60 whitespace-nowrap">{new Date(p.created_at).toLocaleDateString(dateLoc)}</td>
                         <td className="px-3 py-2.5 font-num text-end font-bold whitespace-nowrap">{fmtKd(p.amount_kd)} <span className="text-xs text-white/40">KD</span></td>
+                        <td className="px-3 py-2.5 font-num text-end text-white/50 whitespace-nowrap">{Number(p.fee_kd) > 0 ? `-${fmtKd(p.fee_kd)}` : '—'}</td>
+                        <td className="px-3 py-2.5 font-num text-end text-qahwa-accent font-bold whitespace-nowrap">{fmtKd(Number(p.amount_kd) - Number(p.fee_kd || 0))}</td>
                         <td className="px-3 py-2.5 text-white/70">{p.bank_name || (p.method === 'knet_send' ? t('po.method.knet') : t('po.method.bank'))}</td>
                         <td className="px-3 py-2.5 font-num text-white/50 whitespace-nowrap">{maskIban(p.iban)}</td>
                         <td className={`px-3 py-2.5 font-bold ${cls}`}>{t(`po.status.${p.status}`)}</td>

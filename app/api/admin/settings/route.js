@@ -1,7 +1,7 @@
 import { getAdminUser } from '@/lib/admin';
 import { createAdminClient } from '@/lib/supabase';
 
-const NUMERIC = ['platform_fee_pct', 'min_payout_kd', 'max_coffee_price_kd', 'amazing_max_kd', 'amazing_min_kd'];
+const NUMERIC = ['platform_fee_pct', 'payout_fee_kd', 'min_payout_kd', 'max_coffee_price_kd', 'amazing_max_kd', 'amazing_min_kd'];
 const BOOL    = ['amazing_enabled_global', 'new_signups_enabled', 'manual_approval_required', 'payouts_enabled', 'maintenance_mode'];
 
 export async function POST(req) {
