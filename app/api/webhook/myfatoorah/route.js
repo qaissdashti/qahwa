@@ -70,9 +70,14 @@ export async function POST(req) {
     return new Response('OK', { status: 200 });
   }
 
-  // ── 4. MARK TIP AS PAID ──────────────────────────────────
-  // The trigger update_creator_balance() fires automatically on this update
-  const { error: updateError } = await supabase
+  // ── 4. MARK TIP AS PAID (ATOMIC) ─────────────────────────
+  // The trigger update_creator_balance() fires automatically on this update.
+  // The .neq('status','paid') makes the not-paid → paid transition atomic:
+  // only ONE caller (this webhook OR the payment callback) can win it. The
+  // winner gets the row back from .select(); the loser gets an empty array
+  // and skips the email — guaranteeing exactly one notification even if the
+  // webhook and callback race. (The status pre-check above is a fast path.)
+  const { data: claimed, error: updateError } = await supabase
     .from('tips')
     .update({
       status: 'paid',
@@ -80,11 +85,19 @@ export async function POST(req) {
       myfatoorah_payment_id: String(ReferenceId),
       payment_method: normaliseMethod(PaymentMethod),
     })
-    .eq('id', tip.id);
+    .eq('id', tip.id)
+    .neq('status', 'paid')
+    .select('id');
 
   if (updateError) {
     console.error('[webhook] Failed to update tip:', updateError);
     return new Response('DB Error', { status: 500 });
+  }
+
+  // Lost the race — another path already marked it paid + emailed.
+  if (!claimed || claimed.length === 0) {
+    console.log('[webhook] tip already paid — skipping email (another path won)', { tipId: tip.id });
+    return new Response('OK', { status: 200 });
   }
 
   // ── 5. EMAIL THE CREATOR ABOUT THE NEW TIP ───────────────
@@ -93,6 +106,10 @@ export async function POST(req) {
   // failure never fails the webhook (payment is already confirmed).
   try {
     const creator = tip.creators || {};
+    console.log('[webhook] tip marked paid — sending new-tip email', {
+      tipId: tip.id,
+      creatorEmail: creator.email || '(none)',
+    });
     await notifyCreatorNewTip({
       creatorEmail:  creator.email,
       fullName:      creator.full_name,

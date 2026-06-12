@@ -47,25 +47,29 @@ export async function GET(req) {
     if (!tip) redirect('/error?reason=tip_not_found');
 
     // Webhook may have already marked it paid — that is fine.
-    // If not (webhook delayed or, in sandbox, never fires), mark it now
-    // AND send the creator's tip notification email. Gating both on the
-    // not-yet-paid status keeps it idempotent: if the webhook already
-    // ran, it already marked paid + emailed, so we skip here and never
-    // double-send.
-    if (tip.status !== 'paid') {
-      await supabase
-        .from('tips')
-        .update({
-          status:    'paid',
-          paid_at:   new Date().toISOString(),
-          myfatoorah_payment_id: paymentId,
-        })
-        .eq('id', tip.id);
+    // Mark-paid atomically: the .neq('status','paid') means only ONE
+    // caller (this callback OR the webhook) can win the transition from
+    // not-paid → paid. .select() returns the affected row only to the
+    // winner; the loser gets an empty array. We send the notification
+    // email only when we won, guaranteeing exactly one email even if the
+    // webhook and this callback race. (The pre-check above is just a fast
+    // path / sandbox case where the webhook never fires.)
+    const { data: claimed } = await supabase
+      .from('tips')
+      .update({
+        status:    'paid',
+        paid_at:   new Date().toISOString(),
+        myfatoorah_payment_id: paymentId,
+      })
+      .eq('id', tip.id)
+      .neq('status', 'paid')
+      .select('id');
 
-      // Tip notification email (replaces the old WhatsApp notify). The
-      // helper swallows its own errors, but we still guard so a notify
-      // failure can never block the supporter's redirect. Awaited so it
-      // completes before redirect() ends the serverless invocation.
+    if (claimed && claimed.length > 0) {
+      // We won the race — send the creator's tip notification email.
+      // The helper swallows its own errors, but we still guard so a
+      // notify failure can never block the supporter's redirect. Awaited
+      // so it completes before redirect() ends the serverless invocation.
       try {
         const creator = tip.creators || {};
         console.log('[callback] tip marked paid — sending new-tip email', {
@@ -88,6 +92,8 @@ export async function GET(req) {
       } catch (notifyError) {
         console.error('[callback] new-tip email failed:', notifyError);
       }
+    } else {
+      console.log('[callback] tip already paid — skipping email (another path won)', { tipId: tip.id });
     }
 
     // Redirect supporter to thank-you screen
