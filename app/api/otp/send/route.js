@@ -1,5 +1,5 @@
 import { createAdminClient, createServerSupabaseClient } from '@/lib/supabase';
-import { sendOTP } from '@/lib/whatsapp';
+import { sendWhatsAppOTP } from '@/lib/twilio';
 import crypto from 'crypto';
 
 const E164 = /^\+?[1-9]\d{6,14}$/;
@@ -69,7 +69,7 @@ export async function POST(req) {
   }
 
   try {
-    await sendOTP({ phone: cleanPhone, code, creatorId: user.id });
+    await sendWhatsAppOTP({ phone: cleanPhone, code });
   } catch (err) {
     console.error('[otp/send] WhatsApp send failed:', err);
     return Response.json({ error: 'تعذّر إرسال الرمز عبر واتساب' }, { status: 502 });

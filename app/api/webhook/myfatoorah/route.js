@@ -1,12 +1,12 @@
 // ============================================================
 // FILE: /app/api/webhook/myfatoorah/route.js  (Next.js App Router)
 // PURPOSE: Receive MyFatoorah payment confirmation webhook,
-//          mark tip as paid, fire WhatsApp notification to creator
+//          mark tip as paid, email the creator about the new tip
 // ============================================================
 
 import { createClient } from '@supabase/supabase-js';
 import crypto from 'crypto';
-import { sendCreatorNotification } from '@/lib/whatsapp';
+import { notifyCreatorNewTip } from '@/lib/adminNotify';
 
 // Use service role key — bypasses RLS, only safe on server
 const supabase = createClient(
@@ -52,7 +52,7 @@ export async function POST(req) {
     .select(`
       *,
       creators (
-        id, full_name, handle, whatsapp_number,
+        id, full_name, handle, email, whatsapp_number,
         phone, thankyou_template, balance_kd
       )
     `)
@@ -87,11 +87,20 @@ export async function POST(req) {
     return new Response('DB Error', { status: 500 });
   }
 
-  // ── 5. FIRE WHATSAPP NOTIFICATION TO CREATOR ─────────────
+  // ── 5. EMAIL THE CREATOR ABOUT THE NEW TIP ───────────────
+  // Replaces the old WhatsApp notification. notifyCreatorNewTip
+  // swallows its own errors, but we still guard here so a notify
+  // failure never fails the webhook (payment is already confirmed).
   try {
-    await sendCreatorNotification({
-      tip,
-      creator: tip.creators,
+    const creator = tip.creators || {};
+    await notifyCreatorNewTip({
+      creatorEmail:  creator.email,
+      fullName:      creator.full_name,
+      supporterName: tip.supporter_name,
+      cups:          tip.cups,
+      amount:        tip.gross_amount_kd,
+      message:       tip.message,
+      handle:        creator.handle,
     });
 
     await supabase
@@ -99,10 +108,10 @@ export async function POST(req) {
       .update({ whatsapp_notified_at: new Date().toISOString() })
       .eq('id', tip.id);
 
-  } catch (waError) {
-    // Don't fail the webhook — payment already confirmed
-    // WA notification failure is non-critical and can be retried
-    console.error('[webhook] WhatsApp notification failed:', waError);
+  } catch (notifyError) {
+    // Don't fail the webhook — payment already confirmed.
+    // Notification failure is non-critical and can be retried.
+    console.error('[webhook] Creator tip email failed:', notifyError);
   }
 
   return new Response('OK', { status: 200 });
