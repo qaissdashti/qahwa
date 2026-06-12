@@ -84,6 +84,7 @@ export async function POST(req) {
     fullName:     creator.full_name,
     handle:       creator.handle,
     amount:       amt,
+    fee,
     bankName:     creator.bank_name,
   }).catch((err) => console.error('[creator/payout] notify', err));
 
