@@ -6,7 +6,7 @@
 //   2. Hero (headline + sub + CTAs + iPhone notification mockup
 //      + floating brand badges on desktop)
 //   3. "How it works" — 3 numbered steps
-//   4. Feature strip (KNET / WhatsApp / no-account-for-supporter)
+//   4. Feature strip (KNET / email notifications / no-account-for-supporter)
 //   5. "Trusted by Kuwait creators" — handle pill row
 //   6. Footer
 // ============================================================
@@ -30,7 +30,7 @@ const STR = {
     hero: {
       title1: 'خلّي متابعينك',
       title2: 'يشترونلك قهوة ☕',
-      sub: 'منصّة كويتية لدعم المبدعين. متابعينك يدفعون بالدينار عبر كي نت — بدون حساب، بضغطة وحدة. ويوصلك إشعار واتساب لحظة وصول كل قهوة.',
+      sub: 'منصّة كويتية لدعم المبدعين. متابعينك يدفعون بالدينار عبر كي نت — بدون حساب، بضغطة وحدة. ويوصلك إشعار بالبريد لحظة وصول كل قهوة.',
       ctaPrimary: '↗ أنشئ صفحتك',
       ctaSecondary: 'عندي حساب',
       microcopy: 'مجاناً · ٤ دقائق · بدون بطاقة',
@@ -38,10 +38,10 @@ const STR = {
     phone: {
       time: '9:41',
       app: 'قهوة',
-      notif1Title: 'قهوة جديدة! ☕',
-      notif1Body: 'أحمد اشترى لك قهوة · 2.0 KD',
-      notif2Title: 'رسالة جديدة 💬',
-      notif2Body: 'شكراً على المحتوى الرائع!',
+      notif1Title: 'وصلك فنجان قهوة! ☕',
+      notif1Body: 'أحمد أرسل لك قهوة · 2.0 KD',
+      notif2Title: 'وصلك فنجان قهوة! ☕',
+      notif2Body: 'نورة أرسلت لك ٣ قهوات · 6.0 KD',
       now: 'الآن',
     },
     how: {
@@ -50,12 +50,12 @@ const STR = {
       steps: [
         { n: '١', t: 'شارك رابطك', d: 'حط qahwa.kw/handle في الباي‌و أو الستوري.' },
         { n: '٢', t: 'متابعك يدفع', d: 'يفتح الرابط، يختار عدد القهوات، ويدفع كي نت في ثواني.' },
-        { n: '٣', t: 'يوصلك إشعار', d: 'إشعار واتساب لحظة الدفع — ترد على داعمك مباشرة.' },
+        { n: '٣', t: 'يوصلك إشعار', d: 'يوصلك إيميل في صندوق بريدك لحظة وصول القهوة.' },
       ],
     },
     features: [
       ['💳', 'كي نت بالدينار', 'دفع محلي عبر MyFatoorah — كي نت، Apple Pay، فيزا.'],
-      ['💬', 'إشعار واتساب', 'يوصلك إشعار بكل قهوة، وترد على داعمك مباشرة.'],
+      ['📧', 'إشعارات فورية', 'يوصلك إيميل بكل قهوة تستلمها.'],
       ['🔒', 'بدون حساب للداعم', 'متابعك يدفع بضغطة وحدة، ما يحتاج تسجيل.'],
     ],
     proof: {
@@ -70,7 +70,7 @@ const STR = {
     hero: {
       title1: 'Let your followers',
       title2: 'buy you a coffee ☕',
-      sub: 'A Kuwaiti platform for supporting creators. Your fans pay in KD via KNET — no account needed, one tap. You get a WhatsApp notification the moment a coffee lands.',
+      sub: 'A Kuwaiti platform for supporting creators. Your fans pay in KD via KNET — no account needed, one tap. You get notified by email the moment a coffee lands.',
       ctaPrimary: '↗ Create your page',
       ctaSecondary: 'I have an account',
       microcopy: 'Free · 4 minutes · no card needed',
@@ -78,10 +78,10 @@ const STR = {
     phone: {
       time: '9:41',
       app: 'Qahwa',
-      notif1Title: 'New coffee! ☕',
-      notif1Body: 'Ahmed bought you a coffee · 2.0 KD',
-      notif2Title: 'New message 💬',
-      notif2Body: 'Thanks for the great content!',
+      notif1Title: 'You just received a coffee! ☕',
+      notif1Body: 'Ahmed sent you a coffee · 2.0 KD',
+      notif2Title: 'You just received a coffee! ☕',
+      notif2Body: 'Noura sent you 3 coffees · 6.0 KD',
       now: 'now',
     },
     how: {
@@ -90,12 +90,12 @@ const STR = {
       steps: [
         { n: '1', t: 'Share your link', d: 'Put qahwa.kw/handle in your bio or story.' },
         { n: '2', t: 'They pay', d: 'A tap opens your page, they pick coffees, pay KNET in seconds.' },
-        { n: '3', t: 'You’re notified', d: 'WhatsApp pings you instantly — reply to your supporter from your phone.' },
+        { n: '3', t: 'You’re notified', d: 'An email lands in your inbox the moment a coffee arrives.' },
       ],
     },
     features: [
       ['💳', 'KNET in KD', 'Local payments via MyFatoorah — KNET, Apple Pay, Visa.'],
-      ['💬', 'WhatsApp ping', 'Get notified for every coffee and reply directly.'],
+      ['📧', 'Instant notifications', 'Get an email for every coffee you receive.'],
       ['🔒', 'No supporter account', 'One tap to pay — no signup needed.'],
     ],
     proof: {
@@ -325,11 +325,11 @@ function Notif({ strings, dir, title, body, cls }) {
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
         <span style={{
           width: 22, height: 22, borderRadius: 6,
-          background: '#25D366', color: '#fff',
+          background: F.purple, color: '#fff',
           display: 'grid', placeItems: 'center',
           fontSize: 12, fontWeight: 900,
-        }}>W</span>
-        <span style={{ fontSize: 11, fontWeight: 800 }}>WhatsApp · {strings.app}</span>
+        }}>✉</span>
+        <span style={{ fontSize: 11, fontWeight: 800 }}>{strings.app}</span>
         <span style={{ marginInlineStart: 'auto', fontSize: 10, opacity: 0.55 }}>{strings.now}</span>
       </div>
       <div style={{ fontSize: 12.5, fontWeight: 800, marginBottom: 2 }}>{title}</div>
