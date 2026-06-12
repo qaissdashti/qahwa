@@ -17,9 +17,20 @@ export async function POST(req) {
 
   // Grab handle + email + full_name up-front so we know which public
   // page to revalidate AND can fire the post-decision creator email
-  // without a second round-trip after the updates land.
+  // without a second round-trip after the updates land. terms_accepted_at
+  // is pulled for the approval safety-net check below.
   const { data: cInfo } = await admin.from('creators')
-    .select('handle, full_name, email').eq('id', creatorId).maybeSingle();
+    .select('handle, full_name, email, terms_accepted_at').eq('id', creatorId).maybeSingle();
+
+  // Safety net: never approve a creator who hasn't accepted the Terms &
+  // Conditions, even if the admin UI filter is bypassed. (Rejection is
+  // always allowed — it doesn't activate the page.)
+  if (approved && !cInfo?.terms_accepted_at) {
+    return Response.json(
+      { error: 'Creator has not accepted Terms and Conditions' },
+      { status: 422 }
+    );
+  }
 
   // Update creators (is_verified + verification_status) AND the verifications
   // row together; surface an error if either fails so they can't drift.

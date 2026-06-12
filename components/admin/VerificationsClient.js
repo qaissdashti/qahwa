@@ -26,6 +26,7 @@ export default function VerificationsClient({ rows }) {
               phoneVerified={r.phone_verified}
               civilMasked={r.civil_id_masked}
               hasSelfie={!!r.selfie_url}
+              termsAccepted={!!r.creators?.terms_accepted_at}
             />
           ))}
         </div>
