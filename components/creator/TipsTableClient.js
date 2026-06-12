@@ -62,6 +62,7 @@ export default function TipsTableClient({ tips, creatorName, handle }) {
   const columns = useMemo(() => [
     { key: 'date', label: t('tips.col.date'), value: (r) => fmtDate(r.created_at), csv: (r) => dayKey(r) },
     { key: 'supporter', label: t('tips.col.supporter'), value: (r) => r.supporter_name || t('dash.supporterDefault') },
+    { key: 'phone', label: t('tips.col.phone'), value: (r) => r.supporter_phone || '—', csv: (r) => r.supporter_phone || '' },
     { key: 'cups', label: t('tips.col.cups'), value: (r) => (r.is_amazing ? t('dash.amazing') : String(r.cups ?? 0)) },
     { key: 'gross', label: t('tips.col.gross'), num: true, value: (r) => fmtKd(r.gross_amount_kd) },
     { key: 'fee', label: t('tips.col.fee'), num: true, value: (r) => fmtKd(r.platform_fee_kd) },

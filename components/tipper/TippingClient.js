@@ -32,6 +32,8 @@ const STR = {
     messagePlaceholder: (n) => `اترك رسالة لـ ${n}...`,
     namePlaceholder: 'اسمك (اختياري)',
     phonePlaceholder: '+965 XXXX XXXX (لتلقي الرد)',
+    phoneRequired: 'رقم الهاتف مطلوب لتلقي رد المبدع',
+    phoneInvalid: 'أدخل رقم كويتي صحيح (٨ أرقام)',
     payBtn: (amt) => `☕ أرسل القهوة · ${amt} KD`,
     processing: 'جاري المعالجة...',
     amazingDefault: 'أنت رائع! حدد مبلغًا بإرادتك',
@@ -68,6 +70,8 @@ const STR = {
     messagePlaceholder: (n) => `Leave a message for ${n}...`,
     namePlaceholder: 'Your name (optional)',
     phonePlaceholder: '+965 XXXX XXXX (to get a reply)',
+    phoneRequired: 'Phone number is required to get a reply',
+    phoneInvalid: 'Enter a valid Kuwait number (8 digits)',
     payBtn: (amt) => `☕ Send coffee · ${amt} KD`,
     processing: 'Processing...',
     amazingDefault: "You're amazing! Pick any amount",
@@ -139,6 +143,20 @@ function Confetti() {
 // (3-decimal) precision. Dashboard / admin / receipts still use the
 // canonical fmtKd from lib/i18n.js.
 const fmtKd1 = (v) => Number(v || 0).toFixed(1);
+
+// ── Kuwait phone helpers ────────────────────────────────────
+// Supporter phone is mandatory (creators reply to it). Kuwait mobile
+// numbers are 8 digits; we accept input with/without a +965 / 965
+// prefix and spaces. normalizeKwPhone strips everything down to the
+// 8 local digits; isValidKwPhone gates the pay button on exactly 8.
+function normalizeKwPhone(raw) {
+  let d = String(raw || '').replace(/\D/g, '');
+  if (d.startsWith('965') && d.length > 8) d = d.slice(3);
+  return d;
+}
+function isValidKwPhone(raw) {
+  return /^\d{8}$/.test(normalizeKwPhone(raw));
+}
 
 // Build an Instagram-Story-sized (1080×1920) share card as a PNG blob.
 // Lavender Flewd background, purple accent stripes, Plus Jakarta Sans
@@ -520,6 +538,7 @@ export default function TippingClient({ creator, settings, recentTips, todayCoun
   const [message, setMessage]           = useState('');
   const [supporterName, setSupporterName] = useState('');
   const [supporterPhone, setSupporterPhone] = useState('');
+  const [phoneTouched, setPhoneTouched] = useState(false);
   const [loading, setLoading]           = useState(false);
   const [success, setSuccess]           = useState(showSuccess);
   const [error, setError]               = useState('');
@@ -533,6 +552,17 @@ export default function TippingClient({ creator, settings, recentTips, todayCoun
     : Number((price * selectedCups).toFixed(3));
 
   const showAmazing = creator.amazing_enabled && settings?.amazing_enabled_global !== false;
+
+  // Supporter phone is mandatory. phoneError only shows once the field
+  // has been touched (blur or a pay attempt) so we don't yell on load.
+  const phoneValid = isValidKwPhone(supporterPhone);
+  const phoneError = phoneTouched && !phoneValid
+    ? (normalizeKwPhone(supporterPhone).length === 0 ? t.phoneRequired : t.phoneInvalid)
+    : '';
+
+  // Social-proof count: real number of today's paid tips, floored at 2
+  // so the popup always reads as warm (0/1 → 2, 4 → 4).
+  const displayCount = Math.max(2, todayCount);
 
   // Analytics — supporters stay anonymous (no identify on this page).
   useEffect(() => {
@@ -556,6 +586,12 @@ export default function TippingClient({ creator, settings, recentTips, todayCoun
 
   async function handlePay() {
     if (loading) return;
+    // Phone is mandatory — block + surface the inline error.
+    if (!phoneValid) {
+      setPhoneTouched(true);
+      setError('');
+      return;
+    }
     if (isAmazing && (!amazingAmt || grossAmount < (settings?.amazing_min_kd || 0.5))) {
       setError(t.minErr(fmtKd1(settings?.amazing_min_kd || 0.5)));
       return;
@@ -573,7 +609,7 @@ export default function TippingClient({ creator, settings, recentTips, todayCoun
           grossAmount,
           message:       message || undefined,
           supporterName: supporterName || undefined,
-          supporterPhone: supporterPhone || undefined,
+          supporterPhone: `+965${normalizeKwPhone(supporterPhone)}`,
         }),
       });
       const data = await res.json();
@@ -641,17 +677,15 @@ export default function TippingClient({ creator, settings, recentTips, todayCoun
 
   return (
     <div style={s.page} dir={dir}>
-      {/* Daily social-proof toast — only shown when today's tip count
-          is 2+ (i.e. the 3rd+ visitor sees the warmth). Auto-dismisses
-          after 4s; key={todayCount} resets state on prop change. */}
-      {todayCount >= 2 && (
-        <SocialProofToast
-          key={`proof-${todayCount}-${lang}`}
-          message={t.todayProof(todayCount, creator.full_name)}
-          closeAria={t.closeAria}
-          dir={dir}
-        />
-      )}
+      {/* Daily social-proof toast — shows the real count of today's paid
+          tips, floored at 2 so it always reads warm (displayCount).
+          Auto-dismisses after 4s; key resets state on prop/lang change. */}
+      <SocialProofToast
+        key={`proof-${displayCount}-${lang}`}
+        message={t.todayProof(displayCount, creator.full_name)}
+        closeAria={t.closeAria}
+        dir={dir}
+      />
       <div style={s.card}>
         <button style={s.langBtn} onClick={toggleLang} aria-label={t.otherName}>{t.other}</button>
 
@@ -758,11 +792,31 @@ export default function TippingClient({ creator, settings, recentTips, todayCoun
           style={{ ...s.input, minHeight: 64, resize: 'none', lineHeight: 1.55 }} />
 
         <input value={supporterName} onChange={e => setSupporterName(e.target.value)} placeholder={t.namePlaceholder} style={s.input} />
-        <input value={supporterPhone} onChange={e => setSupporterPhone(e.target.value)} placeholder={t.phonePlaceholder} style={{ ...s.input, direction: 'ltr' }} />
+        <input
+          value={supporterPhone}
+          onChange={e => setSupporterPhone(e.target.value)}
+          onBlur={() => setPhoneTouched(true)}
+          placeholder={t.phonePlaceholder}
+          inputMode="tel"
+          aria-invalid={!!phoneError}
+          aria-required="true"
+          style={{
+            ...s.input,
+            direction: 'ltr',
+            marginBottom: phoneError ? 4 : s.input.marginBottom,
+            borderColor: phoneError ? '#FF5A5A' : C.ink,
+          }}
+        />
+        {phoneError && (
+          <div style={{ fontSize: 12, color: '#C00', fontWeight: 700, direction: dir, marginBottom: 10 }}>
+            {phoneError}
+          </div>
+        )}
 
         {error && <div style={s.errorBox}>{error}</div>}
 
-        <button style={s.payBtn} onClick={handlePay} disabled={loading}
+        <button style={{ ...s.payBtn, cursor: (loading || !phoneValid) ? 'not-allowed' : 'pointer', opacity: (loading || !phoneValid) ? 0.6 : 1 }}
+                onClick={handlePay} disabled={loading || !phoneValid}
                 className={loading ? 'qahwa-pulse' : ''}
                 aria-busy={loading}>
           {loading ? (

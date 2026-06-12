@@ -45,6 +45,16 @@ export async function POST(req) {
     return Response.json({ error: 'Missing required fields' }, { status: 400 });
   }
 
+  // Supporter phone is mandatory (creators reply to it). Normalise to the
+  // 8 local Kuwait digits — accept input with/without a +965 / 965 prefix
+  // and spaces — and reject anything that isn't exactly 8 digits.
+  let phoneDigits = String(supporterPhone || '').replace(/\D/g, '');
+  if (phoneDigits.startsWith('965') && phoneDigits.length > 8) phoneDigits = phoneDigits.slice(3);
+  if (!/^\d{8}$/.test(phoneDigits)) {
+    return Response.json({ error: 'A valid Kuwait phone number is required' }, { status: 400 });
+  }
+  const normalizedPhone = `+965${phoneDigits}`;
+
   // ── 2. FETCH CREATOR + PLATFORM SETTINGS ─────────────────
   const [{ data: creator }, { data: settings }] = await Promise.all([
     supabase
@@ -107,7 +117,7 @@ export async function POST(req) {
       fee_pct:          feePct,
       message:          message || null,
       supporter_name:   supporterName || null,
-      supporter_phone:  supporterPhone || null,
+      supporter_phone:  normalizedPhone,
       status:           'pending',
     })
     .select()

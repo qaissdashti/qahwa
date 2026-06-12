@@ -79,6 +79,7 @@ export default function AdminReportClient({ rows, variant = 'fees', metric = 'fe
   const columns = useMemo(() => {
     const colDate = { key: 'date', label: t('admin.rep.col.date'), value: (r) => fmtDate(rowDate(r)), csv: (r) => dayKey(r) };
     const colSupporter = { key: 'supporter', label: t('admin.rep.col.supporter'), value: (r) => r.supporter_name || t('admin.rep.anonymous') };
+    const colPhone = { key: 'phone', label: t('admin.rep.col.phone'), value: (r) => r.supporter_phone || '—', csv: (r) => r.supporter_phone || '' };
     const colCreator = { key: 'creator', label: t('admin.rep.col.creator'), value: (r) => r.creators?.full_name || '—' };
     const colHandle = { key: 'handle', label: t('admin.rep.col.handle'), value: (r) => `@${r.creators?.handle || '—'}` };
     const colType = { key: 'type', label: t('admin.rep.col.type'), value: (r) => (r.is_amazing ? t('admin.rep.amazing') : t('admin.rep.cupsN', { n: r.cups })) };
@@ -91,6 +92,7 @@ export default function AdminReportClient({ rows, variant = 'fees', metric = 'fe
     return [
       colDate,
       colSupporter,
+      ...(variant === 'tips' ? [colPhone] : []),
       colCreator,
       colHandle,
       ...(variant === 'tips' ? [colType] : []),

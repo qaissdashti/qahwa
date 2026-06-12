@@ -11,7 +11,7 @@ export default async function AdminTipsPage() {
   const { data: rows } = await admin
     .from('tips')
     .select(
-      'id, created_at, paid_at, supporter_name, gross_amount_kd, platform_fee_kd, net_amount_kd, fee_pct, payment_method, cups, is_amazing, message, creators(full_name, handle)',
+      'id, created_at, paid_at, supporter_name, supporter_phone, gross_amount_kd, platform_fee_kd, net_amount_kd, fee_pct, payment_method, cups, is_amazing, message, creators(full_name, handle)',
     )
     .eq('status', 'paid')
     .order('paid_at', { ascending: false, nullsFirst: false })

@@ -14,7 +14,7 @@ export default async function TipsPage() {
     auth.from('creators').select('full_name, handle').eq('id', user.id).maybeSingle(),
     auth
       .from('tips')
-      .select('id, created_at, paid_at, supporter_name, cups, is_amazing, gross_amount_kd, platform_fee_kd, net_amount_kd, message, payment_method, status')
+      .select('id, created_at, paid_at, supporter_name, supporter_phone, cups, is_amazing, gross_amount_kd, platform_fee_kd, net_amount_kd, message, payment_method, status')
       .eq('creator_id', user.id)
       .order('created_at', { ascending: false })
       .limit(2000),
