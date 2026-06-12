@@ -1,23 +1,35 @@
 // ============================================================
-// LANDING PAGE — Flewd palette, AR/EN, neo-brutalist.
+// LANDING PAGE — Flewd palette, AR/EN, neo-brutalist + GSAP.
+//
+// Motion lives in:
+//   • useLandingGsap.js   — page-level timeline + ScrollTriggers
+//   • MagneticButton.js   — magnetic CTAs
+//   • Marquee.js          — infinite brand strip
+// All of it respects prefers-reduced-motion and RTL, and is cleaned up
+// on unmount via a single gsap.context().revert().
 //
 // Sections (top → bottom):
-//   1. Top nav (logo + lang toggle + login + signup CTA)
-//   2. Hero (headline + sub + CTAs + iPhone notification mockup
-//      + floating brand badges on desktop)
-//   3. "How it works" — 3 numbered steps
-//   4. Feature strip (KNET / WhatsApp / no-account-for-supporter)
-//   5. "Trusted by Kuwait creators" — handle pill row
-//   6. Footer
+//   1. Sticky nav (logo + lang toggle + login + signup CTA)
+//   2. Hero (word-reveal headline + floating pixel logo w/ steam +
+//      parallax brand badges + cursor-tilt phone with an EMAIL notif)
+//   3. Marquee strip
+//   4. "How it works" — 3 numbered steps (pinned scrub on desktop)
+//   5. Feature strip (KNET / instant email notifications / no account)
+//   6. Marquee strip
+//   7. "Trusted by Kuwait creators" — handle pill row
+//   8. Footer
 // ============================================================
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { useLang } from '@/components/LangProvider';
 import LangToggle from '@/components/LangToggle';
 import Logo from '@/components/Logo';
 import { trackEvent } from '@/lib/mixpanel';
+import MagneticButton from '@/components/landing/MagneticButton';
+import Marquee from '@/components/landing/Marquee';
+import useLandingGsap from '@/components/landing/useLandingGsap';
 
 const F = { bg: '#F5F0FF', card: '#FFFFFF', ink: '#0D0D0D', accent: '#C8F55A', purple: '#7B2FBE', violet: '#9B4DCA', soft: '#EDE4FB' };
 
@@ -30,18 +42,18 @@ const STR = {
     hero: {
       title1: 'خلّي متابعينك',
       title2: 'يشترونلك قهوة ☕',
-      sub: 'منصّة كويتية لدعم المبدعين. متابعينك يدفعون بالدينار عبر كي نت — بدون حساب، بضغطة وحدة. ويوصلك إشعار واتساب لحظة وصول كل قهوة.',
+      sub: 'منصّة كويتية لدعم المبدعين. متابعينك يدفعون بالدينار عبر كي نت — بدون حساب، بضغطة وحدة. ويوصلك إشعار بالبريد لحظة وصول كل قهوة.',
       ctaPrimary: '↗ أنشئ صفحتك',
       ctaSecondary: 'عندي حساب',
       microcopy: 'مجاناً · ٤ دقائق · بدون بطاقة',
     },
     phone: {
       time: '9:41',
-      app: 'قهوة',
-      notif1Title: 'قهوة جديدة! ☕',
-      notif1Body: 'أحمد اشترى لك قهوة · 2.0 KD',
-      notif2Title: 'رسالة جديدة 💬',
-      notif2Body: 'شكراً على المحتوى الرائع!',
+      mail: 'قهوة · البريد',
+      notif1Title: 'وصلك فنجان قهوة! ☕',
+      notif1Body: 'أحمد أرسل لك قهوة · 2.0 KD',
+      notif2Title: 'وصلك فنجان قهوة! ☕',
+      notif2Body: 'نورة أرسلت لك ٣ قهوات · 6.0 KD',
       now: 'الآن',
     },
     how: {
@@ -50,12 +62,12 @@ const STR = {
       steps: [
         { n: '١', t: 'شارك رابطك', d: 'حط qahwa.kw/handle في الباي‌و أو الستوري.' },
         { n: '٢', t: 'متابعك يدفع', d: 'يفتح الرابط، يختار عدد القهوات، ويدفع كي نت في ثواني.' },
-        { n: '٣', t: 'يوصلك إشعار', d: 'إشعار واتساب لحظة الدفع — ترد على داعمك مباشرة.' },
+        { n: '٣', t: 'يوصلك إشعار', d: 'يوصلك إشعار بالبريد لحظة وصول القهوة.' },
       ],
     },
     features: [
       ['💳', 'كي نت بالدينار', 'دفع محلي عبر MyFatoorah — كي نت، Apple Pay، فيزا.'],
-      ['💬', 'إشعار واتساب', 'يوصلك إشعار بكل قهوة، وترد على داعمك مباشرة.'],
+      ['📧', 'إشعارات فورية', 'يوصلك إشعار بالبريد لحظة وصول كل قهوة.'],
       ['🔒', 'بدون حساب للداعم', 'متابعك يدفع بضغطة وحدة، ما يحتاج تسجيل.'],
     ],
     proof: {
@@ -70,18 +82,18 @@ const STR = {
     hero: {
       title1: 'Let your followers',
       title2: 'buy you a coffee ☕',
-      sub: 'A Kuwaiti platform for supporting creators. Your fans pay in KD via KNET — no account needed, one tap. You get a WhatsApp notification the moment a coffee lands.',
+      sub: 'A Kuwaiti platform for supporting creators. Your fans pay in KD via KNET — no account needed, one tap. You get notified by email the moment a coffee lands.',
       ctaPrimary: '↗ Create your page',
       ctaSecondary: 'I have an account',
       microcopy: 'Free · 4 minutes · no card needed',
     },
     phone: {
       time: '9:41',
-      app: 'Qahwa',
-      notif1Title: 'New coffee! ☕',
-      notif1Body: 'Ahmed bought you a coffee · 2.0 KD',
-      notif2Title: 'New message 💬',
-      notif2Body: 'Thanks for the great content!',
+      mail: 'Qahwa · Mail',
+      notif1Title: 'You just received a coffee! ☕',
+      notif1Body: 'Ahmed sent you a coffee · 2.0 KD',
+      notif2Title: 'You just received a coffee! ☕',
+      notif2Body: 'Noura sent you 3 coffees · 6.0 KD',
       now: 'now',
     },
     how: {
@@ -90,12 +102,12 @@ const STR = {
       steps: [
         { n: '1', t: 'Share your link', d: 'Put qahwa.kw/handle in your bio or story.' },
         { n: '2', t: 'They pay', d: 'A tap opens your page, they pick coffees, pay KNET in seconds.' },
-        { n: '3', t: 'You’re notified', d: 'WhatsApp pings you instantly — reply to your supporter from your phone.' },
+        { n: '3', t: 'You’re notified', d: 'An email lands the moment a coffee comes in.' },
       ],
     },
     features: [
       ['💳', 'KNET in KD', 'Local payments via MyFatoorah — KNET, Apple Pay, Visa.'],
-      ['💬', 'WhatsApp ping', 'Get notified for every coffee and reply directly.'],
+      ['📧', 'Instant notifications', 'Get an email the moment every coffee lands.'],
       ['🔒', 'No supporter account', 'One tap to pay — no signup needed.'],
     ],
     proof: {
@@ -107,85 +119,102 @@ const STR = {
 };
 
 // ── Brand badges floating around the hero. Real brand colors so they
-//    read at a glance without a logo file. Emoji glyphs for visual
-//    weight. Positioned absolutely on desktop, hidden on mobile to
-//    avoid crowding. Coordinates target the hero perimeter — never
-//    overlap the phone mockup that lives in the right grid cell. ──
+//    read at a glance. Each badge has an OUTER layer (cursor parallax,
+//    via GSAP quickTo) and an INNER layer (gentle drift loop) so the two
+//    transforms never fight. Desktop only. ──
 const BRANDS = [
-  // top-left corner, above headline
   { name: 'YouTube',   bg: '#FF0000', glyph: '▶',  pos: { top: 8,   left: 12 } },
-  // mid-left, alongside headline
   { name: 'Instagram', bg: 'linear-gradient(135deg,#F58529,#DD2A7B,#8134AF)', glyph: '📷', pos: { top: '46%', left: '-8px' } },
-  // bottom-left, under hero text
   { name: 'TikTok',    bg: '#0D0D0D', glyph: '🎵', pos: { bottom: 24, left: '32%' } },
-  // top-right corner — outside phone (phone starts at ~55% width)
   { name: 'X',         bg: '#0D0D0D', glyph: '𝕏',  pos: { top: 8,   right: 12 } },
-  // bottom-right corner — below the phone's bottom edge
   { name: 'Snapchat',  bg: '#FFFC00', glyph: '👻', pos: { bottom: 0, right: 16, color: '#0D0D0D' } },
 ];
+
+// Split a headline string into clip-wrapped words for the GSAP reveal.
+// Each word slides up out of its overflow-hidden wrapper. Spaces are kept
+// as real text nodes so wrapping + RTL flow stay native.
+function Words({ text }) {
+  const parts = text.split(' ');
+  return parts.map((w, i) => (
+    <span key={i}>
+      <span className="lc-word-wrap"><span className="lc-word">{w}</span></span>
+      {i < parts.length - 1 ? ' ' : ''}
+    </span>
+  ));
+}
 
 export default function LandingClient() {
   // Pull just the lang code — we use our own STR dict, not the global one.
   const { lang } = useLang();
   const t = STR[lang === 'en' ? 'en' : 'ar'];
 
+  const rootRef = useRef(null);
+
   useEffect(() => { trackEvent('Landing Page Viewed'); }, []);
 
+  // All page-level GSAP (hero timeline, ScrollTriggers, parallax, tilt).
+  // Re-runs on lang/dir change so RTL stays correct.
+  useLandingGsap(rootRef, { lang, dir: t.dir });
+
   return (
-    <main className="min-h-screen flex flex-col" dir={t.dir} style={{ background: F.bg, color: F.ink }}>
-      {/* ─── Top nav ─── */}
-      <header className="flex items-center justify-between px-5 sm:px-6 py-4 max-w-6xl mx-auto w-full">
-        <Link href="/" className="text-2xl font-extrabold inline-flex items-center gap-2" style={{ fontFamily: 'var(--font-sans)' }}>
-          <Logo size={32} />
-          <span>{lang === 'ar' ? 'قهوة' : 'Qahwa'}</span>
-        </Link>
-        <nav className="flex items-center gap-2.5 sm:gap-3">
-          <LangToggle />
-          <Link href="/login" onClick={() => trackEvent('Sign In Clicked')} className="font-bold text-sm hidden sm:inline">{t.nav.login}</Link>
-          <Link href="/onboard" onClick={() => trackEvent('Create Page Clicked')} className="q-btn-accent text-xs sm:text-sm py-2 px-3 sm:px-4">{t.nav.cta}</Link>
-        </nav>
+    <main ref={rootRef} className="min-h-screen flex flex-col" dir={t.dir} style={{ background: F.bg, color: F.ink }}>
+      {/* ─── Top nav (sticky; compacts + blurs after 100px) ─── */}
+      <header data-lc="nav" className="lc-nav">
+        <div className="flex items-center justify-between px-5 sm:px-6 py-4 max-w-6xl mx-auto w-full">
+          <Link href="/" className="text-2xl font-extrabold inline-flex items-center gap-2" style={{ fontFamily: 'var(--font-sans)' }}>
+            <Logo size={32} />
+            <span>{lang === 'ar' ? 'قهوة' : 'Qahwa'}</span>
+          </Link>
+          <nav className="flex items-center gap-2.5 sm:gap-3">
+            <LangToggle />
+            <Link href="/login" onClick={() => trackEvent('Sign In Clicked')} className="font-bold text-sm hidden sm:inline">{t.nav.login}</Link>
+            <MagneticButton href="/onboard" onClick={() => trackEvent('Create Page Clicked')} className="q-btn-accent text-xs sm:text-sm py-2 px-3 sm:px-4">{t.nav.cta}</MagneticButton>
+          </nav>
+        </div>
       </header>
 
       {/* ─── Hero ─── */}
       <section className="relative max-w-6xl mx-auto w-full px-5 sm:px-6 py-10 sm:py-16 grid lg:grid-cols-[1.1fr_1fr] gap-10 lg:gap-12 items-center">
-        {/* floating brand badges — desktop only, sit above the phone (z-30
-            > phone's z-10), positioned around the hero perimeter so they
-            never overlap the phone frame. */}
+        {/* floating brand badges — desktop only. Outer = parallax target,
+            inner = drift + visual. */}
         <div className="hidden lg:block absolute inset-0 pointer-events-none" style={{ zIndex: 30 }}>
-          {BRANDS.map((b, i) => (
-            <span key={b.name}
-              className="absolute qahwa-bob"
-              style={{
-                ...b.pos,
-                width: 56, height: 56, borderRadius: '50%',
-                background: b.bg, color: b.pos.color || '#fff',
-                display: 'grid', placeItems: 'center',
-                fontSize: 22, fontWeight: 800,
-                border: `2px solid ${F.ink}`, boxShadow: `4px 4px 0 ${F.ink}`,
-                animationDelay: `${i * 0.55}s`,
-              }}
-              aria-hidden>
-              <span>{b.glyph}</span>
+          {BRANDS.map((b) => (
+            <span key={b.name} className="lc-brand-outer absolute" style={{ ...b.pos }} aria-hidden>
+              <span
+                className="lc-brand-inner"
+                style={{
+                  width: 56, height: 56, borderRadius: '50%',
+                  background: b.bg, color: b.pos.color || '#fff',
+                  display: 'grid', placeItems: 'center',
+                  fontSize: 22, fontWeight: 800,
+                  border: `2px solid ${F.ink}`, boxShadow: `4px 4px 0 ${F.ink}`,
+                }}>
+                <span>{b.glyph}</span>
+              </span>
             </span>
           ))}
         </div>
 
         {/* hero text */}
         <div className="text-start relative z-10">
-          {/* Pixel-art brand mark above the headline — replaces the
-              previous emoji ☕ above the heading. Uses the detailed
-              "large" variant with قهوة Arabic text on the cup. */}
-          <div className="mb-5">
-            <Logo variant="large" size={140} alt="Qahwa logo" style={{ height: 140, width: 'auto' }} />
+          {/* Pixel-art brand mark — floats gently, with pixel steam rising.
+              data-lc lives on the wrapper span (Logo doesn't forward props);
+              steam particles are siblings so they stay put as the cup bobs. */}
+          <div className="mb-5 relative inline-block" style={{ width: 'fit-content' }}>
+            <span data-lc="logo" style={{ display: 'inline-block' }}>
+              <Logo variant="large" size={140} alt="Qahwa logo" style={{ height: 140, width: 'auto', display: 'block' }} />
+            </span>
+            {/* steam particles anchored over the cup */}
+            <i className="lc-steam" style={{ top: 6, left: '38%' }} />
+            <i className="lc-steam" style={{ top: 0, left: '50%' }} />
+            <i className="lc-steam" style={{ top: 8, left: '62%' }} />
           </div>
-          <div className="inline-block text-xs font-extrabold tracking-wider uppercase mb-4 px-3 py-1.5 rounded-full"
+
+          <div data-lc="hero-fade" className="inline-block text-xs font-extrabold tracking-wider uppercase mb-4 px-3 py-1.5 rounded-full"
                style={{ background: F.soft, color: F.purple, border: `2px solid ${F.purple}` }}>
             Kuwait · KWD · KNET
           </div>
-          {/* Explicit weight 800 — overrides the global h1 rule's tight -0.04em
-              tracking that was making the headline read as condensed/stretched.
-              Slightly looser letter-spacing + tighter line-height = bold and
-              punchy without the vertical-stretch feel. */}
+
           <h1 className="text-4xl sm:text-5xl lg:text-6xl mb-5"
               style={{
                 fontFamily: 'var(--font-sans)',
@@ -193,20 +222,21 @@ export default function LandingClient() {
                 letterSpacing: '-0.01em',
                 lineHeight: 1.05,
               }}>
-            {t.hero.title1}<br/>{t.hero.title2}
+            <Words text={t.hero.title1} /><br/><Words text={t.hero.title2} />
           </h1>
-          <p className="text-base sm:text-lg max-w-xl mb-7 font-medium" style={{ color: 'rgba(13,13,13,0.65)' }}>
+
+          <p data-lc="hero-fade" className="text-base sm:text-lg max-w-xl mb-7 font-medium" style={{ color: 'rgba(13,13,13,0.65)' }}>
             {t.hero.sub}
           </p>
-          <div className="flex flex-wrap items-center gap-3">
-            <Link href="/onboard" onClick={() => trackEvent('Create Page Clicked')} className="q-btn-accent text-base sm:text-lg px-6 sm:px-7 py-3.5 sm:py-4">
+          <div data-lc="hero-fade" className="flex flex-wrap items-center gap-3">
+            <MagneticButton href="/onboard" onClick={() => trackEvent('Create Page Clicked')} className="q-btn-accent text-base sm:text-lg px-6 sm:px-7 py-3.5 sm:py-4">
               {t.hero.ctaPrimary}
-            </Link>
-            <Link href="/login" onClick={() => trackEvent('Sign In Clicked')} className="q-btn-white text-base sm:text-lg px-6 sm:px-7 py-3.5 sm:py-4">
+            </MagneticButton>
+            <MagneticButton href="/login" onClick={() => trackEvent('Sign In Clicked')} className="q-btn-white text-base sm:text-lg px-6 sm:px-7 py-3.5 sm:py-4">
               {t.hero.ctaSecondary}
-            </Link>
+            </MagneticButton>
           </div>
-          <p className="text-xs font-bold mt-4" style={{ color: F.violet }}>{t.hero.microcopy}</p>
+          <p data-lc="hero-fade" className="text-xs font-bold mt-4" style={{ color: F.violet }}>{t.hero.microcopy}</p>
         </div>
 
         {/* phone mockup */}
@@ -215,15 +245,18 @@ export default function LandingClient() {
         </div>
       </section>
 
-      {/* ─── How it works ─── */}
-      <section className="max-w-5xl mx-auto w-full px-5 sm:px-6 py-12 sm:py-16">
+      {/* ─── Marquee ─── */}
+      <Marquee text={lang === 'ar' ? 'قهوة ☕ Qahwa ☕' : 'Qahwa ☕ قهوة ☕'} dir={t.dir} />
+
+      {/* ─── How it works (pinned scrub on desktop) ─── */}
+      <section data-lc="how" className="max-w-5xl mx-auto w-full px-5 sm:px-6 py-12 sm:py-16">
         <div className="text-center mb-10">
           <h2 className="text-3xl sm:text-4xl mb-2">{t.how.title}</h2>
           <p className="font-medium" style={{ color: 'rgba(13,13,13,0.55)' }}>{t.how.sub}</p>
         </div>
         <div className="grid sm:grid-cols-3 gap-4 sm:gap-5">
           {t.how.steps.map((s, i) => (
-            <div key={i} className="q-card p-5 sm:p-6 text-start relative" style={{ background: F.card }}>
+            <div key={i} className="lc-step q-card p-5 sm:p-6 text-start relative" style={{ background: F.card }}>
               <div className="absolute -top-3 -start-3 w-10 h-10 rounded-full grid place-items-center font-extrabold text-lg"
                    style={{ background: F.accent, color: F.ink, border: `2px solid ${F.ink}`, boxShadow: `2px 2px 0 ${F.ink}`, fontFamily: 'var(--font-sans)' }}>
                 {s.n}
@@ -235,16 +268,19 @@ export default function LandingClient() {
         </div>
       </section>
 
-      {/* ─── Feature strip ─── */}
-      <section className="max-w-5xl mx-auto w-full px-5 sm:px-6 pb-12 sm:pb-16 grid sm:grid-cols-3 gap-4">
+      {/* ─── Feature strip (batch fade-up) ─── */}
+      <section className="max-w-5xl mx-auto w-full px-5 sm:px-6 pb-12 sm:pb-16 pt-2 grid sm:grid-cols-3 gap-4">
         {t.features.map(([emoji, title, desc]) => (
-          <div key={title} className="q-card p-5 text-start" style={{ background: F.card }}>
+          <div key={title} className="lc-feature q-card p-5 text-start" style={{ background: F.card }}>
             <div className="text-3xl mb-2">{emoji}</div>
             <h3 className="text-lg mb-1">{title}</h3>
             <p className="text-sm font-medium" style={{ color: 'rgba(13,13,13,0.6)' }}>{desc}</p>
           </div>
         ))}
       </section>
+
+      {/* ─── Marquee ─── */}
+      <Marquee text={lang === 'ar' ? 'ادعم مبدعك ☕ Support a creator ☕' : 'Support a creator ☕ ادعم مبدعك ☕'} dir={t.dir} />
 
       {/* ─── Social proof ─── */}
       <SocialProof strings={t.proof} dir={t.dir} />
@@ -264,15 +300,14 @@ export default function LandingClient() {
 }
 
 // ─────────────────────────────────────────────────────────────
-// iPhone-ish frame with a status bar and two notification cards
+// iPhone-ish frame with a status bar and two EMAIL notification cards
 // stacked at the same anchor. Each card animates via the global
-// .qahwa-notif / .qahwa-notif-late classes (8s cycle: gentle
-// 0.4s slide-in → 3s hold → 1s fade-out; second card offset 4s
-// so the two alternate sequentially without overlap).
+// .qahwa-notif / .qahwa-notif-late classes (8s cycle). The whole phone
+// tilts toward the cursor on desktop (GSAP, see useLandingGsap).
 // ─────────────────────────────────────────────────────────────
 function PhoneMockup({ strings, dir }) {
   return (
-    <div style={{
+    <div data-lc="phone" style={{
       width: 270, maxWidth: '90%',
       aspectRatio: '9 / 19',
       background: F.ink, borderRadius: 42, padding: 10,
@@ -323,13 +358,14 @@ function Notif({ strings, dir, title, body, cls }) {
         willChange: 'transform, opacity',
       }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
+        {/* Email-style sender badge (purple ✉) — was the WhatsApp "W". */}
         <span style={{
           width: 22, height: 22, borderRadius: 6,
-          background: '#25D366', color: '#fff',
+          background: F.purple, color: '#fff',
           display: 'grid', placeItems: 'center',
           fontSize: 12, fontWeight: 900,
-        }}>W</span>
-        <span style={{ fontSize: 11, fontWeight: 800 }}>WhatsApp · {strings.app}</span>
+        }}>✉</span>
+        <span style={{ fontSize: 11, fontWeight: 800 }}>{strings.mail}</span>
         <span style={{ marginInlineStart: 'auto', fontSize: 10, opacity: 0.55 }}>{strings.now}</span>
       </div>
       <div style={{ fontSize: 12.5, fontWeight: 800, marginBottom: 2 }}>{title}</div>
@@ -344,8 +380,6 @@ function Notif({ strings, dir, title, body, cls }) {
 // for now; swap with real creators once the platform has them).
 // ─────────────────────────────────────────────────────────────
 function SocialProof({ strings, dir }) {
-  // Placeholder handles + emoji. Replace with real creators (and link
-  // to /<handle>) once we have a curated set worth featuring.
   const samples = [
     { handle: 'newmoneyguy', emoji: '💰' },
     { handle: 'noura',       emoji: '🎨' },

@@ -135,3 +135,51 @@ h1, h2, h3 { font-family: var(--font-sans); font-weight: 800; letter-spacing: -0
 /* Dark dashboard surface helpers */
 .dash-bg      { background: #080808; }
 .dash-surface { background: #0F0F0F; }
+
+/* ════════════════════════════════════════════════════════════
+   LANDING PAGE (GSAP) — helper classes
+   All motion is driven by GSAP in useLandingGsap.js / MagneticButton
+   / Marquee. These classes only provide the static structure + the
+   "final" (visible) state so the page is correct with no JS and under
+   prefers-reduced-motion (GSAP bails out in JS in both cases).
+   ════════════════════════════════════════════════════════════ */
+
+/* Headline word reveal — each word sits in an overflow-clip wrapper so
+   the inner span can slide up from below. Default state = fully visible. */
+.lc-word-wrap { display: inline-block; overflow: hidden; vertical-align: top; padding-bottom: 0.08em; }
+.lc-word      { display: inline-block; }
+
+/* Pixel steam particle rising from the hero cup. Invisible by default —
+   only meaningful while GSAP animates it, so reduced-motion / no-JS users
+   see nothing rather than frozen dots. */
+.lc-steam {
+  position: absolute; width: 6px; height: 6px; border-radius: 1px;
+  background: rgba(123, 47, 190, 0.4); opacity: 0; pointer-events: none;
+}
+
+/* Sticky nav that compacts + elevates + blurs after 100px scroll
+   (class toggled by ScrollTrigger). */
+.lc-nav {
+  position: sticky; top: 0; z-index: 50;
+  transition: padding .25s ease, background-color .25s ease,
+              box-shadow .25s ease, backdrop-filter .25s ease;
+}
+.lc-nav.nav-scrolled {
+  padding-top: .5rem; padding-bottom: .5rem;
+  background: rgba(245, 240, 255, 0.82);
+  backdrop-filter: saturate(140%) blur(10px);
+  -webkit-backdrop-filter: saturate(140%) blur(10px);
+  box-shadow: 0 2px 0 #0D0D0D, 0 10px 30px rgba(123, 47, 190, 0.12);
+}
+
+/* Marquee track — laid out as one wide flex row; GSAP translates it. */
+.lc-marquee { display: flex; width: max-content; will-change: transform; }
+
+/* Belt-and-suspenders: with reduced motion, kill the looping CSS
+   animations + landing transitions so the page is fully static even
+   before the GSAP JS guard runs (and for any no-JS fallback). */
+@media (prefers-reduced-motion: reduce) {
+  .qahwa-bob, .qahwa-notif, .qahwa-notif-late, .qahwa-heart-pulse { animation: none !important; }
+  .lc-nav { transition: none !important; }
+  .lc-steam { display: none !important; }
+}
