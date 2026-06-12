@@ -87,12 +87,14 @@ export default async function TippingPage({ params, searchParams }) {
     );
   }
 
-  // Recent tips list + today's-count for the social-proof popup,
-  // fired in parallel — both read the same `tips` table for this creator.
+  // Recent tips list + today's tips for the social-proof popup, fired in
+  // parallel — both read the same `tips` table for this creator. We fetch
+  // today's paid rows (not a bare count) so we can dedupe to DISTINCT
+  // supporters: same phone = same person. "Today" = since Kuwait midnight.
   const sinceKuwaitMidnight = kuwaitMidnightIso();
   const [
     { data: recentTips },
-    { count: todayCount },
+    { data: todayTips },
   ] = await Promise.all([
     supabase
       .from('tips')
@@ -103,18 +105,30 @@ export default async function TippingPage({ params, searchParams }) {
       .limit(5),
     supabase
       .from('tips')
-      .select('id', { count: 'exact', head: true })
+      .select('id, supporter_phone')
       .eq('creator_id', creator.id)
       .eq('status', 'paid')
       .gte('paid_at', sinceKuwaitMidnight),
   ]);
+
+  // Distinct supporters today: dedupe by supporter_phone (mandatory for
+  // new tips, so reliable). Older/anonymous tips with no phone each count
+  // as their own supporter (keyed by tip id) rather than collapsing into
+  // one "anonymous" bucket.
+  const distinctSupportersToday = (() => {
+    const seen = new Set();
+    for (const tp of todayTips || []) {
+      seen.add(tp.supporter_phone ? `phone:${tp.supporter_phone}` : `tip:${tp.id}`);
+    }
+    return seen.size;
+  })();
 
   return (
     <TippingClient
       creator={creator}
       settings={settings}
       recentTips={recentTips || []}
-      todayCount={todayCount || 0}
+      todayCount={distinctSupportersToday}
       showSuccess={searchParams?.success === '1'}
     />
   );

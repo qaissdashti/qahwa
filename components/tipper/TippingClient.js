@@ -560,9 +560,10 @@ export default function TippingClient({ creator, settings, recentTips, todayCoun
     ? (normalizeKwPhone(supporterPhone).length === 0 ? t.phoneRequired : t.phoneInvalid)
     : '';
 
-  // Social-proof count: real number of today's paid tips, floored at 2
-  // so the popup always reads as warm (0/1 → 2, 4 → 4).
-  const displayCount = Math.max(2, todayCount);
+  // Social-proof popup: todayCount is the DISTINCT supporters today
+  // (deduped by phone server-side). The "2" is a visibility THRESHOLD,
+  // not a floor — show nothing for 0/1, show the true count for 2+.
+  const showSocialProof = todayCount >= 2;
 
   // Analytics — supporters stay anonymous (no identify on this page).
   useEffect(() => {
@@ -677,15 +678,17 @@ export default function TippingClient({ creator, settings, recentTips, todayCoun
 
   return (
     <div style={s.page} dir={dir}>
-      {/* Daily social-proof toast — shows the real count of today's paid
-          tips, floored at 2 so it always reads warm (displayCount).
-          Auto-dismisses after 4s; key resets state on prop/lang change. */}
-      <SocialProofToast
-        key={`proof-${displayCount}-${lang}`}
-        message={t.todayProof(displayCount, creator.full_name)}
-        closeAria={t.closeAria}
-        dir={dir}
-      />
+      {/* Daily social-proof toast — only shown when 2+ distinct supporters
+          have tipped today; displays the TRUE distinct count. Auto-dismisses
+          after 4s; key resets state on prop/lang change. */}
+      {showSocialProof && (
+        <SocialProofToast
+          key={`proof-${todayCount}-${lang}`}
+          message={t.todayProof(todayCount, creator.full_name)}
+          closeAria={t.closeAria}
+          dir={dir}
+        />
+      )}
       <div style={s.card}>
         <button style={s.langBtn} onClick={toggleLang} aria-label={t.otherName}>{t.other}</button>
 
