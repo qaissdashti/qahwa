@@ -13,6 +13,7 @@ import PendingApprovalPage from '@/components/tipper/PendingApprovalPage';
 // statically renders the page and serves stale creator data (e.g. an old
 // coffee price or name) after the creator updates their settings.
 export const dynamic = 'force-dynamic';
+export const revalidate = 0;
 export const runtime = 'nodejs';
 
 // Build the ISO timestamp for "today, 00:00 Asia/Kuwait" (UTC+3, no DST).
