@@ -9,6 +9,12 @@ import { notFound } from 'next/navigation';
 import TippingClient from '@/components/tipper/TippingClient';
 import PendingApprovalPage from '@/components/tipper/PendingApprovalPage';
 
+// Always read live data from Supabase on each request. Without this Next
+// statically renders the page and serves stale creator data (e.g. an old
+// coffee price or name) after the creator updates their settings.
+export const dynamic = 'force-dynamic';
+export const runtime = 'nodejs';
+
 // Build the ISO timestamp for "today, 00:00 Asia/Kuwait" (UTC+3, no DST).
 // We add 3h to UTC to read the Kuwait local date, then emit that date at
 // midnight with the +03:00 offset — Postgres parses it without conversion
