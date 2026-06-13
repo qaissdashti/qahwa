@@ -57,12 +57,9 @@ export default async function TippingPage({ params, searchParams }) {
     .eq('handle', params.username.toLowerCase())
     .maybeSingle();
 
-  // TEMP DEBUG — remove after diagnosing the under_review 404.
-  console.log('creator query', {
-    handleParam: params.username.toLowerCase(),
-    data: creator,
-    error: creatorError,
-  });
+  // A real query failure (bad service-role key, RLS, schema) must not be
+  // silently collapsed into a 404 — log it distinctly so it's visible.
+  if (creatorError) console.error('[username] creator query failed', creatorError);
 
   // Genuinely no such creator, or admin-disabled, or creator-deactivated
   // → 404 (we don't reveal anything about disabled accounts).
