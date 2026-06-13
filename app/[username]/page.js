@@ -46,7 +46,7 @@ export default async function TippingPage({ params, searchParams }) {
 
   // Fetch without the verification filter so we can decide between
   // "pending approval" and "tipping" based on the creator's status.
-  const { data: creator } = await supabase
+  const { data: creator, error: creatorError } = await supabase
     .from('creators')
     .select(`id, full_name, handle, bio, avatar_url, avatar_emoji,
              coffee_price_kd, theme_bg, theme_text,
@@ -56,6 +56,13 @@ export default async function TippingPage({ params, searchParams }) {
              verification_status`)
     .eq('handle', params.username.toLowerCase())
     .maybeSingle();
+
+  // TEMP DEBUG — remove after diagnosing the under_review 404.
+  console.log('creator query', {
+    handleParam: params.username.toLowerCase(),
+    data: creator,
+    error: creatorError,
+  });
 
   // Genuinely no such creator, or admin-disabled, or creator-deactivated
   // → 404 (we don't reveal anything about disabled accounts).

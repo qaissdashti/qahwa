@@ -15,7 +15,7 @@ export default async function AdminVerifications() {
   const { data: rows } = await admin
     .from('verifications')
     .select('creator_id, phone_verified, civil_id_masked, selfie_url, status, created_at, creators!inner(full_name, handle, email, phone, terms_accepted_at)')
-    .eq('status', 'under_review')
+    .in('status', ['pending', 'under_review'])
     .not('creators.terms_accepted_at', 'is', null)
     .order('created_at', { ascending: false })
     .limit(100);
