@@ -161,7 +161,7 @@ async function run() {
   for (const c of cs || []) console.log(`  @${c.handle}: ${Number(c.balance_kd).toFixed(3)} KD across ${c.total_tips_count} tips`);
 
   console.log(`\nTest logins (password for all: ${PASSWORD}):`);
-  for (const c of CREATORS) console.log(`  ${c.email}  ->  qahwa.kw/${c.handle}`);
+  for (const c of CREATORS) console.log(`  ${c.email}  ->  buymeqahwa.com/${c.handle}`);
   console.log('\nDone.');
 }
 

@@ -85,7 +85,7 @@ export default function PendingApprovalPage({ creator }) {
               padding: '10px 14px', fontFamily: 'var(--font-sans)', fontWeight: 700,
               color: C.ink, direction: 'ltr',
             }}>
-              qahwa.kw/{creator.handle}
+              buymeqahwa.com/{creator.handle}
             </div>
           </div>
 

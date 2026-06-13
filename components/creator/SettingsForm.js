@@ -119,7 +119,7 @@ export default function SettingsForm({ creator, maxPrice, amazingGlobal }) {
             <label className={label}>{t('sset.bio')}</label>
             <textarea className={input} rows={2} maxLength={280} value={f.bio} onChange={set('bio')} placeholder={t('sset.bioPlaceholder')} />
           </div>
-          <div className="text-xs text-white/40 font-num" dir="ltr">qahwa.kw/{creator?.handle}</div>
+          <div className="text-xs text-white/40 font-num" dir="ltr">buymeqahwa.com/{creator?.handle}</div>
         </div>
 
         {/* pricing */}
@@ -228,7 +228,7 @@ export default function SettingsForm({ creator, maxPrice, amazingGlobal }) {
                   : (f.avatar_emoji || '☕')}
               </div>
               <div style={{ fontFamily: 'var(--font-sans)', fontWeight: 800, fontSize: 16, color: F.ink, textAlign: 'center' }}>{f.full_name || t('sset.previewName')}</div>
-              <div style={{ fontSize: 10, color: F.violet, fontWeight: 700 }}>qahwa.kw/{creator?.handle}</div>
+              <div style={{ fontSize: 10, color: F.violet, fontWeight: 700 }}>buymeqahwa.com/{creator?.handle}</div>
             </div>
 
             {/* cup pills */}

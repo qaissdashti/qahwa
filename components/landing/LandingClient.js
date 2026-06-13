@@ -48,7 +48,7 @@ const STR = {
       title: 'كيف تشتغل قهوة؟',
       sub: 'ثلاث خطوات. لا أكثر.',
       steps: [
-        { n: '١', t: 'شارك رابطك', d: 'حط qahwa.kw/handle في الباي‌و أو الستوري.' },
+        { n: '١', t: 'شارك رابطك', d: 'حط buymeqahwa.com/handle في الباي‌و أو الستوري.' },
         { n: '٢', t: 'متابعك يدفع', d: 'يفتح الرابط، يختار عدد القهوات، ويدفع كي نت في ثواني.' },
         { n: '٣', t: 'يوصلك إشعار', d: 'يوصلك إيميل في صندوق بريدك لحظة وصول القهوة.' },
       ],
@@ -88,7 +88,7 @@ const STR = {
       title: 'How Qahwa works',
       sub: 'Three steps. That’s it.',
       steps: [
-        { n: '1', t: 'Share your link', d: 'Put qahwa.kw/handle in your bio or story.' },
+        { n: '1', t: 'Share your link', d: 'Put buymeqahwa.com/handle in your bio or story.' },
         { n: '2', t: 'They pay', d: 'A tap opens your page, they pick coffees, pay KNET in seconds.' },
         { n: '3', t: 'You’re notified', d: 'An email lands in your inbox the moment a coffee arrives.' },
       ],

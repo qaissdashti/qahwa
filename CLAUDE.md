@@ -42,7 +42,7 @@ types/index.ts               ← TypeScript types for all DB tables
 ```
 
 ## Three user roles
-1. **Supporter** — visits qahwa.kw/[handle], no account needed, pays via KNET
+1. **Supporter** — visits buymeqahwa.com/[handle], no account needed, pays via KNET
 2. **Creator** — logs in at /dashboard, customises page, sees tips, requests payouts
 3. **God Admin (you)** — logs in at /admin, full platform control
 

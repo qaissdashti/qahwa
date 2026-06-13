@@ -260,7 +260,7 @@ async function buildShareCard({ creatorName, handle, t }) {
   ctx.fillRect((W - pillW) / 2 + 14, pillY + pillH + 6, pillW, 10);
   ctx.fillStyle = F.ink;
   ctx.font = `700 56px ${SANS}`;
-  ctx.fillText(`qahwa.kw/${handle}`, W / 2, pillY + pillH / 2 + 2);
+  ctx.fillText(`buymeqahwa.com/${handle}`, W / 2, pillY + pillH / 2 + 2);
 
   // Footer line
   ctx.fillStyle = F.violet;
@@ -732,7 +732,7 @@ export default function TippingClient({ creator, settings, recentTips, todayCoun
               dedicated verified signal, and Twitter-blue reads unambiguously. */}
           <div style={s.name}>{creator.full_name}</div>
           <div style={{ fontSize: 12, color: C.violet, fontFamily: 'var(--font-sans)', fontWeight: 700, marginBottom: 6 }}>
-            qahwa.kw/{creator.handle}
+            buymeqahwa.com/{creator.handle}
           </div>
           {creator.bio && <div style={s.bio}>{creator.bio}</div>}
 

@@ -954,7 +954,7 @@ function Step5({ t, fullName, handle, avatarEmoji, avatarUrl, coffeePrice }) {
                   : avatarEmoji}
               </div>
               <div style={{ fontFamily: 'var(--font-sans)', fontWeight: 800, fontSize: 14, color: F.ink, textAlign: 'center' }}>{fullName || t('sset.previewName')}</div>
-              <div style={{ fontSize: 10, color: F.purple, fontWeight: 700 }}>qahwa.kw/{handle}</div>
+              <div style={{ fontSize: 10, color: F.purple, fontWeight: 700 }}>buymeqahwa.com/{handle}</div>
             </div>
             <div style={{ display: 'flex', gap: 5, marginTop: 10 }}>
               {[1, 3, 5].map((n, i) => (

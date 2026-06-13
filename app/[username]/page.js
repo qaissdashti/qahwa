@@ -1,4 +1,4 @@
-// PUBLIC TIPPING PAGE — qahwa.kw/[username]
+// PUBLIC TIPPING PAGE — buymeqahwa.com/[username]
 // Supporters land here. No auth required.
 // IMPORTANT: the tipping UI is ONLY shown for creators that have been
 // approved by the god admin (is_verified=true AND verification_status
