@@ -3,8 +3,7 @@
 //
 // Sections (top → bottom):
 //   1. Top nav (logo + lang toggle + login + signup CTA)
-//   2. Hero (headline + sub + CTAs + iPhone notification mockup
-//      + floating brand badges on desktop)
+//   2. Hero (headline + sub + CTAs + iPhone notification mockup)
 //   3. "How it works" — 3 numbered steps
 //   4. Feature strip (KNET / email notifications / no-account-for-supporter)
 //   5. "Trusted by Kuwait creators" — handle pill row
@@ -85,7 +84,7 @@ const STR = {
       now: 'now',
     },
     how: {
-      title: 'How Qahwa works',
+      title: 'How BuyMeQahwa works',
       sub: 'Three steps. That’s it.',
       steps: [
         { n: '1', t: 'Share your link', d: 'Put buymeqahwa.com/handle in your bio or story.' },
@@ -106,24 +105,6 @@ const STR = {
   },
 };
 
-// ── Brand badges floating around the hero. Real brand colors so they
-//    read at a glance without a logo file. Emoji glyphs for visual
-//    weight. Positioned absolutely on desktop, hidden on mobile to
-//    avoid crowding. Coordinates target the hero perimeter — never
-//    overlap the phone mockup that lives in the right grid cell. ──
-const BRANDS = [
-  // top-left corner, above headline
-  { name: 'YouTube',   bg: '#FF0000', glyph: '▶',  pos: { top: 8,   left: 12 } },
-  // mid-left, alongside headline
-  { name: 'Instagram', bg: 'linear-gradient(135deg,#F58529,#DD2A7B,#8134AF)', glyph: '📷', pos: { top: '46%', left: '-8px' } },
-  // bottom-left, under hero text
-  { name: 'TikTok',    bg: '#0D0D0D', glyph: '🎵', pos: { bottom: 24, left: '32%' } },
-  // top-right corner — outside phone (phone starts at ~55% width)
-  { name: 'X',         bg: '#0D0D0D', glyph: '𝕏',  pos: { top: 8,   right: 12 } },
-  // bottom-right corner — below the phone's bottom edge
-  { name: 'Snapchat',  bg: '#FFFC00', glyph: '👻', pos: { bottom: 0, right: 16, color: '#0D0D0D' } },
-];
-
 export default function LandingClient() {
   // Pull just the lang code — we use our own STR dict, not the global one.
   const { lang } = useLang();
@@ -137,7 +118,7 @@ export default function LandingClient() {
       <header className="flex items-center justify-between px-5 sm:px-6 py-4 max-w-6xl mx-auto w-full">
         <Link href="/" className="text-2xl font-extrabold inline-flex items-center gap-2" style={{ fontFamily: 'var(--font-sans)' }}>
           <Logo size={32} />
-          <span>{lang === 'ar' ? 'قهوة' : 'Qahwa'}</span>
+          <span>{lang === 'ar' ? 'قهوة' : 'BuyMeQahwa'}</span>
         </Link>
         <nav className="flex items-center gap-2.5 sm:gap-3">
           <LangToggle />
@@ -148,28 +129,6 @@ export default function LandingClient() {
 
       {/* ─── Hero ─── */}
       <section className="relative max-w-6xl mx-auto w-full px-5 sm:px-6 py-10 sm:py-16 grid lg:grid-cols-[1.1fr_1fr] gap-10 lg:gap-12 items-center">
-        {/* floating brand badges — desktop only, sit above the phone (z-30
-            > phone's z-10), positioned around the hero perimeter so they
-            never overlap the phone frame. */}
-        <div className="hidden lg:block absolute inset-0 pointer-events-none" style={{ zIndex: 30 }}>
-          {BRANDS.map((b, i) => (
-            <span key={b.name}
-              className="absolute qahwa-bob"
-              style={{
-                ...b.pos,
-                width: 56, height: 56, borderRadius: '50%',
-                background: b.bg, color: b.pos.color || '#fff',
-                display: 'grid', placeItems: 'center',
-                fontSize: 22, fontWeight: 800,
-                border: `2px solid ${F.ink}`, boxShadow: `4px 4px 0 ${F.ink}`,
-                animationDelay: `${i * 0.55}s`,
-              }}
-              aria-hidden>
-              <span>{b.glyph}</span>
-            </span>
-          ))}
-        </div>
-
         {/* hero text */}
         <div className="text-start relative z-10">
           {/* Pixel-art brand mark above the headline — replaces the

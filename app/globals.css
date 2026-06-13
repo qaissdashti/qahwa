@@ -79,13 +79,6 @@ input, textarea, select { font-size: 16px; }
 .qahwa-notif       { animation: qahwa-notif 8s infinite; }
 .qahwa-notif-late  { animation: qahwa-notif 8s infinite; animation-delay: 4s; }
 
-/* Gentle floating bob for the landing-page social-brand badges. */
-@keyframes qahwa-bob {
-  0%, 100% { transform: translateY(0); }
-  50%      { transform: translateY(-10px); }
-}
-.qahwa-bob { animation: qahwa-bob 4.2s ease-in-out infinite; }
-
 /* Soft heartbeat-style pulse for the success-screen coffee glyph.
    A two-beat cycle (1 → 1.08 → 1 → 1.04 → 1) reads like a heart, not
    a robotic scale loop. */
