@@ -216,6 +216,10 @@ export default function LandingClient() {
           <Link href="/terms" className="underline font-bold hover:text-qahwa-purple transition-colors">
             {lang === 'ar' ? 'الشروط والأحكام' : 'Terms and Conditions'}
           </Link>
+          <span className="hidden sm:inline" style={{ opacity: 0.5 }}>·</span>
+          <Link href="/contact" className="underline font-bold hover:text-qahwa-purple transition-colors">
+            {lang === 'ar' ? 'تواصل معنا' : 'Contact'}
+          </Link>
         </div>
       </footer>
     </main>
