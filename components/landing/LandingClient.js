@@ -6,8 +6,7 @@
 //   2. Hero (headline + sub + CTAs + iPhone notification mockup)
 //   3. "How it works" — 3 numbered steps
 //   4. Feature strip (KNET / email notifications / no-account-for-supporter)
-//   5. "Trusted by Kuwait creators" — handle pill row
-//   6. Footer
+//   5. Footer
 // ============================================================
 'use client';
 
@@ -28,7 +27,7 @@ const STR = {
     nav: { login: 'تسجيل الدخول', cta: 'أنشئ صفحتك' },
     hero: {
       title1: 'خلّي متابعينك',
-      title2: 'يشترونلك قهوة ☕',
+      title2: 'يعزمونك على قهوة ☕',
       sub: 'منصّة كويتية لدعم المبدعين. متابعينك يدفعون بالدينار عبر كي نت — بدون حساب، بضغطة وحدة. ويوصلك إشعار بالبريد لحظة وصول كل قهوة.',
       ctaPrimary: '↗ أنشئ صفحتك',
       ctaSecondary: 'عندي حساب',
@@ -57,10 +56,6 @@ const STR = {
       ['📧', 'إشعارات فورية', 'يوصلك إيميل بكل قهوة تستلمها.'],
       ['🔒', 'بدون حساب للداعم', 'متابعك يدفع بضغطة وحدة، ما يحتاج تسجيل.'],
     ],
-    proof: {
-      title: 'مبدعون كويتيون يستخدمون قهوة',
-      sub: 'انضم لهم اليوم.',
-    },
     footer: 'قهوة · صُنع في الكويت ☕',
   },
   en: {
@@ -97,10 +92,6 @@ const STR = {
       ['📧', 'Instant notifications', 'Get an email for every coffee you receive.'],
       ['🔒', 'No supporter account', 'One tap to pay — no signup needed.'],
     ],
-    proof: {
-      title: 'Kuwaiti creators trust Qahwa',
-      sub: 'Join them today.',
-    },
     footer: 'Qahwa · Made in Kuwait ☕',
   },
 };
@@ -205,9 +196,6 @@ export default function LandingClient() {
         ))}
       </section>
 
-      {/* ─── Social proof ─── */}
-      <SocialProof strings={t.proof} dir={t.dir} />
-
       {/* ─── Footer ─── */}
       <footer className="border-t-2 py-6 text-center text-sm font-medium" style={{ borderColor: 'rgba(13,13,13,0.1)', color: 'rgba(13,13,13,0.45)' }}>
         <div className="max-w-5xl mx-auto px-5 sm:px-6 flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-5">
@@ -301,44 +289,3 @@ function Notif({ strings, dir, title, body, cls }) {
   );
 }
 
-// ─────────────────────────────────────────────────────────────
-// "Trusted by Kuwait creators" — a soft, no-fabricated-stats
-// proof section. Renders a row of handle pills (placeholder set
-// for now; swap with real creators once the platform has them).
-// ─────────────────────────────────────────────────────────────
-function SocialProof({ strings, dir }) {
-  // Placeholder handles + emoji. Replace with real creators (and link
-  // to /<handle>) once we have a curated set worth featuring.
-  const samples = [
-    { handle: 'newmoneyguy', emoji: '💰' },
-    { handle: 'noura',       emoji: '🎨' },
-    { handle: 'numbertwo',   emoji: '🎙️' },
-    { handle: 'sara',        emoji: '✨' },
-    { handle: 'fahad',       emoji: '🎮' },
-  ];
-  return (
-    <section className="max-w-5xl mx-auto w-full px-5 sm:px-6 py-10 sm:py-14" dir={dir}>
-      <div className="text-center mb-7">
-        <h2 className="text-2xl sm:text-3xl mb-1.5">{strings.title}</h2>
-        <p className="font-medium" style={{ color: 'rgba(13,13,13,0.55)' }}>{strings.sub}</p>
-      </div>
-      <div className="flex flex-wrap items-center justify-center gap-2.5 sm:gap-3">
-        {samples.map((s) => (
-          <Link key={s.handle} href={`/${s.handle}`}
-            className="inline-flex items-center gap-2 rounded-full font-bold text-sm transition-all hover:-translate-y-0.5"
-            style={{
-              background: F.card, color: F.ink,
-              border: `2px solid ${F.ink}`, boxShadow: `2px 2px 0 ${F.ink}`,
-              padding: '7px 14px 7px 8px', fontFamily: 'var(--font-sans)',
-            }}>
-            <span style={{
-              width: 26, height: 26, borderRadius: '50%',
-              background: F.soft, display: 'grid', placeItems: 'center', fontSize: 14,
-            }}>{s.emoji}</span>
-            <span dir="ltr">@{s.handle}</span>
-          </Link>
-        ))}
-      </div>
-    </section>
-  );
-}
