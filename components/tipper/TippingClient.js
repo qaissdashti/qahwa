@@ -36,6 +36,10 @@ const STR = {
     phoneInvalid: 'أدخل رقم كويتي صحيح (٨ أرقام)',
     payBtn: (amt) => `☕ أرسل القهوة · ${amt} KD`,
     processing: 'جاري المعالجة...',
+    payWith: 'طريقة الدفع',
+    pmKnet: 'كي نت',
+    pmCard: 'بطاقة ائتمان',
+    comingSoon: 'قريباً',
     amazingDefault: 'أنت رائع! حدد مبلغًا بإرادتك',
     minErr: (m) => `الحد الأدنى ${m} KD`,
     genericErr: 'حدث خطأ',
@@ -74,6 +78,10 @@ const STR = {
     phoneInvalid: 'Enter a valid Kuwait number (8 digits)',
     payBtn: (amt) => `☕ Send coffee · ${amt} KD`,
     processing: 'Processing...',
+    payWith: 'Payment method',
+    pmKnet: 'KNET',
+    pmCard: 'Credit Card',
+    comingSoon: 'coming soon',
     amazingDefault: "You're amazing! Pick any amount",
     minErr: (m) => `Minimum ${m} KD`,
     genericErr: 'Something went wrong',
@@ -156,6 +164,30 @@ function normalizeKwPhone(raw) {
 }
 function isValidKwPhone(raw) {
   return /^\d{8}$/.test(normalizeKwPhone(raw));
+}
+
+// ── MPGS Hosted Checkout loader ─────────────────────────────
+// Load Mastercard's Hosted Checkout script once (test host). Cached by
+// id so repeated pay attempts never re-inject it; resolves immediately
+// if window.Checkout is already present.
+const MPGS_CHECKOUT_SRC = 'https://mtf.gateway.mastercard.com/static/checkout/checkout.min.js';
+function loadMpgsCheckout() {
+  return new Promise((resolve, reject) => {
+    if (typeof window !== 'undefined' && window.Checkout) return resolve();
+    const existing = document.getElementById('mpgs-checkout-script');
+    if (existing) {
+      existing.addEventListener('load', () => resolve(), { once: true });
+      existing.addEventListener('error', () => reject(new Error('MPGS script failed to load')), { once: true });
+      return;
+    }
+    const el = document.createElement('script');
+    el.id = 'mpgs-checkout-script';
+    el.src = MPGS_CHECKOUT_SRC;
+    el.async = true;
+    el.onload = () => resolve();
+    el.onerror = () => reject(new Error('MPGS script failed to load'));
+    document.body.appendChild(el);
+  });
 }
 
 // Build an Instagram-Story-sized (1080×1920) share card as a PNG blob.
@@ -539,6 +571,7 @@ export default function TippingClient({ creator, settings, recentTips, todayCoun
   const [supporterName, setSupporterName] = useState('');
   const [supporterPhone, setSupporterPhone] = useState('');
   const [phoneTouched, setPhoneTouched] = useState(false);
+  const [payMethod, setPayMethod]       = useState('card'); // 'card' (MPGS) active; 'knet' disabled until MyFatoorah is live
   const [loading, setLoading]           = useState(false);
   const [success, setSuccess]           = useState(showSuccess);
   const [error, setError]               = useState('');
@@ -631,6 +664,68 @@ export default function TippingClient({ creator, settings, recentTips, todayCoun
     }
   }
 
+  // Card rail (Visa/Mastercard) via MPGS Hosted Checkout. Mirrors
+  // handlePay's validation + tracking, but posts to /initiate-card and
+  // opens Mastercard's hosted page instead of the KNET redirect.
+  // handlePay stays untouched for when MyFatoorah/KNET goes live.
+  async function handlePayCard() {
+    if (loading) return;
+    // Phone is mandatory — block + surface the inline error.
+    if (!phoneValid) {
+      setPhoneTouched(true);
+      setError('');
+      return;
+    }
+    if (isAmazing && (!amazingAmt || grossAmount < (settings?.amazing_min_kd || 0.5))) {
+      setError(t.minErr(fmtKd1(settings?.amazing_min_kd || 0.5)));
+      return;
+    }
+    setLoading(true);
+    setError('');
+    try {
+      const res = await fetch('/api/payment/initiate-card', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          creatorHandle: creator.handle,
+          cups:          isAmazing ? 0 : selectedCups,
+          isAmazing,
+          grossAmount,
+          message:       message || undefined,
+          supporterName: supporterName || undefined,
+          supporterPhone: `+965${normalizeKwPhone(supporterPhone)}`,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || t.genericErr);
+      const cupsPaid = isAmazing ? 0 : selectedCups;
+      trackEvent('Payment Initiated', {
+        cups: cupsPaid,
+        amount: grossAmount,
+        creatorHandle: creator.handle,
+        supporterName: !!supporterName,
+      });
+      // Carry the amount across the hosted-page redirect for Payment Success.
+      try { sessionStorage.setItem('qahwa_last_tip', JSON.stringify({ cups: cupsPaid, amount: grossAmount })); } catch {}
+
+      // Test mode returns a paymentUrl straight to the success screen —
+      // same redirect as the KNET flow, so it works with no card keys.
+      if (data.paymentUrl) {
+        window.location.href = data.paymentUrl;
+        return;
+      }
+
+      // Live: open Mastercard's Hosted Checkout with the returned session.
+      // showPaymentPage() navigates away, so we leave `loading` set.
+      await loadMpgsCheckout();
+      window.Checkout.configure({ session: { id: data.sessionId } });
+      window.Checkout.showPaymentPage();
+    } catch (err) {
+      setError(err.message);
+      setLoading(false);
+    }
+  }
+
   const toggleLang = () => setLang((l) => {
     const next = l === 'ar' ? 'en' : 'ar';
     try { localStorage.setItem('qahwa_lang', next); } catch {}
@@ -663,6 +758,17 @@ export default function TippingClient({ creator, settings, recentTips, todayCoun
     errorBox: { background: '#FFF0F0', border: `2px solid #FF5A5A`, borderRadius: 12, padding: '8px 14px', fontSize: 13, color: '#C00', direction: dir, marginBottom: 10, fontWeight: 700 },
     pmRow: { display: 'flex', justifyContent: 'center', gap: 6, marginTop: 14, flexWrap: 'wrap' },
     pmBadge: { border: `1.5px solid ${C.ink}`, borderRadius: 8, padding: '3px 10px', fontSize: 11, fontWeight: 700, color: C.muted, fontFamily: 'var(--font-sans)' },
+    pmSelectRow: { display: 'flex', gap: 9, marginBottom: '1rem' },
+    pmOption: (sel, disabled) => ({
+      flex: 1, border: `2px solid ${C.ink}`, borderRadius: 14,
+      background: sel ? C.purple : C.card, color: sel ? '#fff' : C.ink,
+      boxShadow: sel ? `3px 3px 0 ${C.ink}` : 'none',
+      padding: '12px 6px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3,
+      cursor: disabled ? 'not-allowed' : 'pointer', opacity: disabled ? 0.5 : 1,
+      transition: 'all .15s', direction: dir,
+    }),
+    pmOptionLabel: { fontFamily: 'var(--font-sans)', fontSize: 14, fontWeight: 800 },
+    pmOptionHint: { fontSize: 9, fontWeight: 700, opacity: 0.75, letterSpacing: '0.02em' },
     langBtn: { position: 'absolute', top: 16, insetInlineEnd: 16, border: `2px solid ${C.ink}`, background: C.card, color: C.ink, borderRadius: 999, padding: '5px 13px', fontSize: 13, fontWeight: 800, fontFamily: 'var(--font-sans)', cursor: 'pointer', zIndex: 2, boxShadow: `2px 2px 0 ${C.ink}` },
     social: { background: C.purple, color: '#fff', border: `2px solid ${C.ink}`, borderRadius: 10, padding: '4px 10px', fontSize: 12, fontWeight: 700, textDecoration: 'none' },
   };
@@ -816,10 +922,24 @@ export default function TippingClient({ creator, settings, recentTips, todayCoun
           </div>
         )}
 
+        {/* Payment method — KNET is disabled until MyFatoorah goes live;
+            Credit Card (MPGS Hosted Checkout) is the active default. */}
+        <div style={s.sectionLabel}>{t.payWith}</div>
+        <div style={s.pmSelectRow}>
+          <button type="button" disabled style={s.pmOption(false, true)}>
+            <span style={s.pmOptionLabel}>🏧 {t.pmKnet}</span>
+            <span style={s.pmOptionHint}>{t.comingSoon}</span>
+          </button>
+          <button type="button" onClick={() => setPayMethod('card')}
+                  style={s.pmOption(payMethod === 'card', false)}>
+            <span style={s.pmOptionLabel}>💳 {t.pmCard}</span>
+          </button>
+        </div>
+
         {error && <div style={s.errorBox}>{error}</div>}
 
         <button style={{ ...s.payBtn, cursor: (loading || !phoneValid) ? 'not-allowed' : 'pointer', opacity: (loading || !phoneValid) ? 0.6 : 1 }}
-                onClick={handlePay} disabled={loading || !phoneValid}
+                onClick={payMethod === 'knet' ? handlePay : handlePayCard} disabled={loading || !phoneValid}
                 className={loading ? 'qahwa-pulse' : ''}
                 aria-busy={loading}>
           {loading ? (
