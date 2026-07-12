@@ -5,22 +5,36 @@
 //          then mark the tip paid and email the creator — exactly once.
 //
 // Parallel to /app/api/payment/callback-card/route.js — same atomic
-// mark-paid pattern, same redirect destinations, same NEXT_REDIRECT
-// re-throw handling. KNET differs: it's a URL-encoded form POST, and
-// the payment result arrives encrypted in the `trandata` param.
+// mark-paid pattern and same destinations. KNET differs: it's a
+// server-to-server URL-encoded form POST, the payment result arrives
+// encrypted in the `trandata` param, and per the KNET manual (K-064 §5)
+// we must NOT reply with an HTTP redirect — instead we return a 200
+// plain-text "REDIRECT=<absolute url>" line and KNET redirects the
+// customer's browser itself.
 // ============================================================
 
 import { createClient } from '@supabase/supabase-js';
 import { decryptTrandata } from '@/lib/knet';
 import { notifyCreatorNewTip } from '@/lib/adminNotify';
-import { redirect } from 'next/navigation';
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL,
   process.env.SUPABASE_SERVICE_ROLE_KEY
 );
 
+// KNET reads a plain-text "REDIRECT=<url>" line from our 200 response and
+// redirects the customer's browser itself (K-064 §5). We must NOT reply
+// with an HTTP redirect on this server-to-server notification.
+function knetRedirect(url) {
+  return new Response(`REDIRECT=${url}`, {
+    status: 200,
+    headers: { 'Content-Type': 'text/plain' },
+  });
+}
+
 export async function POST(req) {
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL;
+
   try {
     // KNET sends a URL-encoded form POST to the responseURL (via the
     // payer's browser), not JSON or query params.
@@ -35,7 +49,7 @@ export async function POST(req) {
       console.error('[callback-knet] KNET returned error:', {
         Error: errorParam, ErrorText: errorText,
       });
-      redirect('/error?reason=payment_failed');
+      return knetRedirect(`${appUrl}/error?reason=payment_failed`);
     }
 
     // ── 2. DECRYPT THE RESPONSE ──────────────────────────────
@@ -45,7 +59,7 @@ export async function POST(req) {
       data = decryptTrandata(String(form.get('trandata') || ''));
     } catch (decryptErr) {
       console.error('[callback-knet] trandata decrypt failed:', decryptErr);
-      redirect('/error?reason=payment_failed');
+      return knetRedirect(`${appUrl}/error?reason=payment_failed`);
     }
 
     // The manual mandates merchants log the full response. It contains no
@@ -69,7 +83,7 @@ export async function POST(req) {
 
     if (!tip) {
       console.error('[callback-knet] tip not found for trackid:', trackid);
-      redirect('/error?reason=tip_not_found');
+      return knetRedirect(`${appUrl}/error?reason=tip_not_found`);
     }
 
     // ── 4. VERIFY AMOUNT ─────────────────────────────────────
@@ -78,7 +92,7 @@ export async function POST(req) {
       console.error('[callback-knet] amount mismatch — not marking paid', {
         trackid, received: amt, expected: tip.gross_amount_kd,
       });
-      redirect('/error?reason=payment_failed');
+      return knetRedirect(`${appUrl}/error?reason=payment_failed`);
     }
 
     // ── 5. VERIFY RESULT ─────────────────────────────────────
@@ -86,7 +100,7 @@ export async function POST(req) {
     // CANCELED, HOST TIMEOUT, …) is a failure — do NOT mark paid.
     if (result !== 'CAPTURED') {
       console.error('[callback-knet] non-captured result — not marking paid', { trackid, result });
-      redirect('/error?reason=payment_failed');
+      return knetRedirect(`${appUrl}/error?reason=payment_failed`);
     }
 
     // ── 6. MARK TIP AS PAID (ATOMIC) ─────────────────────────
@@ -140,15 +154,11 @@ export async function POST(req) {
       console.log('[callback-knet] tip already paid — skipping email (duplicate POST)', { tipId: tip.id });
     }
 
-    // Redirect payer to thank-you screen
-    redirect(`/${tip.creators.handle}?success=1&tip=${tip.id}`);
+    // Tell KNET where to send the payer's browser — thank-you screen.
+    return knetRedirect(`${appUrl}/${tip.creators.handle}?success=1&tip=${tip.id}`);
 
   } catch (err) {
-    // next/navigation's redirect() works by throwing a NEXT_REDIRECT error.
-    // Re-throw it so Next.js can perform the redirect instead of treating
-    // an intended redirect as an unexpected failure.
-    if (err?.digest?.startsWith('NEXT_REDIRECT')) throw err;
     console.error('[callback-knet] Error:', err);
-    redirect('/error?reason=unexpected');
+    return knetRedirect(`${appUrl}/error?reason=unexpected`);
   }
 }
