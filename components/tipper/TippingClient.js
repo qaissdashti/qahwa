@@ -586,6 +586,10 @@ export default function TippingClient({ creator, settings, recentTips, todayCoun
 
   const showAmazing = creator.amazing_enabled && settings?.amazing_enabled_global !== false;
 
+  // KNET direct rail is gated behind a build-time flag until it's live.
+  // When not 'true', the selector keeps its disabled "coming soon" state.
+  const knetEnabled = process.env.NEXT_PUBLIC_KNET_ENABLED === 'true';
+
   // Supporter phone is mandatory. phoneError only shows once the field
   // has been touched (blur or a pay attempt) so we don't yell on load.
   const phoneValid = isValidKwPhone(supporterPhone);
@@ -720,6 +724,56 @@ export default function TippingClient({ creator, settings, recentTips, todayCoun
       await loadMpgsCheckout();
       window.Checkout.configure({ session: { id: data.sessionId } });
       window.Checkout.showPaymentPage();
+    } catch (err) {
+      setError(err.message);
+      setLoading(false);
+    }
+  }
+
+  // KNET direct (KPAY) rail. Mirrors handlePayCard's validation + tracking,
+  // but posts to /initiate-knet and does a full browser redirect to KNET's
+  // hosted page (no checkout.js). handlePay/handlePayCard stay untouched.
+  async function handlePayKnet() {
+    if (loading) return;
+    // Phone is mandatory — block + surface the inline error.
+    if (!phoneValid) {
+      setPhoneTouched(true);
+      setError('');
+      return;
+    }
+    if (isAmazing && (!amazingAmt || grossAmount < (settings?.amazing_min_kd || 0.5))) {
+      setError(t.minErr(fmtKd1(settings?.amazing_min_kd || 0.5)));
+      return;
+    }
+    setLoading(true);
+    setError('');
+    try {
+      const res = await fetch('/api/payment/initiate-knet', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          creatorHandle: creator.handle,
+          cups:          isAmazing ? 0 : selectedCups,
+          isAmazing,
+          grossAmount,
+          message:       message || undefined,
+          supporterName: supporterName || undefined,
+          supporterPhone: `+965${normalizeKwPhone(supporterPhone)}`,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || t.genericErr);
+      const cupsPaid = isAmazing ? 0 : selectedCups;
+      trackEvent('Payment Initiated', {
+        cups: cupsPaid,
+        amount: grossAmount,
+        creatorHandle: creator.handle,
+        supporterName: !!supporterName,
+      });
+      // Carry the amount across the KNET redirect for the Payment Success event.
+      try { sessionStorage.setItem('qahwa_last_tip', JSON.stringify({ cups: cupsPaid, amount: grossAmount })); } catch {}
+      // KNET is a redirect flow — send the browser to the hosted page.
+      window.location.href = data.paymentUrl;
     } catch (err) {
       setError(err.message);
       setLoading(false);
@@ -922,14 +976,22 @@ export default function TippingClient({ creator, settings, recentTips, todayCoun
           </div>
         )}
 
-        {/* Payment method — KNET is disabled until MyFatoorah goes live;
-            Credit Card (MPGS Hosted Checkout) is the active default. */}
+        {/* Payment method — KNET is enabled via NEXT_PUBLIC_KNET_ENABLED,
+            otherwise it stays disabled ("coming soon"). Credit Card
+            (MPGS Hosted Checkout) is the active default. */}
         <div style={s.sectionLabel}>{t.payWith}</div>
         <div style={s.pmSelectRow}>
-          <button type="button" disabled style={s.pmOption(false, true)}>
-            <span style={s.pmOptionLabel}>🏧 {t.pmKnet}</span>
-            <span style={s.pmOptionHint}>{t.comingSoon}</span>
-          </button>
+          {knetEnabled ? (
+            <button type="button" onClick={() => setPayMethod('knet')}
+                    style={s.pmOption(payMethod === 'knet', false)}>
+              <span style={s.pmOptionLabel}>🏧 {t.pmKnet}</span>
+            </button>
+          ) : (
+            <button type="button" disabled style={s.pmOption(false, true)}>
+              <span style={s.pmOptionLabel}>🏧 {t.pmKnet}</span>
+              <span style={s.pmOptionHint}>{t.comingSoon}</span>
+            </button>
+          )}
           <button type="button" onClick={() => setPayMethod('card')}
                   style={s.pmOption(payMethod === 'card', false)}>
             <span style={s.pmOptionLabel}>💳 {t.pmCard}</span>
@@ -939,7 +1001,7 @@ export default function TippingClient({ creator, settings, recentTips, todayCoun
         {error && <div style={s.errorBox}>{error}</div>}
 
         <button style={{ ...s.payBtn, cursor: (loading || !phoneValid) ? 'not-allowed' : 'pointer', opacity: (loading || !phoneValid) ? 0.6 : 1 }}
-                onClick={payMethod === 'knet' ? handlePay : handlePayCard} disabled={loading || !phoneValid}
+                onClick={payMethod === 'knet' ? handlePayKnet : handlePayCard} disabled={loading || !phoneValid}
                 className={loading ? 'qahwa-pulse' : ''}
                 aria-busy={loading}>
           {loading ? (
