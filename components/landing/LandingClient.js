@@ -27,7 +27,7 @@ const STR = {
     nav: { login: 'تسجيل الدخول', cta: 'أنشئ صفحتك' },
     hero: {
       title1: 'خلّي متابعينك',
-      title2: 'يعزمونك على قهوة ☕',
+      title2: 'يعزمونك على قهوة',
       sub: 'منصّة كويتية لدعم المبدعين. متابعينك يدفعون بالدينار عبر كي نت — بدون حساب، بضغطة وحدة. ويوصلك إشعار بالبريد لحظة وصول كل قهوة.',
       ctaPrimary: '↗ أنشئ صفحتك',
       ctaSecondary: 'عندي حساب',
@@ -47,12 +47,12 @@ const STR = {
       sub: 'ثلاث خطوات. لا أكثر.',
       steps: [
         { n: '١', t: 'شارك رابطك', d: 'حط buymeqahwa.com/handle في الباي‌و أو الستوري.' },
-        { n: '٢', t: 'متابعك يدفع', d: 'يفتح الرابط، يختار عدد القهوات، ويدفع كي نت في ثواني.' },
+        { n: '٢', t: 'متابعك يدفع', d: 'يفتح الرابط، يختار عدد القهوات، ويدفع بكي نت أو بطاقة في ثواني.' },
         { n: '٣', t: 'يوصلك إشعار', d: 'يوصلك إيميل في صندوق بريدك لحظة وصول القهوة.' },
       ],
     },
     features: [
-      ['💳', 'كي نت بالدينار', 'دفع محلي عبر MyFatoorah — كي نت، Apple Pay، فيزا.'],
+      ['💳', 'كي نت بالدينار', 'دفع محلي عبر كي نت وفيزا وماستركارد.'],
       ['📧', 'إشعارات فورية', 'يوصلك إيميل بكل قهوة تستلمها.'],
       ['🔒', 'بدون حساب للداعم', 'متابعك يدفع بضغطة وحدة، ما يحتاج تسجيل.'],
     ],
@@ -63,7 +63,7 @@ const STR = {
     nav: { login: 'Sign in', cta: 'Create your page' },
     hero: {
       title1: 'Let your followers',
-      title2: 'buy you a coffee ☕',
+      title2: 'buy you a coffee',
       sub: 'A Kuwaiti platform for supporting creators. Your fans pay in KD via KNET — no account needed, one tap. You get notified by email the moment a coffee lands.',
       ctaPrimary: '↗ Create your page',
       ctaSecondary: 'I have an account',
@@ -83,12 +83,12 @@ const STR = {
       sub: 'Three steps. That’s it.',
       steps: [
         { n: '1', t: 'Share your link', d: 'Put buymeqahwa.com/handle in your bio or story.' },
-        { n: '2', t: 'They pay', d: 'A tap opens your page, they pick coffees, pay KNET in seconds.' },
+        { n: '2', t: 'They pay', d: 'A tap opens your page, they pick coffees, pay by KNET or card in seconds.' },
         { n: '3', t: 'You’re notified', d: 'An email lands in your inbox the moment a coffee arrives.' },
       ],
     },
     features: [
-      ['💳', 'KNET in KD', 'Local payments via MyFatoorah — KNET, Apple Pay, Visa.'],
+      ['💳', 'KNET in KD', 'Local payments via KNET, Visa and Mastercard.'],
       ['📧', 'Instant notifications', 'Get an email for every coffee you receive.'],
       ['🔒', 'No supporter account', 'One tap to pay — no signup needed.'],
     ],
@@ -143,7 +143,12 @@ export default function LandingClient() {
                 letterSpacing: '-0.01em',
                 lineHeight: 1.05,
               }}>
-            {t.hero.title1}<br/>{t.hero.title2}
+            {t.hero.title1}<br/>
+            <span className="inline-flex items-center gap-2 align-middle">
+              {t.hero.title2}
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src="/coffee-cup.png" alt="" className="inline-block align-middle h-9 sm:h-11 lg:h-14 w-auto" />
+            </span>
           </h1>
           <p className="text-base sm:text-lg max-w-xl mb-7 font-medium" style={{ color: 'rgba(13,13,13,0.65)' }}>
             {t.hero.sub}
@@ -189,7 +194,20 @@ export default function LandingClient() {
       <section className="max-w-5xl mx-auto w-full px-5 sm:px-6 pb-12 sm:pb-16 grid sm:grid-cols-3 gap-4">
         {t.features.map(([emoji, title, desc]) => (
           <div key={title} className="q-card p-5 text-start" style={{ background: F.card }}>
-            <div className="text-3xl mb-2">{emoji}</div>
+            <div className="text-3xl mb-2">
+              {/* The payments card (keyed by the 💳 marker) shows the KNET +
+                  Visa + Mastercard logos instead of an emoji; all other cards keep theirs. */}
+              {emoji === '💳' ? (
+                <span className="inline-flex items-center gap-2">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src="/knet-logo.png" alt="KNET" className="h-6 w-auto" />
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src="/visa-logo.svg" alt="Visa" className="h-6 w-auto" />
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src="/mastercard-logo.png" alt="Mastercard" className="h-6 w-auto" />
+                </span>
+              ) : emoji}
+            </div>
             <h3 className="text-lg mb-1">{title}</h3>
             <p className="text-sm font-medium" style={{ color: 'rgba(13,13,13,0.6)' }}>{desc}</p>
           </div>

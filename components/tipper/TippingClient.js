@@ -1045,7 +1045,7 @@ export default function TippingClient({ creator, settings, recentTips, todayCoun
         </button>
 
         <div style={s.pmRow}>
-          {['KNET', 'Apple Pay', 'Visa', 'Mastercard'].map(pm => (
+          {['KNET', 'Visa', 'Mastercard'].map(pm => (
             <span key={pm} style={s.pmBadge}>{pm}</span>
           ))}
         </div>
