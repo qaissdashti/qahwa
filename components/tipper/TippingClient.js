@@ -34,7 +34,7 @@ const STR = {
     phonePlaceholder: '+965 XXXX XXXX (اختياري)',
     phoneRequired: 'رقم الهاتف مطلوب',
     phoneInvalid: 'أدخل رقم كويتي صحيح (٨ أرقام)',
-    payBtn: (amt) => `☕ أرسل القهوة · ${amt} KD`,
+    payBtn: (amt) => `أرسل القهوة · ${amt} KD`,
     processing: 'جاري المعالجة...',
     payWith: 'طريقة الدفع',
     pmKnet: 'كي نت',
@@ -76,7 +76,7 @@ const STR = {
     phonePlaceholder: '+965 XXXX XXXX (optional)',
     phoneRequired: 'Phone number is required',
     phoneInvalid: 'Enter a valid Kuwait number (8 digits)',
-    payBtn: (amt) => `☕ Send coffee · ${amt} KD`,
+    payBtn: (amt) => `Send coffee · ${amt} KD`,
     processing: 'Processing...',
     payWith: 'Payment method',
     pmKnet: 'KNET',
@@ -908,7 +908,11 @@ export default function TippingClient({ creator, settings, recentTips, todayCoun
         {/* Total counter */}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', border: `2px solid ${C.ink}`, borderRadius: 14, padding: '9px 14px', marginBottom: '1.1rem', background: C.soft, boxShadow: `3px 3px 0 ${C.ink}` }}>
           <span style={{ fontSize: 12, color: '#4A4458', fontWeight: 700 }}>{t.totalCoffees}</span>
-          <span style={{ fontFamily: 'var(--font-sans)', fontSize: 18, fontWeight: 800, color: C.purple }}>☕ {creator.total_tips_count}</span>
+          <span style={{ fontFamily: 'var(--font-sans)', fontSize: 18, fontWeight: 800, color: C.purple, display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/coffee-cup.png" alt="" style={{ height: 20, width: 'auto' }} />
+            {creator.total_tips_count}
+          </span>
         </div>
 
         <div style={s.divider} />
@@ -923,7 +927,16 @@ export default function TippingClient({ creator, settings, recentTips, todayCoun
                   setSelectedCups(cups); setIsAmazing(false);
                   trackEvent('Coffee Amount Selected', { cups, amount: Number((price * cups).toFixed(3)), creatorHandle: creator.handle });
                 }}>
-                <span style={{ fontSize: cups === 5 ? 22 : 20 }}>{cups === 1 ? '☕' : cups === 3 ? '☕☕☕' : '🫖'}</span>
+                {cups === 5 ? (
+                  <span style={{ fontSize: 22 }}>🫖</span>
+                ) : (
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: 2 }}>
+                    {Array.from({ length: cups }).map((_, i) => (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img key={i} src="/coffee-cup.png" alt="" style={{ height: cups === 1 ? 28 : 18, width: 'auto' }} />
+                    ))}
+                  </span>
+                )}
                 <span style={{ fontSize: 10, opacity: 0.8 }}>{t.cupLabel[cups]}</span>
                 <span style={s.cupAmt}>{fmtKd1(price * cups)}</span>
                 <span style={{ fontSize: 9, opacity: 0.7 }}>KD</span>
@@ -985,17 +998,29 @@ export default function TippingClient({ creator, settings, recentTips, todayCoun
           {knetEnabled ? (
             <button type="button" onClick={() => setPayMethod('knet')}
                     style={s.pmOption(payMethod === 'knet', false)}>
-              <span style={s.pmOptionLabel}>🏧 {t.pmKnet}</span>
+              <span style={{ ...s.pmOptionLabel, display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src="/knet-logo.png" alt="" style={{ height: 20, width: 'auto', background: '#fff', borderRadius: 4, padding: '1px 3px' }} />
+                {t.pmKnet}
+              </span>
             </button>
           ) : (
             <button type="button" disabled style={s.pmOption(false, true)}>
-              <span style={s.pmOptionLabel}>🏧 {t.pmKnet}</span>
+              <span style={{ ...s.pmOptionLabel, display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src="/knet-logo.png" alt="" style={{ height: 20, width: 'auto', background: '#fff', borderRadius: 4, padding: '1px 3px' }} />
+                {t.pmKnet}
+              </span>
               <span style={s.pmOptionHint}>{t.comingSoon}</span>
             </button>
           )}
           <button type="button" onClick={() => setPayMethod('card')}
                   style={s.pmOption(payMethod === 'card', false)}>
-            <span style={s.pmOptionLabel}>💳 {t.pmCard}</span>
+            <span style={{ ...s.pmOptionLabel, display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src="/mastercard-logo.png" alt="" style={{ height: 20, width: 'auto' }} />
+              {t.pmCard}
+            </span>
           </button>
         </div>
 
@@ -1010,7 +1035,13 @@ export default function TippingClient({ creator, settings, recentTips, todayCoun
               <Spinner size={18} color={C.ink} />
               {t.processing}
             </span>
-          ) : t.payBtn(fmtKd1(grossAmount))}
+          ) : (
+            <span style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src="/coffee-cup.png" alt="" style={{ height: 22, width: 'auto' }} />
+              {t.payBtn(fmtKd1(grossAmount))}
+            </span>
+          )}
         </button>
 
         <div style={s.pmRow}>
