@@ -147,7 +147,7 @@ export default function LandingClient() {
             <span className="inline-flex items-center gap-2 align-middle">
               {t.hero.title2}
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src="/coffee-cup.png" alt="" className="inline-block align-middle h-9 sm:h-11 lg:h-14 w-auto" />
+              <img src="/coffee-cup.png" alt="" className="inline-block align-middle w-auto" style={{ height: 56, filter: 'drop-shadow(0 3px 6px rgba(0,0,0,0.25))' }} />
             </span>
           </h1>
           <p className="text-base sm:text-lg max-w-xl mb-7 font-medium" style={{ color: 'rgba(13,13,13,0.65)' }}>
@@ -200,11 +200,11 @@ export default function LandingClient() {
               {emoji === '💳' ? (
                 <span className="inline-flex items-center gap-2">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src="/knet-logo.png" alt="KNET" className="h-6 w-auto" />
+                  <img src="/knet-logo.png" alt="KNET" className="w-auto" style={{ height: 22 }} />
                   {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src="/visa-logo.svg" alt="Visa" className="h-6 w-auto" />
+                  <img src="/visa-logo.png" alt="Visa" className="w-auto" style={{ height: 22 }} />
                   {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src="/mastercard-logo.png" alt="Mastercard" className="h-6 w-auto" />
+                  <img src="/mastercard-logo.png" alt="Mastercard" className="w-auto" style={{ height: 22 }} />
                 </span>
               ) : emoji}
             </div>
