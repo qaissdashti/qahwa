@@ -31,7 +31,7 @@ const STR = {
     leaveMessage: 'اترك رسالة 💬',
     messagePlaceholder: (n) => `اترك رسالة لـ ${n}...`,
     namePlaceholder: 'اسمك (اختياري)',
-    phonePlaceholder: '+965 XXXX XXXX',
+    phonePlaceholder: '+965 XXXX XXXX (اختياري)',
     phoneRequired: 'رقم الهاتف مطلوب',
     phoneInvalid: 'أدخل رقم كويتي صحيح (٨ أرقام)',
     payBtn: (amt) => `☕ أرسل القهوة · ${amt} KD`,
@@ -73,7 +73,7 @@ const STR = {
     leaveMessage: 'Leave a message 💬',
     messagePlaceholder: (n) => `Leave a message for ${n}...`,
     namePlaceholder: 'Your name (optional)',
-    phonePlaceholder: '+965 XXXX XXXX',
+    phonePlaceholder: '+965 XXXX XXXX (optional)',
     phoneRequired: 'Phone number is required',
     phoneInvalid: 'Enter a valid Kuwait number (8 digits)',
     payBtn: (amt) => `☕ Send coffee · ${amt} KD`,
@@ -153,10 +153,10 @@ function Confetti() {
 const fmtKd1 = (v) => Number(v || 0).toFixed(1);
 
 // ── Kuwait phone helpers ────────────────────────────────────
-// Supporter phone is mandatory (creators reply to it). Kuwait mobile
-// numbers are 8 digits; we accept input with/without a +965 / 965
+// Supporter phone is OPTIONAL (creators reply to it when given). Kuwait
+// mobile numbers are 8 digits; we accept input with/without a +965 / 965
 // prefix and spaces. normalizeKwPhone strips everything down to the
-// 8 local digits; isValidKwPhone gates the pay button on exactly 8.
+// 8 local digits; isValidKwPhone reports whether it's exactly 8.
 function normalizeKwPhone(raw) {
   let d = String(raw || '').replace(/\D/g, '');
   if (d.startsWith('965') && d.length > 8) d = d.slice(3);
@@ -590,12 +590,13 @@ export default function TippingClient({ creator, settings, recentTips, todayCoun
   // When not 'true', the selector keeps its disabled "coming soon" state.
   const knetEnabled = process.env.NEXT_PUBLIC_KNET_ENABLED === 'true';
 
-  // Supporter phone is mandatory. phoneError only shows once the field
-  // has been touched (blur or a pay attempt) so we don't yell on load.
+  // Supporter phone is OPTIONAL. If left blank we skip it entirely; if
+  // something is typed it must be a valid 8-digit Kuwait number. The
+  // inline error only shows once the field has been touched AND a
+  // non-empty (but invalid) value is present — never "required".
+  const phoneEntered = normalizeKwPhone(supporterPhone).length > 0;
   const phoneValid = isValidKwPhone(supporterPhone);
-  const phoneError = phoneTouched && !phoneValid
-    ? (normalizeKwPhone(supporterPhone).length === 0 ? t.phoneRequired : t.phoneInvalid)
-    : '';
+  const phoneError = phoneTouched && phoneEntered && !phoneValid ? t.phoneInvalid : '';
 
   // Social-proof popup: todayCount is the DISTINCT supporters today
   // (deduped by phone server-side). The "2" is a visibility THRESHOLD,
@@ -624,8 +625,8 @@ export default function TippingClient({ creator, settings, recentTips, todayCoun
 
   async function handlePay() {
     if (loading) return;
-    // Phone is mandatory — block + surface the inline error.
-    if (!phoneValid) {
+    // Phone is optional — only block if a non-empty value fails validation.
+    if (phoneEntered && !phoneValid) {
       setPhoneTouched(true);
       setError('');
       return;
@@ -647,7 +648,7 @@ export default function TippingClient({ creator, settings, recentTips, todayCoun
           grossAmount,
           message:       message || undefined,
           supporterName: supporterName || undefined,
-          supporterPhone: `+965${normalizeKwPhone(supporterPhone)}`,
+          supporterPhone: phoneEntered ? `+965${normalizeKwPhone(supporterPhone)}` : undefined,
         }),
       });
       const data = await res.json();
@@ -674,8 +675,8 @@ export default function TippingClient({ creator, settings, recentTips, todayCoun
   // handlePay stays untouched for when MyFatoorah/KNET goes live.
   async function handlePayCard() {
     if (loading) return;
-    // Phone is mandatory — block + surface the inline error.
-    if (!phoneValid) {
+    // Phone is optional — only block if a non-empty value fails validation.
+    if (phoneEntered && !phoneValid) {
       setPhoneTouched(true);
       setError('');
       return;
@@ -697,7 +698,7 @@ export default function TippingClient({ creator, settings, recentTips, todayCoun
           grossAmount,
           message:       message || undefined,
           supporterName: supporterName || undefined,
-          supporterPhone: `+965${normalizeKwPhone(supporterPhone)}`,
+          supporterPhone: phoneEntered ? `+965${normalizeKwPhone(supporterPhone)}` : undefined,
         }),
       });
       const data = await res.json();
@@ -735,8 +736,8 @@ export default function TippingClient({ creator, settings, recentTips, todayCoun
   // hosted page (no checkout.js). handlePay/handlePayCard stay untouched.
   async function handlePayKnet() {
     if (loading) return;
-    // Phone is mandatory — block + surface the inline error.
-    if (!phoneValid) {
+    // Phone is optional — only block if a non-empty value fails validation.
+    if (phoneEntered && !phoneValid) {
       setPhoneTouched(true);
       setError('');
       return;
@@ -758,7 +759,7 @@ export default function TippingClient({ creator, settings, recentTips, todayCoun
           grossAmount,
           message:       message || undefined,
           supporterName: supporterName || undefined,
-          supporterPhone: `+965${normalizeKwPhone(supporterPhone)}`,
+          supporterPhone: phoneEntered ? `+965${normalizeKwPhone(supporterPhone)}` : undefined,
         }),
       });
       const data = await res.json();
@@ -962,7 +963,7 @@ export default function TippingClient({ creator, settings, recentTips, todayCoun
           placeholder={t.phonePlaceholder}
           inputMode="tel"
           aria-invalid={!!phoneError}
-          aria-required="true"
+          aria-required="false"
           style={{
             ...s.input,
             direction: 'ltr',
@@ -1000,8 +1001,8 @@ export default function TippingClient({ creator, settings, recentTips, todayCoun
 
         {error && <div style={s.errorBox}>{error}</div>}
 
-        <button style={{ ...s.payBtn, cursor: (loading || !phoneValid) ? 'not-allowed' : 'pointer', opacity: (loading || !phoneValid) ? 0.6 : 1 }}
-                onClick={payMethod === 'knet' ? handlePayKnet : handlePayCard} disabled={loading || !phoneValid}
+        <button style={{ ...s.payBtn, cursor: loading ? 'not-allowed' : 'pointer', opacity: loading ? 0.6 : 1 }}
+                onClick={payMethod === 'knet' ? handlePayKnet : handlePayCard} disabled={loading}
                 className={loading ? 'qahwa-pulse' : ''}
                 aria-busy={loading}>
           {loading ? (

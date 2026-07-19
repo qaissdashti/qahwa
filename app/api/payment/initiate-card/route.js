@@ -48,15 +48,20 @@ export async function POST(req) {
     return Response.json({ error: 'Missing required fields' }, { status: 400 });
   }
 
-  // Supporter phone is mandatory (creators reply to it). Normalise to the
-  // 8 local Kuwait digits — accept input with/without a +965 / 965 prefix
-  // and spaces — and reject anything that isn't exactly 8 digits.
-  let phoneDigits = String(supporterPhone || '').replace(/\D/g, '');
-  if (phoneDigits.startsWith('965') && phoneDigits.length > 8) phoneDigits = phoneDigits.slice(3);
-  if (!/^\d{8}$/.test(phoneDigits)) {
-    return Response.json({ error: 'A valid Kuwait phone number is required' }, { status: 400 });
+  // Supporter phone is OPTIONAL (creators reply to it when given). If one
+  // is supplied, normalise to the 8 local Kuwait digits — accept input
+  // with/without a +965 / 965 prefix and spaces — and reject anything
+  // that isn't exactly 8 digits. If absent/blank, store null.
+  let normalizedPhone = null;
+  const rawPhone = String(supporterPhone || '').replace(/\D/g, '');
+  if (rawPhone.length > 0) {
+    let phoneDigits = rawPhone;
+    if (phoneDigits.startsWith('965') && phoneDigits.length > 8) phoneDigits = phoneDigits.slice(3);
+    if (!/^\d{8}$/.test(phoneDigits)) {
+      return Response.json({ error: 'A valid Kuwait phone number is required' }, { status: 400 });
+    }
+    normalizedPhone = `+965${phoneDigits}`;
   }
-  const normalizedPhone = `+965${phoneDigits}`;
 
   // ── 2. FETCH CREATOR + PLATFORM SETTINGS ─────────────────
   const [{ data: creator }, { data: settings }] = await Promise.all([
