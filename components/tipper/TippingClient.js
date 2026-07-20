@@ -167,10 +167,13 @@ function isValidKwPhone(raw) {
 }
 
 // ── MPGS Hosted Checkout loader ─────────────────────────────
-// Load Mastercard's Hosted Checkout script once (test host). Cached by
-// id so repeated pay attempts never re-inject it; resolves immediately
-// if window.Checkout is already present.
-const MPGS_CHECKOUT_SRC = 'https://mtf.gateway.mastercard.com/static/checkout/checkout.min.js';
+// Load Mastercard's Hosted Checkout script once. The gateway host is
+// env-driven (NEXT_PUBLIC_MPGS_HOST, e.g. 'https://ap-gateway.mastercard.com'),
+// falling back to the mtf test host when unset. Cached by id so repeated
+// pay attempts never re-inject it; resolves immediately if window.Checkout
+// is already present.
+const MPGS_HOST = process.env.NEXT_PUBLIC_MPGS_HOST || 'https://mtf.gateway.mastercard.com';
+const MPGS_CHECKOUT_SRC = `${MPGS_HOST}/static/checkout/checkout.min.js`;
 function loadMpgsCheckout() {
   return new Promise((resolve, reject) => {
     if (typeof window !== 'undefined' && window.Checkout) return resolve();
