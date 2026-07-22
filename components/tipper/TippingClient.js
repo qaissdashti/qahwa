@@ -433,10 +433,13 @@ function SuccessScreen({ C, s, t, dir, creator, message, onSendAnother, onToggle
         <button style={s.langBtn} onClick={onToggleLang} aria-label={t.otherName}>{t.other}</button>
 
         {/* Heart-pulsing coffee glyph: pop-in once, then soft heartbeat loop. */}
-        <div
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src="/coffee-cup.png"
+          alt="Coffee"
           className="qahwa-heart-pulse"
-          style={{ fontSize: 76, marginBottom: 16, display: 'inline-block', animationDelay: '.5s' }}
-        >☕</div>
+          style={{ width: 76, height: 76, marginBottom: 16, display: 'inline-block', animationDelay: '.5s' }}
+        />
 
         <h2 style={{ ...s.name, marginBottom: 8 }}>{t.successTitle}</h2>
 
