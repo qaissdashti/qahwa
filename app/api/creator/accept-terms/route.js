@@ -105,6 +105,7 @@ export async function POST(req) {
 
     notifyAdminPendingReview({ fullName, handle, email })
       .catch((err) => console.error('[creator/accept-terms] notifyAdmin', err));
+    console.log('[creator/accept-terms] email debug', { rowEmail: row.email, userEmail: user.email });
     notifyCreatorWelcome({ creatorEmail: email, fullName, handle, lang })
       .catch((err) => console.error('[creator/accept-terms] notifyCreatorWelcome', err));
   }
