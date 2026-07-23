@@ -861,6 +861,9 @@ export default function TippingClient({ creator, settings, recentTips, todayCoun
           dir={dir}
         />
       )}
+      {/* Column wrapper so the footer link stacks BELOW the card instead of
+          becoming a second item in s.page's flex ROW. */}
+      <div style={{ width: '100%', maxWidth: 430, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
       <div style={s.card}>
         <button style={s.langBtn} onClick={toggleLang} aria-label={t.otherName}>{t.other}</button>
 
@@ -1081,12 +1084,13 @@ export default function TippingClient({ creator, settings, recentTips, todayCoun
 
       {/* Quiet "make your own page" invite — sits below the card, deliberately
           muted so it never competes with the Send-coffee CTA. */}
-      <p style={{ fontSize: 13, color: C.muted, textAlign: 'center', direction: dir, marginTop: 20, marginBottom: 8 }}>
+      <p style={{ width: '100%', fontSize: 13, color: C.muted, textAlign: 'center', direction: dir, marginTop: 20, marginBottom: 8 }}>
         {t.ctaFooter}{' '}
         <Link href="/" style={{ color: C.purple, fontWeight: 700, textDecoration: 'none' }}>
           {t.ctaFooterLink}
         </Link>
       </p>
+      </div>
     </div>
   );
 }
