@@ -46,7 +46,7 @@ export async function POST(req) {
         .maybeSingle();
       const creatorEmail = po?.creators?.email;
       if (creatorEmail) {
-        notifyPayoutPaid({
+        await notifyPayoutPaid({
           creatorEmail,
           fullName:   po.creators.full_name,
           amount:     po.amount_kd,

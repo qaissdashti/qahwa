@@ -61,10 +61,10 @@ export async function POST(req) {
     revalidatePath('/[username]', 'page');
   }
 
-  // Fire-and-forget creator email — same pattern as notifyPayoutPaid
-  // in app/api/admin/payout/route.js. The helper swallows its own
-  // errors so a misconfigured email provider can never break the admin
-  // action. Language preference isn't stored anywhere, so the notifier
+  // Awaited creator email — an unawaited promise is killed when the
+  // serverless response returns before Resend replies. The .catch keeps
+  // a misconfigured email provider from ever breaking the admin action.
+  // Language preference isn't stored anywhere, so the notifier
   // falls back to an Arabic-script heuristic on the display name and
   // ultimately to English.
   if (cInfo?.email) {
@@ -74,10 +74,10 @@ export async function POST(req) {
       handle:       cInfo.handle,
     };
     if (approved) {
-      notifyCreatorApproved(args)
+      await notifyCreatorApproved(args)
         .catch((err) => console.error('[admin/verification] notifyApproved', err));
     } else {
-      notifyCreatorRejected({ ...args, reasonNote: notes })
+      await notifyCreatorRejected({ ...args, reasonNote: notes })
         .catch((err) => console.error('[admin/verification] notifyRejected', err));
     }
   }

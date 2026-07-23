@@ -76,10 +76,11 @@ export async function POST(req) {
     return Response.json({ error: 'تعذّر إنشاء الطلب' }, { status: 500 });
   }
 
-  // Fire-and-forget: confirmation to creator + notification to admin.
-  // Helper swallows its own errors so a notification fault never breaks
-  // payout creation.
-  notifyPayoutRequested({
+  // Await both sends (confirmation to creator + admin notification) — an
+  // unawaited promise is killed when the serverless response returns
+  // before Resend replies. The .catch keeps a notification fault from
+  // ever breaking payout creation.
+  await notifyPayoutRequested({
     creatorEmail: creator.email || user.email,
     fullName:     creator.full_name,
     handle:       creator.handle,
