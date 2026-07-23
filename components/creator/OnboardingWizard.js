@@ -359,9 +359,6 @@ export default function OnboardingWizard({ startStep = 1, initial = {}, authed =
 
       const fd = new FormData();
       fd.append('selfie', selfie);
-      // Ride along the supporter's UI language so the post-onboarding
-      // welcome email lands in AR/EN matching how they used the wizard.
-      fd.append('lang', lang === 'ar' ? 'ar' : 'en');
       try {
         await xhrUpload('/api/verify/selfie', fd, (pct) => setUploadPct(pct));
       } catch (uploadErr) {
@@ -391,7 +388,7 @@ export default function OnboardingWizard({ startStep = 1, initial = {}, authed =
     }
     setErrors({}); setBusy(true);
     try {
-      await postJson('/api/creator/accept-terms', {});
+      await postJson('/api/creator/accept-terms', { lang: lang === 'ar' ? 'ar' : 'en' });
       trackEvent('Terms Accepted');
       trackEvent('Onboarding Completed');
       window.location.href = `/${cleanHandle || c0.handle || ''}`;

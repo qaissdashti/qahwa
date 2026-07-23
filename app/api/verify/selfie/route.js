@@ -1,7 +1,8 @@
-// Receives the selfie upload, stores it in the private `selfies` bucket,
-// and moves the creator into 'under_review' to finalise onboarding.
+// Receives the selfie upload and stores it in the private `selfies`
+// bucket. Status stays 'pending' here — the creator only advances to
+// 'under_review' at Step 5 (terms acceptance), which is also where the
+// welcome / admin-review emails fire. See app/api/creator/accept-terms.
 import { createAdminClient, createServerSupabaseClient } from '@/lib/supabase';
-import { notifyAdminPendingReview, notifyCreatorWelcome } from '@/lib/adminNotify';
 import { dbErr } from '@/lib/apiError';
 
 // Phone selfies are routinely 5-8MB; 10MB gives a comfortable margin
@@ -81,42 +82,12 @@ export async function POST(req) {
     .upload(path, bytes, { contentType: file.type, upsert: true });
   if (upErr) return dbErr('تعذّر رفع الصورة', upErr, 500, '[verify/selfie] storage.upload');
 
+  // Store the selfie path only. Status stays 'pending' — it advances to
+  // 'under_review' at Step 5 (accept-terms), which also sends the emails.
   const { error: verifUpdErr } = await supabase.from('verifications')
-    .update({ selfie_url: path, status: 'under_review' })
+    .update({ selfie_url: path })
     .eq('creator_id', user.id);
   if (verifUpdErr) return dbErr('تعذّر تحديث حالة التحقق', verifUpdErr, 500, '[verify/selfie] verifications.update');
-
-  const { error: crUpdErr } = await supabase.from('creators')
-    .update({ verification_status: 'under_review' })
-    .eq('id', user.id);
-  if (crUpdErr) return dbErr('تعذّر تحديث حالة الحساب', crUpdErr, 500, '[verify/selfie] creators.update');
-
-  // Fire-and-forget notifications. Two emails go out in parallel:
-  //   · admin → "new creator pending review"  (unchanged behaviour)
-  //   · creator → "Welcome to Qahwa, page under review"  (new)
-  // Both helpers swallow their own errors so onboarding never fails
-  // because of an email hiccup. The supporter's UI language ships
-  // alongside the upload in FormData['lang']; defaults to 'en' if
-  // missing (older clients, retries, curl probes, etc.).
-  const lang = (form.get('lang') === 'ar') ? 'ar' : 'en';
-  try {
-    const { data: c } = await supabase
-      .from('creators')
-      .select('full_name, handle, email')
-      .eq('id', user.id)
-      .maybeSingle();
-
-    const fullName = c?.full_name;
-    const handle   = c?.handle;
-    const email    = c?.email || user.email;
-
-    notifyAdminPendingReview({ fullName, handle, email })
-      .catch((err) => console.error('[verify/selfie] notifyAdmin', err));
-    notifyCreatorWelcome({ creatorEmail: email, fullName, handle, lang })
-      .catch((err) => console.error('[verify/selfie] notifyCreatorWelcome', err));
-  } catch (err) {
-    console.error('[verify/selfie] notify lookup failed', err);
-  }
 
   return Response.json({ success: true });
 }
