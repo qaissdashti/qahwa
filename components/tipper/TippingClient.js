@@ -7,6 +7,7 @@
 
 import { useState, useEffect } from 'react';
 import Spinner from '@/components/Spinner';
+import Link from 'next/link';
 import { trackEvent } from '@/lib/mixpanel';
 
 // ── Flewd palette (fixed, light-only) ───────────────────────
@@ -64,6 +65,8 @@ const STR = {
     shareCardLine1: '☕ اشتريت لـ',
     shareCardLine2: 'قهوة!',
     sendAnother: '☕ أرسل قهوة أخرى',
+    ctaFooter: 'تبي رابط قهوة خاص فيك؟',
+    ctaFooterLink: 'أنشئ صفحتك',
   },
   en: {
     dir: 'ltr', other: 'ع', otherName: 'العربية',
@@ -106,6 +109,8 @@ const STR = {
     shareCardLine1: '☕ I just bought',
     shareCardLine2: 'a coffee!',
     sendAnother: '☕ Send another coffee',
+    ctaFooter: 'Want your own coffee link?',
+    ctaFooterLink: 'Create your page',
   },
 };
 
@@ -1073,6 +1078,15 @@ export default function TippingClient({ creator, settings, recentTips, todayCoun
         )}
 
       </div>
+
+      {/* Quiet "make your own page" invite — sits below the card, deliberately
+          muted so it never competes with the Send-coffee CTA. */}
+      <p style={{ fontSize: 13, color: C.muted, textAlign: 'center', direction: dir, marginTop: 20, marginBottom: 8 }}>
+        {t.ctaFooter}{' '}
+        <Link href="/" style={{ color: C.purple, fontWeight: 700, textDecoration: 'none' }}>
+          {t.ctaFooterLink}
+        </Link>
+      </p>
     </div>
   );
 }
