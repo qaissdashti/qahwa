@@ -95,19 +95,22 @@ export async function POST(req) {
       .eq('id', user.id);
     if (crErr) return dbErr('تعذّر تحديث حالة الحساب', crErr, 500, '[creator/accept-terms] creators.update');
 
-    // Fire-and-forget, only AFTER both flips succeed — so a retry following
-    // a failed flip (status still 'pending') re-runs this block exactly
-    // once. Both helpers swallow their own errors so onboarding never
-    // fails on an email hiccup.
+    // Await both sends. In a serverless function an UNawaited promise is
+    // killed when the response returns — Resend fails with an
+    // application_error ("request could not be resolved"). The .catch()
+    // on each keeps an email failure from ever failing onboarding;
+    // Promise.all just guarantees both settle before we respond. Only
+    // runs AFTER both status flips succeed.
     const fullName = row.full_name;
     const handle   = row.handle;
     const email    = row.email || user.email;
 
-    notifyAdminPendingReview({ fullName, handle, email })
-      .catch((err) => console.error('[creator/accept-terms] notifyAdmin', err));
-    console.log('[creator/accept-terms] email debug', { rowEmail: row.email, userEmail: user.email });
-    notifyCreatorWelcome({ creatorEmail: email, fullName, handle, lang })
-      .catch((err) => console.error('[creator/accept-terms] notifyCreatorWelcome', err));
+    await Promise.all([
+      notifyAdminPendingReview({ fullName, handle, email })
+        .catch((err) => console.error('[creator/accept-terms] notifyAdmin', err)),
+      notifyCreatorWelcome({ creatorEmail: email, fullName, handle, lang })
+        .catch((err) => console.error('[creator/accept-terms] notifyCreatorWelcome', err)),
+    ]);
   }
 
   return Response.json({ success: true });
