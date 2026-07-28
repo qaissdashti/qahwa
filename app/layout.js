@@ -23,14 +23,17 @@ const plexArabic = IBM_Plex_Sans_Arabic({
   display: 'swap',
 });
 
-const base = getBaseUrl();
+// getBaseUrl() can return the string "null" if NEXT_PUBLIC_BASE_URL is
+// misconfigured. Coerce anything that isn't a valid absolute URL to the
+// production domain, so metadataBase is ALWAYS a real URL (never undefined,
+// never 'null') and the relative OG/icon images below always resolve.
+const rawBase = getBaseUrl();
+const safeBase = (typeof rawBase === 'string' && /^https?:\/\//.test(rawBase))
+  ? rawBase
+  : 'https://buymeqahwa.com';
 
 export const metadata = {
-  // Base for resolving relative OG/icon URLs. Only set it when getBaseUrl()
-  // yields a valid absolute URL — otherwise leave it undefined so Next falls
-  // back to its own default instead of throwing ERR_INVALID_URL (e.g. when
-  // NEXT_PUBLIC_BASE_URL is unset or misconfigured to a bad value like "null").
-  metadataBase: (typeof base === 'string' && /^https?:\/\//.test(base)) ? new URL(base) : undefined,
+  metadataBase: new URL(safeBase),
   title: 'قهوة — Qahwa',
   description: 'ادعم منشئك المفضل بقهوة ☕',
   // Pixel-art coffee-cup brand mark. SVG favicon works in every modern
