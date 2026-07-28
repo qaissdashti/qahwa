@@ -23,12 +23,14 @@ const plexArabic = IBM_Plex_Sans_Arabic({
   display: 'swap',
 });
 
+const base = getBaseUrl();
+
 export const metadata = {
-  // Base for resolving relative OG/icon URLs. Without this, Next builds
-  // image URLs with no base and throws ERR_INVALID_URL on any non-absolute
-  // (or bad, e.g. "null") image value. getBaseUrl() → the custom domain in
-  // prod, localhost in dev — never a trailing slash.
-  metadataBase: new URL(getBaseUrl()),
+  // Base for resolving relative OG/icon URLs. Only set it when getBaseUrl()
+  // yields a valid absolute URL — otherwise leave it undefined so Next falls
+  // back to its own default instead of throwing ERR_INVALID_URL (e.g. when
+  // NEXT_PUBLIC_BASE_URL is unset or misconfigured to a bad value like "null").
+  metadataBase: (typeof base === 'string' && /^https?:\/\//.test(base)) ? new URL(base) : undefined,
   title: 'قهوة — Qahwa',
   description: 'ادعم منشئك المفضل بقهوة ☕',
   // Pixel-art coffee-cup brand mark. SVG favicon works in every modern
