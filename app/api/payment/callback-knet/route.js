@@ -42,6 +42,11 @@ export async function POST(req) {
     // urlencoded). So read the RAW body and parse it as URL-encoded
     // ourselves — header-agnostic. Same field names (trandata, Error, …).
     const form = new URLSearchParams(await req.text());
+    // TEMP DEBUG: the decrypted object is coming back empty {}, which means
+    // the trandata we fed in was empty — so log the raw body + all parsed
+    // keys to see what KNET actually posted and under what field name.
+    console.log('[callback-knet] DEBUG raw keys:', [...form.keys()],
+                'trandata len:', (form.get('trandata') || '').length);
 
     // ── 1. GATEWAY-LEVEL ERROR ───────────────────────────────
     // If KNET couldn't even process the request it returns Error/ErrorText
@@ -68,6 +73,10 @@ export async function POST(req) {
     // The manual mandates merchants log the full response. It contains no
     // card data (PAN/CVV are never returned) — only payment identifiers.
     console.log('[callback-knet] KNET response:', data);
+    // TEMP DEBUG: dump the decrypted trandata verbatim so we can see the
+    // exact field names + shape KNET actually returned (the destructure
+    // below is coming back undefined → "tip not found for trackid: undefined").
+    console.log('[callback-knet] DEBUG decrypted trandata:', JSON.stringify(data), 'typeof:', typeof data);
 
     const { result, trackid, paymentid, tranid, ref, amt } = data;
 
