@@ -431,6 +431,30 @@ function SuccessScreen({ C, s, t, dir, creator, message, onSendAnother, onToggle
     gap: 8, width: '100%',
   };
 
+  // ── BISECTION (temporary) ─────────────────────────────────────────
+  // Bare-minimum success screen — no Confetti, no <img src="/coffee-cup.png">,
+  // no share links (WhatsApp / Instagram / copy) — to isolate the
+  // ERR_INVALID_URL 'null' 400 that only fires on the ?success=1 path.
+  //   · 400 GOES AWAY → the culprit is one of the removed rendered elements;
+  //     we re-add Confetti → img → share link one at a time.
+  //   · 400 PERSISTS → the throw is NOT in the success JSX (look higher: the
+  //     TippingClient body, an import, or the server render around it).
+  const BISECT = true;
+  if (BISECT) {
+    return (
+      <div style={s.page} dir={dir}>
+        <div style={{ ...s.card, textAlign: 'center', padding: '3rem 2rem' }}>
+          <h2 style={{ ...s.name, marginBottom: 8 }}>{t.successTitle}</h2>
+          <p style={s.bio}>{subtitle}</p>
+          <button type="button" onClick={onSendAnother}
+            style={{ ...baseBtn, background: C.purple, color: '#fff', marginTop: 22 }}>
+            {t.sendAnother}
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div style={s.page} dir={dir}>
       {showConfetti && <Confetti />}
