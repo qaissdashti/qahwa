@@ -445,6 +445,13 @@ function SuccessScreen({ C, s, t, dir, creator, message, onSendAnother, onToggle
       <div style={s.page} dir={dir}>
         {showConfetti && <Confetti />}
         <div style={{ ...s.card, textAlign: 'center', padding: '3rem 2rem' }}>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="/coffee-cup.png"
+            alt="Coffee"
+            className="qahwa-heart-pulse"
+            style={{ width: 76, height: 76, marginBottom: 16, display: 'inline-block', animationDelay: '.5s' }}
+          />
           <h2 style={{ ...s.name, marginBottom: 8 }}>{t.successTitle}</h2>
           <p style={s.bio}>{subtitle}</p>
           <button type="button" onClick={onSendAnother}
