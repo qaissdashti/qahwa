@@ -4,6 +4,7 @@ import './globals.css';
 import LangProvider from '@/components/LangProvider';
 import NavigationProgress from '@/components/NavigationProgress';
 import MixpanelProvider from '@/components/MixpanelProvider';
+import { getBaseUrl } from '@/lib/baseUrl';
 
 // Plus Jakarta Sans is the app-wide font (Latin). It has no Arabic glyphs,
 // so IBM Plex Sans Arabic is loaded alongside it as the Arabic fallback.
@@ -23,6 +24,11 @@ const plexArabic = IBM_Plex_Sans_Arabic({
 });
 
 export const metadata = {
+  // Base for resolving relative OG/icon URLs. Without this, Next builds
+  // image URLs with no base and throws ERR_INVALID_URL on any non-absolute
+  // (or bad, e.g. "null") image value. getBaseUrl() → the custom domain in
+  // prod, localhost in dev — never a trailing slash.
+  metadataBase: new URL(getBaseUrl()),
   title: 'قهوة — Qahwa',
   description: 'ادعم منشئك المفضل بقهوة ☕',
   // Pixel-art coffee-cup brand mark. SVG favicon works in every modern

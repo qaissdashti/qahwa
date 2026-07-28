@@ -44,7 +44,14 @@ export async function generateMetadata({ params }) {
     description: approved
       ? (creator.bio || `ادعم ${creator.full_name} بقهوة`)
       : `صفحة ${creator.full_name} قيد مراجعة الإدارة`,
-    openGraph: { images: creator.avatar_url ? [creator.avatar_url] : [] },
+    // Only include the avatar as an OG image when it's a real absolute
+    // http(s) URL (Supabase storage URLs are). This filters out empty,
+    // relative, and — critically — the literal string "null" that some
+    // rows carry, which is truthy and otherwise slips through to
+    // new URL('null') and crashes metadata generation.
+    openGraph: {
+      images: /^https?:\/\//.test(creator.avatar_url || '') ? [creator.avatar_url] : [],
+    },
   };
 }
 
