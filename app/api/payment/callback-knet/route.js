@@ -41,7 +41,8 @@ export async function POST(req) {
     // (it throws a TypeError on anything but multipart / x-www-form-
     // urlencoded). So read the RAW body and parse it as URL-encoded
     // ourselves — header-agnostic. Same field names (trandata, Error, …).
-    const form = new URLSearchParams(await req.text());
+    const raw = await req.text();
+    const form = new URLSearchParams(raw);
     // TEMP DEBUG: the decrypted object is coming back empty {}, which means
     // the trandata we fed in was empty — so log the raw body + all parsed
     // keys to see what KNET actually posted and under what field name.
@@ -61,10 +62,21 @@ export async function POST(req) {
     }
 
     // ── 2. DECRYPT THE RESPONSE ──────────────────────────────
+    // Extract the encrypted trandata hex robustly. Normally KNET posts
+    // "trandata=<hex>", but in practice it sometimes posts the BARE hex
+    // blob with no field name — URLSearchParams then parses the whole hex
+    // as a single key with an empty value, so form.get('trandata') is ''.
+    // Prefer the named field; else fall back to the raw body as the hex
+    // directly (strip '=' padding + whitespace — valid hex has neither).
+    let trandataHex = form.get('trandata') || '';
+    if (!trandataHex) {
+      trandataHex = raw.replace(/=/g, '').replace(/\s+/g, '');
+    }
+
     // Decryption failure = tampered/garbage payload → fail closed.
     let data;
     try {
-      data = decryptTrandata(String(form.get('trandata') || ''));
+      data = decryptTrandata(trandataHex);
     } catch (decryptErr) {
       console.error('[callback-knet] trandata decrypt failed:', decryptErr);
       return knetRedirect(`${appUrl}/error?reason=payment_failed`);
