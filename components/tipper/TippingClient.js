@@ -443,6 +443,7 @@ function SuccessScreen({ C, s, t, dir, creator, message, onSendAnother, onToggle
   if (BISECT) {
     return (
       <div style={s.page} dir={dir}>
+        {showConfetti && <Confetti />}
         <div style={{ ...s.card, textAlign: 'center', padding: '3rem 2rem' }}>
           <h2 style={{ ...s.name, marginBottom: 8 }}>{t.successTitle}</h2>
           <p style={s.bio}>{subtitle}</p>
