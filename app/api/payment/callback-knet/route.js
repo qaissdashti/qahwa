@@ -36,9 +36,12 @@ export async function POST(req) {
   const appUrl = process.env.NEXT_PUBLIC_APP_URL;
 
   try {
-    // KNET sends a URL-encoded form POST to the responseURL (via the
-    // payer's browser), not JSON or query params.
-    const form = await req.formData();
+    // KNET sends a URL-encoded body to the responseURL, but its
+    // Content-Type header isn't reliably one that req.formData() accepts
+    // (it throws a TypeError on anything but multipart / x-www-form-
+    // urlencoded). So read the RAW body and parse it as URL-encoded
+    // ourselves — header-agnostic. Same field names (trandata, Error, …).
+    const form = new URLSearchParams(await req.text());
 
     // ── 1. GATEWAY-LEVEL ERROR ───────────────────────────────
     // If KNET couldn't even process the request it returns Error/ErrorText
