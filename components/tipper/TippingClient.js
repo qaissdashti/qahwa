@@ -454,10 +454,51 @@ function SuccessScreen({ C, s, t, dir, creator, message, onSendAnother, onToggle
           />
           <h2 style={{ ...s.name, marginBottom: 8 }}>{t.successTitle}</h2>
           <p style={s.bio}>{subtitle}</p>
-          <button type="button" onClick={onSendAnother}
-            style={{ ...baseBtn, background: C.purple, color: '#fff', marginTop: 22 }}>
-            {t.sendAnother}
-          </button>
+
+          {/* BISECT step 4: re-add the share-link block (WhatsApp <a href={shareUrl}>,
+              Instagram button, copy link, send-another). Last removed element — if
+              /?success=1 400s now, the offender is in here. */}
+          <div style={{ display: 'grid', gap: 10, marginTop: 22 }}>
+            <a
+              href={shareUrl} target="_blank" rel="noreferrer"
+              onClick={() => trackEvent('Share WhatsApp Clicked', { creatorHandle: creator.handle })}
+              style={{ ...baseBtn, background: '#25D366', color: '#fff', textDecoration: 'none' }}>
+              <span>💬</span><span>{t.shareBtn}</span>
+            </a>
+            <button
+              type="button" onClick={shareToInstagram} disabled={igBusy}
+              style={{
+                ...baseBtn,
+                background: 'linear-gradient(135deg, #F58529 0%, #DD2A7B 50%, #8134AF 100%)',
+                color: '#fff',
+                opacity: igBusy ? 0.75 : 1,
+                cursor: igBusy ? 'wait' : 'pointer',
+              }}>
+              {igBusy
+                ? <><Spinner size={16} color="#fff" /><span>{t.shareIgBusy}</span></>
+                : <span>{t.shareIgBtn}</span>}
+            </button>
+            {igSaved && (
+              <p style={{ fontSize: 12, fontWeight: 700, color: C.purple, margin: '-2px 0 0', lineHeight: 1.4 }}>
+                {t.shareIgSaved}
+              </p>
+            )}
+            {igErr && (
+              <p style={{ fontSize: 12, fontWeight: 700, color: '#C00', margin: '-2px 0 0' }}>
+                {t.shareIgErr}
+              </p>
+            )}
+            <button
+              type="button" onClick={copyLink}
+              style={{ ...baseBtn, background: copied ? C.accent : C.card, color: C.ink }}>
+              {copied ? t.copiedBtn : `🔗 ${t.copyBtn}`}
+            </button>
+            <button
+              type="button" onClick={() => { trackEvent('Send Another Coffee Clicked', { creatorHandle: creator.handle }); onSendAnother(); }}
+              style={{ ...baseBtn, background: C.purple, color: '#fff' }}>
+              {t.sendAnother}
+            </button>
+          </div>
         </div>
       </div>
     );
