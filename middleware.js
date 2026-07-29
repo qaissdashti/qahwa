@@ -5,6 +5,20 @@ import { createServerClient } from '@supabase/ssr';
 const PROTECTED_PREFIXES = ['/dashboard', '/verify', '/admin'];
 
 export async function middleware(request) {
+  // Neutralise stray non-Server-Action POSTs to PAGE routes (e.g. bots/
+  // scanners posting to a route that only renders a component) by bouncing
+  // them to a GET via 303. Server Actions carry a Next-Action header and must
+  // pass through untouched. /api routes are EXCLUDED — they legitimately
+  // receive POSTs (payment callbacks, webhooks, JSON endpoints) that must
+  // never be redirected.
+  if (
+    request.method === 'POST' &&
+    !request.headers.get('next-action') &&
+    !request.nextUrl.pathname.startsWith('/api')
+  ) {
+    return NextResponse.redirect(request.nextUrl, 303);
+  }
+
   let response = NextResponse.next({ request: { headers: request.headers } });
 
   const supabase = createServerClient(
